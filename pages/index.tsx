@@ -1,15 +1,15 @@
 import { ConnectWallet} from "@thirdweb-dev/react";
-import styles from "../styles/Home.module.css";
+import styles from "styles/Home.module.css";
 import Image from "next/image";
-import { NextPage } from "next";
 import { useDropzone } from "react-dropzone";
 import { use, useCallback } from "react";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { useStorageUpload } from "@thirdweb-dev/react";
-import Hero from "../components/hero";
-
-
-
+import Layout from "../components/Layout";
+import { NextPage } from 'next';
+import HomePageHtml from '../components/HomePageHtml';
+import FileUpload from "../components/FileUpload";
+import Home from "../pages/home"
 
 
 function Provider() {
@@ -22,33 +22,9 @@ function Provider() {
     </ThirdwebProvider>
   );
 }
-
-
-const Home: NextPage = () => {
-
- const { mutateAsync: upload } = useStorageUpload();
-
-
- 
-   
- const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      const uris = await upload({data: acceptedFiles});
-      console.log(uris);
-    },
-    [upload],
-  );
-  // And upload the data with the upload function
-  const {getRootProps, getInputProps } = useDropzone({onDrop});
-
-  return (
-    <div {...getRootProps()}>
-      <input {...getInputProps()} />
-      <p>Drop files here</p>
-
-    </div>
-
-  )
+const Index: NextPage = () => {
+  return <Home/>;
 };
-    
-export default Home;
+
+
+export default Index;
