@@ -1,18 +1,17 @@
 import React from 'react';
 import { NextPage } from 'next';
-import HomePageHtml from '../components/HomePageHtml'; // Import the HomePageHtml component
-import FileUpload from '../components/FileUpload'; // Import the FileUpload component
+import HomePageHtml from '../components/HomePageHtml'; 
+import Layout from '../components/Layout';
 
 const Home: NextPage = () => {
   return (
-    <div>
+    <Layout>
+    <main>
       {/* Include the HomePageHtml component for your website content */}
       <HomePageHtml />
-
-      {/* Include the FileUpload component for file uploading */}
-      <FileUpload />
-    </div>
+    </main>
+    </Layout>
   );
 };
-
+    
 export default Home;

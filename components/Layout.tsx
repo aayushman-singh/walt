@@ -12,6 +12,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Header content */}
       </header>
       <main>
+        
         {children} {/* This is where your specific page content goes */}
       </main>
       {/* Include a footer, copyright, or any other common elements here */}

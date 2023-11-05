@@ -1,0 +1,59 @@
+/* Home.module.css */
+
+.header {
+  margin: 0;
+  padding: 0;
+}
+
+.welcome-hero {
+
+}
+
+.container {
+
+}
+
+.menu-bar {
+  background-color: #070529;
+  color: #fff;
+  display: flex; /* Use flexbox to align items horizontally */
+  justify-content: space-between; /* Distribute space between logo and menu items */
+}
+
+/* Style for the logo 
+Slight issue, width is adjusted inline*/
+.logo {
+  display: flex; /* To center the logo vertically within the menu bar */
+  align-items: center; /* To center the logo vertically within the menu bar */
+  width: 100px; /* Set the desired width */
+  height: auto; /* Automatically adjust the height to maintain the aspect ratio */ 
+   
+}
+
+/* Style for the menu items */
+.menu-items {
+  display: flex; /* Use flexbox to align menu items horizontally */
+  list-style: none; /* Remove default list styling */
+  font-family:  sans-serif;
+  margin: 0;
+  padding: 10px;
+}
+
+/* Style for individual menu items */
+.menu-item {
+  margin: 10px;
+  margin-right: 30px;
+  cursor: pointer;
+  color: #fff;
+}
+
+/* Hover effect for menu items */
+.menu-item:hover {
+  
+  color: #5e51ff;
+}
+
+.main-function {
+
+  
+}
