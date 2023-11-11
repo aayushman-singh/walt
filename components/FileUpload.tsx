@@ -3,6 +3,7 @@ import { useStorageUpload } from '@thirdweb-dev/react';
 import { useDropzone } from 'react-dropzone';
 import { NextPage } from 'next';
 import { useCallback } from 'react';
+import styles from './Home.module.css';
 
 const FileUpload: NextPage = () => {
 
@@ -24,7 +25,7 @@ const FileUpload: NextPage = () => {
      return (
        <div {...getRootProps()}>
          <input {...getInputProps()} />
-         <p>Drop files here</p>
+         <button className={styles["mainBtn"]}><p>Drop files here</p></button>
    
        </div>
    
