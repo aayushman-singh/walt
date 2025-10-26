@@ -16,7 +16,7 @@ const HomePageHtml: React.FC = () => {
           <a href="#welcome-hero" onClick={(scrollToSection)} className={styles['menu-item']}>Home</a>
           <a href="#about" onClick={(scrollToSection)} className={styles['menu-item']}>About</a>
           <a href="#working" onClick={(scrollToSection)} className={styles['menu-item']}>How it works</a>
-          <a href="#vault" onClick={(scrollToSection)} className={styles['menu-item']}>Vault</a>
+          <a href="/dashboard" className={styles['menu-item']}>Dashboard</a>
           </div>
         </div>
       </header>
@@ -110,21 +110,13 @@ const HomePageHtml: React.FC = () => {
       <footer className={styles["footer"]}>
 
         <div className={styles["footer-text"]}>
-        <p>&copy; Vault Labs</p>
+        <p>&copy; 2024 Vault Labs. All rights reserved.</p>
         </div>
         <div className={styles["footer-container"]}>
           <a href="#" className={styles["footer-link"]}>
-          <img src="/images/link1.png" alt="l1" className={styles["footer-img"]}/>
+          <img src="/images/link1.png" alt="Social Link" className={styles["footer-img"]}/>
           </a>
-         <a href="#" className={styles["footer-link"]}>
-         <img src="/images/link2.png" alt="l2" className={styles["footer-img"]}/>
-         </a>
-         <a href="#" className={styles["footer-link"]}>
-          <img src="/images/link3.png" alt="l3" className={styles["footer-img"]}/>
-          </a>
-          <a href="#" className={styles["footer-link"]}>
-          <img src="/images/link4.png" alt="l4" className={styles["footer-img"]}/>
-          </a>
+          {/* Add more social media links by adding images to public/images/ */}
         </div>
         
         

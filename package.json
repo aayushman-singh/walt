@@ -1,34 +1,28 @@
 {
-  "name": "lol",
+  "name": "vault-labs",
   "version": "0.1.0",
   "private": true,
-
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "export": "next export",
-    "deploy": "next build && next export && npx thirdweb@latest upload out"
+    "lint": "next lint"
   },
   "dependencies": {
-    "@thirdweb-dev/react": "^4",
-    "@thirdweb-dev/sdk": "^4.0.7",
-    "@thirdweb-dev/storage": "^2.0.1",
-    "dropzone": "^6.0.0-beta.2",
+    "@thirdweb-dev/react": "^4.9.4",
+    "@thirdweb-dev/sdk": "^4.0.99",
     "ethers": "^5.7.2",
-    "fs": "^0.0.1-security",
-    "next": "^13",
-    "react": "^18.2.0",
-    "react-dom": "^18.2",
-    "react-dropzone": "^14.2.3",
-    "thirdweb": "^0.13.8"
+    "next": "^14.2.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.9"
   },
   "devDependencies": {
-    "@types/node": "^18.11.11",
-    "@types/react": "^18",
-    "eslint": "^8.29.0",
-    "eslint-config-next": "^13",
-    "typescript": "^4.9.4"
+    "@types/node": "^22.8.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.18",
+    "typescript": "^5.6.3"
   }
 }

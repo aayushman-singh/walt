@@ -1,36 +1,79 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useStorageUpload } from '@thirdweb-dev/react';
 import { useDropzone } from 'react-dropzone';
-import { NextPage } from 'next';
-import { useCallback } from 'react';
+import { useRouter } from 'next/router';
 import styles from './Home.module.css';
 
-const FileUpload: NextPage = () => {
+interface UploadedFile {
+  name: string;
+  ipfsUri: string;
+  gatewayUrl: string;
+  timestamp: number;
+  type: string;
+  size?: number;
+}
 
-    const { mutateAsync: upload } = useStorageUpload();
-   
-   
-    
+const FileUpload: React.FC = () => {
+  const [isUploading, setIsUploading] = useState(false);
+  const { mutateAsync: upload } = useStorageUpload();
+  const router = useRouter();
+
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return;
       
-    const onDrop = useCallback(
-       async (acceptedFiles: File[]) => {
-         const uris = await upload({data: acceptedFiles});
-         console.log(uris);
-       },
-       [upload],
-     );
-     // And upload the data with the upload function
-     const {getRootProps, getInputProps } = useDropzone({onDrop});
-   
-     return (
-       <div {...getRootProps()}>
-         <input {...getInputProps()} />
-         <button className={styles["mainBtn"]}><p>Drop files here</p></button>
-   
-       </div>
-   
-     )
-   };
-       
+      setIsUploading(true);
+      try {
+        const uris = await upload({ data: acceptedFiles });
+        console.log('Upload successful:', uris);
+
+        // Create uploaded file objects
+        const newFiles: UploadedFile[] = acceptedFiles.map((file, index) => ({
+          name: file.name,
+          ipfsUri: uris[index],
+          gatewayUrl: uris[index].replace('ipfs://', 'https://ipfs.io/ipfs/'),
+          timestamp: Date.now(),
+          type: file.type || 'unknown',
+          size: file.size
+        }));
+
+        // Load existing files and prepend new ones
+        const saved = localStorage.getItem('vaultlabs_uploads');
+        const existingFiles = saved ? JSON.parse(saved) : [];
+        const allFiles = [...newFiles, ...existingFiles];
+        localStorage.setItem('vaultlabs_uploads', JSON.stringify(allFiles));
+
+        // Redirect to dashboard
+        router.push('/dashboard');
+      } catch (error) {
+        console.error('Upload failed:', error);
+        alert('Upload failed. Please try again.');
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [upload, router]
+  );
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+    onDrop,
+    multiple: true 
+  });
+
+  return (
+    <div {...getRootProps()}>
+      <input {...getInputProps()} />
+      <button className={styles["mainBtn"]} disabled={isUploading}>
+        <p>
+          {isUploading 
+            ? 'Uploading...' 
+            : isDragActive 
+            ? 'Drop files here' 
+            : 'Drop files here'}
+        </p>
+      </button>
+    </div>
+  );
+};
 
 export default FileUpload;
