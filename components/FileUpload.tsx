@@ -2,6 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { useStorageUpload } from '@thirdweb-dev/react';
 import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/router';
+import { useAuth } from '../contexts/AuthContext';
+import { useUserFileStorage } from '../hooks/useUserFileStorage';
 import styles from './Home.module.css';
 
 interface UploadedFile {
@@ -17,6 +19,8 @@ const FileUpload: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { mutateAsync: upload } = useStorageUpload();
   const router = useRouter();
+  const { user } = useAuth();
+  const { addFiles } = useUserFileStorage(user?.uid || null);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -37,11 +41,8 @@ const FileUpload: React.FC = () => {
           size: file.size
         }));
 
-        // Load existing files and prepend new ones
-        const saved = localStorage.getItem('vaultlabs_uploads');
-        const existingFiles = saved ? JSON.parse(saved) : [];
-        const allFiles = [...newFiles, ...existingFiles];
-        localStorage.setItem('vaultlabs_uploads', JSON.stringify(allFiles));
+        // Add files to IPFS-based storage
+        await addFiles(newFiles);
 
         // Redirect to dashboard
         router.push('/dashboard');
@@ -52,7 +53,7 @@ const FileUpload: React.FC = () => {
         setIsUploading(false);
       }
     },
-    [upload, router]
+    [upload, router, addFiles]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 

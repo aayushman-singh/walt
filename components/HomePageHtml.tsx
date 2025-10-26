@@ -23,7 +23,10 @@ const HomePageHtml: React.FC = () => {
           <a href="#about" onClick={(scrollToSection)} className={styles['menu-item']}>About</a>
           <a href="#working" onClick={(scrollToSection)} className={styles['menu-item']}>How it works</a>
           {user ? (
-            <Link href="/dashboard" className={styles['menu-item']}>Dashboard</Link>
+            <>
+              <span className={styles['userEmail']}>{user.email}</span>
+              <Link href="/dashboard" className={styles['menu-item']}>Dashboard</Link>
+            </>
           ) : (
             <button 
               className={styles['menu-item'] + ' ' + styles['authBtn']}

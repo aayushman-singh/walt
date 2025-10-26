@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useStorageUpload } from '@thirdweb-dev/react';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserFileStorage } from '../hooks/useUserFileStorage';
 import styles from '../styles/Dashboard.module.css';
 
 interface UploadedFile {
@@ -16,13 +17,21 @@ interface UploadedFile {
 }
 
 const Dashboard: NextPage = () => {
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
   const { user, loading, logout } = useAuth();
   const { mutateAsync: upload } = useStorageUpload();
+  
+  // Use the new IPFS-based storage hook
+  const { 
+    uploadedFiles, 
+    loading: filesLoading, 
+    addFiles, 
+    removeFile, 
+    clearAllFiles 
+  } = useUserFileStorage(user?.uid || null);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -30,25 +39,6 @@ const Dashboard: NextPage = () => {
       router.push('/');
     }
   }, [user, loading, router]);
-
-  // Load uploaded files from localStorage on mount
-  useEffect(() => {
-    if (user) {
-      const saved = localStorage.getItem(`vaultlabs_uploads_${user.uid}`);
-      if (saved) {
-        setUploadedFiles(JSON.parse(saved));
-      }
-    }
-  }, [user]);
-
-  // Save to localStorage whenever uploadedFiles changes
-  useEffect(() => {
-    if (user && uploadedFiles.length > 0) {
-      localStorage.setItem(`vaultlabs_uploads_${user.uid}`, JSON.stringify(uploadedFiles));
-    } else if (user) {
-      localStorage.removeItem(`vaultlabs_uploads_${user.uid}`);
-    }
-  }, [uploadedFiles, user]);
 
   const onDrop = async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -67,7 +57,7 @@ const Dashboard: NextPage = () => {
         size: file.size
       }));
 
-      setUploadedFiles(prev => [...newFiles, ...prev]);
+      await addFiles(newFiles);
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Upload failed. Please try again.');
@@ -87,18 +77,15 @@ const Dashboard: NextPage = () => {
     alert('Link copied to clipboard!');
   };
 
-  const deleteFile = (index: number) => {
+  const deleteFile = async (index: number) => {
     if (confirm('Remove this file from your dashboard?')) {
-      setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+      await removeFile(index);
     }
   };
 
-  const clearAll = () => {
+  const clearAll = async () => {
     if (confirm('Clear all files from your dashboard?')) {
-      setUploadedFiles([]);
-      if (user) {
-        localStorage.removeItem(`vaultlabs_uploads_${user.uid}`);
-      }
+      await clearAllFiles();
     }
   };
 
@@ -133,12 +120,12 @@ const Dashboard: NextPage = () => {
     file.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Show loading spinner while checking auth
-  if (loading) {
+  // Show loading spinner while checking auth or loading files
+  if (loading || filesLoading) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.spinner}></div>
-        <p>Loading...</p>
+        <p>{loading ? 'Loading...' : 'Loading your files...'}</p>
       </div>
     );
   }
@@ -212,6 +199,23 @@ const Dashboard: NextPage = () => {
             <div className={styles.storageText}>
               <span>{uploadedFiles.length} files stored</span>
             </div>
+            {uploadedFiles.length > 0 && (
+              <button 
+                className={styles.syncBtn}
+                onClick={() => {
+                  const userFileListUri = localStorage.getItem(`user_file_list_uri_${user?.uid}`);
+                  if (userFileListUri) {
+                    navigator.clipboard.writeText(userFileListUri);
+                    alert('IPFS URI copied! Paste this in another browser to sync your files.');
+                  } else {
+                    alert('No IPFS URI found. Upload a file first.');
+                  }
+                }}
+                title="Copy IPFS URI to sync across browsers"
+              >
+                🔗 Sync
+              </button>
+            )}
           </div>
         </aside>
 
@@ -266,6 +270,28 @@ const Dashboard: NextPage = () => {
                 <button className={styles.emptyUploadBtn}>
                   Upload Files
                 </button>
+              </div>
+              
+              {/* Sync from IPFS URI */}
+              <div className={styles.syncSection}>
+                <p>Or sync files from another browser:</p>
+                <input
+                  type="text"
+                  placeholder="Paste IPFS URI here (ipfs://...)"
+                  className={styles.syncInput}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const uri = (e.target as HTMLInputElement).value;
+                      if (uri.startsWith('ipfs://') && user) {
+                        localStorage.setItem(`user_file_list_uri_${user.uid}`, uri);
+                        window.location.reload();
+                      } else {
+                        alert('Please enter a valid IPFS URI (starts with ipfs://)');
+                      }
+                    }
+                  }}
+                />
+                <p className={styles.syncHint}>Press Enter to sync</p>
               </div>
             </div>
           ) : (

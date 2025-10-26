@@ -338,6 +338,35 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+/* Sync Section */
+.syncSection {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.syncInput {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px 16px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.syncInput:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.syncHint {
+  font-size: 12px;
+  color: #5f6368;
+  margin-top: 8px;
+}
+
 /* Grid View */
 .fileGrid {
   display: grid;
@@ -512,6 +541,24 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.syncBtn {
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+
+.syncBtn:hover {
+  background: #1765cc;
+  transform: translateY(-1px);
 }
 
 .userEmail {
