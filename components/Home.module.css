@@ -275,3 +275,21 @@ Slight issue, width is adjusted inline*/
 .footer-img{
   width:45px;
 }
+
+/* Auth Button */
+.authBtn {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 20px !important;
+  margin-right: 30px !important;
+  cursor: pointer !important;
+  color: #fff !important;
+  font-size: 20px !important;
+  text-decoration: none !important;
+  font-family: inherit !important;
+}
+
+.authBtn:hover {
+  color: #844cfc !important;
+}

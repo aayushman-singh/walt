@@ -1,5 +1,6 @@
 import type { AppProps } from "next/app";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
+import { AuthProvider } from "../contexts/AuthContext";
 import Head from "next/head";
 import "../styles/globals.css";
 
@@ -7,7 +8,7 @@ import "../styles/globals.css";
 const activeChain = "ethereum";
 
 // Get client ID from environment variable
-const clientId = process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || "746eb2efea72743ef04e142981657f51";
+const clientId = process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || "test-api";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
@@ -20,12 +21,14 @@ function MyApp({ Component, pageProps }: AppProps) {
         <link rel="shortcut icon" type="image/icon" href="assets/logo/favicon.png" />
         {/* Add other global head elements here */}
       </Head>
-      <ThirdwebProvider
-        activeChain={activeChain}
-        clientId={clientId}
-      >
-        <Component {...pageProps} />
-      </ThirdwebProvider>
+      <AuthProvider>
+        <ThirdwebProvider
+          activeChain={activeChain}
+          clientId={clientId}
+        >
+          <Component {...pageProps} />
+        </ThirdwebProvider>
+      </AuthProvider>
     </>
   );
 }

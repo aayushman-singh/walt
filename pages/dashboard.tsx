@@ -3,6 +3,7 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useStorageUpload } from '@thirdweb-dev/react';
 import { useDropzone } from 'react-dropzone';
+import { useAuth } from '../contexts/AuthContext';
 import styles from '../styles/Dashboard.module.css';
 
 interface UploadedFile {
@@ -20,24 +21,34 @@ const Dashboard: NextPage = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
+  const { user, loading, logout } = useAuth();
   const { mutateAsync: upload } = useStorageUpload();
+
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+    }
+  }, [user, loading, router]);
 
   // Load uploaded files from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('vaultlabs_uploads');
-    if (saved) {
-      setUploadedFiles(JSON.parse(saved));
+    if (user) {
+      const saved = localStorage.getItem(`vaultlabs_uploads_${user.uid}`);
+      if (saved) {
+        setUploadedFiles(JSON.parse(saved));
+      }
     }
-  }, []);
+  }, [user]);
 
   // Save to localStorage whenever uploadedFiles changes
   useEffect(() => {
-    if (uploadedFiles.length > 0) {
-      localStorage.setItem('vaultlabs_uploads', JSON.stringify(uploadedFiles));
-    } else {
-      localStorage.removeItem('vaultlabs_uploads');
+    if (user && uploadedFiles.length > 0) {
+      localStorage.setItem(`vaultlabs_uploads_${user.uid}`, JSON.stringify(uploadedFiles));
+    } else if (user) {
+      localStorage.removeItem(`vaultlabs_uploads_${user.uid}`);
     }
-  }, [uploadedFiles]);
+  }, [uploadedFiles, user]);
 
   const onDrop = async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -85,7 +96,18 @@ const Dashboard: NextPage = () => {
   const clearAll = () => {
     if (confirm('Clear all files from your dashboard?')) {
       setUploadedFiles([]);
-      localStorage.removeItem('vaultlabs_uploads');
+      if (user) {
+        localStorage.removeItem(`vaultlabs_uploads_${user.uid}`);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
     }
   };
 
@@ -111,6 +133,21 @@ const Dashboard: NextPage = () => {
     file.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Show loading spinner while checking auth
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner}></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className={styles.dashboard}>
       {/* Header */}
@@ -131,9 +168,12 @@ const Dashboard: NextPage = () => {
           </div>
         </div>
         <div className={styles.headerRight}>
-          <button className={styles.homeBtn} onClick={() => router.push('/')}>
-            Home
-          </button>
+          <div className={styles.userInfo}>
+            <span className={styles.userEmail}>{user.email}</span>
+            <button className={styles.logoutBtn} onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 

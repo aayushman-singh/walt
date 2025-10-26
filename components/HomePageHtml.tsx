@@ -1,9 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './Home.module.css';
 import FileUpload from './FileUpload';
+import AuthModal from './AuthModal';
+import { useAuth } from '../contexts/AuthContext';
 import { scrollToSection } from './SmoothScroll';
+import Link from 'next/link';
 
 const HomePageHtml: React.FC = () => {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user } = useAuth();
+
   return (
     <div className={styles["bg"]}>
       <header>
@@ -16,7 +22,16 @@ const HomePageHtml: React.FC = () => {
           <a href="#welcome-hero" onClick={(scrollToSection)} className={styles['menu-item']}>Home</a>
           <a href="#about" onClick={(scrollToSection)} className={styles['menu-item']}>About</a>
           <a href="#working" onClick={(scrollToSection)} className={styles['menu-item']}>How it works</a>
-          <a href="/dashboard" className={styles['menu-item']}>Dashboard</a>
+          {user ? (
+            <Link href="/dashboard" className={styles['menu-item']}>Dashboard</Link>
+          ) : (
+            <button 
+              className={styles['menu-item'] + ' ' + styles['authBtn']}
+              onClick={() => setShowAuthModal(true)}
+            >
+              Sign In
+            </button>
+          )}
           </div>
         </div>
       </header>
@@ -31,7 +46,16 @@ const HomePageHtml: React.FC = () => {
                   Storage with E-Vault</h2>
                   <p style={{color: '#844cfc'}}>Experience true data security</p>
                     <div className={styles['main-link']}>
-                      <FileUpload/>
+                      {user ? (
+                        <FileUpload/>
+                      ) : (
+                        <button 
+                          className={styles["mainBtn"]}
+                          onClick={() => setShowAuthModal(true)}
+                        >
+                          <p>Sign In to Upload Files</p>
+                        </button>
+                      )}
                     </div>
                 </div>
               </div>
@@ -49,7 +73,7 @@ const HomePageHtml: React.FC = () => {
           <div className={styles["flex-item"]}>
             <img src="/images/logo1.png" alt="Image 1" className={styles["flexbox-image"]} />
             <h2>Our Story</h2>
-            <p>We’re a dedicated team of aspiring engineers that are determined 
+            <p>We're a dedicated team of aspiring engineers that are determined 
                 to offer the best customer experience when it comes to keeping your 
                 belongings safe!</p>
             
@@ -65,7 +89,7 @@ const HomePageHtml: React.FC = () => {
           <div className={styles["flex-item"]}>
           <img src="/images/logo3.png" alt="Image 3" className={styles["flexbox-image"]} />
             <h2>Technology</h2>
-            <p>Blockchains aren’t just good for crypto rugpulls, we’re delivering the power 
+            <p>Blockchains aren't just good for crypto rugpulls, we're delivering the power 
               of the complex Web 3.0 to our users with an intuitive approach to keep things 
               simple while maintaining top notch security measures. A privately hosted L-2 
               blockchain capable of safeguarding anything you wish in your hands</p>
@@ -121,6 +145,11 @@ const HomePageHtml: React.FC = () => {
         
         
       </footer>
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal onClose={() => setShowAuthModal(false)} />
+      )}
     </div>
   );
 };

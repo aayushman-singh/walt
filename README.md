@@ -4,19 +4,22 @@ A modern Web3 application for secure, decentralized file storage using IPFS and 
 
 ## 🚀 Features
 
-- **Decentralized Storage**: Upload files to IPFS for permanent, distributed storage
-- **Upload History**: Track all your uploads with automatic localStorage persistence
-- **File Previews**: View image previews directly in the interface
-- **Multiple Gateway Options**: Access files via IPFS URIs or HTTP gateways
-- **Copy to Clipboard**: Easily copy IPFS URIs and gateway links
-- **Web3 Integration**: Built with Thirdweb SDK for seamless blockchain interaction
-- **Modern UI**: Beautiful, responsive interface with smooth scrolling
-- **Secure**: Client-side encryption and decentralized architecture
+- **🔐 User Authentication**: Secure login with Firebase Auth (Google & Email/Password)
+- **📁 Google Drive Style Dashboard**: Professional file management interface
+- **🌐 Decentralized Storage**: Upload files to IPFS for permanent, distributed storage
+- **👤 User-Specific Storage**: Each user has their own private file collection
+- **🖼️ File Previews**: View image previews directly in the interface
+- **🔗 Multiple Gateway Options**: Access files via IPFS URIs or HTTP gateways
+- **📋 Copy to Clipboard**: Easily copy IPFS URIs and gateway links
+- **🔍 Search Functionality**: Find files quickly with built-in search
+- **📱 Responsive Design**: Works perfectly on desktop, tablet, and mobile
+- **⚡ Web3 Integration**: Built with Thirdweb SDK for seamless blockchain interaction
 
 ## 🛠️ Tech Stack
 
 - **Next.js 14** - React framework
 - **TypeScript** - Type safety
+- **Firebase Auth** - User authentication
 - **Thirdweb** - Web3 development platform
 - **IPFS** - Decentralized storage
 - **React Dropzone** - File upload interface
@@ -25,6 +28,7 @@ A modern Web3 application for secure, decentralized file storage using IPFS and 
 
 - Node.js 18+ 
 - npm or yarn
+- Firebase Project ([Create one here](https://console.firebase.google.com/))
 - Thirdweb Client ID ([Get one here](https://thirdweb.com/dashboard/settings))
 
 ## 🔧 Setup
@@ -44,10 +48,27 @@ A modern Web3 application for secure, decentralized file storage using IPFS and 
    
    Create a `.env.local` file in the root directory:
    ```env
+   # Firebase Configuration
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+   
+   # Thirdweb Configuration
    NEXT_PUBLIC_THIRDWEB_CLIENT_ID=your_client_id_here
    ```
    
-   Get your Client ID from [Thirdweb Dashboard](https://thirdweb.com/dashboard/settings)
+   **Firebase Setup:**
+   1. Go to [Firebase Console](https://console.firebase.google.com/)
+   2. Create a new project
+   3. Enable Authentication → Sign-in method → Google & Email/Password
+   4. Go to Project Settings → General → Your apps → Web app
+   5. Copy the config values to your `.env.local`
+   
+   **Thirdweb Setup:**
+   - Get your Client ID from [Thirdweb Dashboard](https://thirdweb.com/dashboard/settings)
 
 4. **Run the development server**
    ```bash
