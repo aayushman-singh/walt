@@ -1,0 +1,369 @@
+.container {
+  min-height: 100vh;
+  background: #f8f9fa;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.header {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 600;
+  color: #5f6368;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.logo:hover {
+  color: #1a73e8;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sharedBadge {
+  padding: 6px 12px;
+  background: #e8f0fe;
+  color: #1a73e8;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.fileCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.filePreview {
+  width: 100%;
+  min-height: 300px;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  max-height: 600px;
+  object-fit: contain;
+}
+
+.fileIcon,
+.folderIcon {
+  font-size: 128px;
+}
+
+.fileInfo {
+  padding: 32px;
+}
+
+.fileName {
+  font-size: 28px;
+  color: #202124;
+  margin: 0 0 16px 0;
+  font-weight: 400;
+  word-break: break-word;
+}
+
+.fileMeta {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  color: #5f6368;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.permissions {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.permissionBadge {
+  padding: 8px 16px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.expiryInfo {
+  padding: 8px 16px;
+  background: #fff3e0;
+  color: #e65100;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  padding: 12px 24px;
+  border: 1px solid #dadce0;
+  background: white;
+  color: #5f6368;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  background: #f8f9fa;
+  border-color: #5f6368;
+}
+
+.actionBtn.primary {
+  background: #1a73e8;
+  color: white;
+  border-color: #1a73e8;
+}
+
+.actionBtn.primary:hover {
+  background: #1765cc;
+  border-color: #1765cc;
+}
+
+.notice {
+  padding: 12px 16px;
+  background: #e8f0fe;
+  border-left: 4px solid #1a73e8;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #1967d2;
+}
+
+.footer {
+  text-align: center;
+  padding: 32px;
+  color: #5f6368;
+}
+
+.footer p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+}
+
+.linkBtn {
+  background: white;
+  border: 1px solid #dadce0;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #5f6368;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.linkBtn:hover {
+  background: #f8f9fa;
+  border-color: #1a73e8;
+  color: #1a73e8;
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: #5f6368;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #1a73e8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error State */
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  text-align: center;
+}
+
+.errorIcon {
+  font-size: 72px;
+  margin-bottom: 24px;
+}
+
+.error h2 {
+  font-size: 24px;
+  color: #202124;
+  margin: 0 0 12px 0;
+  font-weight: 400;
+}
+
+.error p {
+  font-size: 16px;
+  color: #5f6368;
+  margin: 0 0 24px 0;
+}
+
+.homeBtn {
+  padding: 12px 24px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.homeBtn:hover {
+  background: #1765cc;
+}
+
+/* Password Box */
+.passwordBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  text-align: center;
+}
+
+.passwordIcon {
+  font-size: 72px;
+  margin-bottom: 24px;
+}
+
+.passwordBox h2 {
+  font-size: 24px;
+  color: #202124;
+  margin: 0 0 12px 0;
+  font-weight: 400;
+}
+
+.passwordBox p {
+  font-size: 16px;
+  color: #5f6368;
+  margin: 0 0 32px 0;
+}
+
+.passwordBox form {
+  width: 100%;
+  max-width: 400px;
+}
+
+.passwordInput {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+}
+
+.passwordInput:hover {
+  border-color: #5f6368;
+}
+
+.passwordInput:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 14px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #1765cc;
+}
+
+.submitBtn:disabled {
+  background: #dadce0;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 12px 16px;
+  }
+
+  .main {
+    padding: 24px 16px;
+  }
+
+  .fileInfo {
+    padding: 24px 16px;
+  }
+
+  .fileName {
+    font-size: 22px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actionBtn {
+    width: 100%;
+  }
+}
+

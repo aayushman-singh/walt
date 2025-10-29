@@ -9,6 +9,7 @@ import Link from 'next/link';
 const HomePageHtml: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   return (
     <div className={styles["bg"]}>
@@ -22,6 +23,13 @@ const HomePageHtml: React.FC = () => {
           <a href="#welcome-hero" onClick={(scrollToSection)} className={styles['menu-item']}>Home</a>
           <a href="#about" onClick={(scrollToSection)} className={styles['menu-item']}>About</a>
           <a href="#working" onClick={(scrollToSection)} className={styles['menu-item']}>How it works</a>
+          <button 
+            className={styles['themeBtn']}
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
           {user ? (
             <>
               <span className={styles['userEmail']}>{user.email}</span>
@@ -76,7 +84,7 @@ const HomePageHtml: React.FC = () => {
           <div className={styles["flex-item"]}>
             <img src="/images/logo1.png" alt="Image 1" className={styles["flexbox-image"]} />
             <h2>Our Story</h2>
-            <p>We're a dedicated team of aspiring engineers that are determined 
+            <p>We&apos;re a dedicated team of aspiring engineers that are determined 
                 to offer the best customer experience when it comes to keeping your 
                 belongings safe!</p>
             
@@ -92,7 +100,7 @@ const HomePageHtml: React.FC = () => {
           <div className={styles["flex-item"]}>
           <img src="/images/logo3.png" alt="Image 3" className={styles["flexbox-image"]} />
             <h2>Technology</h2>
-            <p>Blockchains aren't just good for crypto rugpulls, we're delivering the power 
+            <p>Blockchains aren&apos;t just good for crypto rugpulls, we&apos;re delivering the power 
               of the complex Web 3.0 to our users with an intuitive approach to keep things 
               simple while maintaining top notch security measures. A privately hosted L-2 
               blockchain capable of safeguarding anything you wish in your hands</p>

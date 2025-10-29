@@ -48,7 +48,8 @@ const FileUpload: React.FC = () => {
         router.push('/dashboard');
       } catch (error) {
         console.error('Upload failed:', error);
-        alert('Upload failed. Please try again.');
+        // Note: Error handling should be done by parent component
+        throw error;
       } finally {
         setIsUploading(false);
       }

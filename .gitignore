@@ -43,3 +43,4 @@ yarn-error.log*
 firebase.json
 storage.rules
 google-services.json
+/dist
