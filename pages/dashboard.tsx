@@ -3,12 +3,21 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import { useStorageUpload } from '@thirdweb-dev/react';
 import { useDropzone } from 'react-dropzone';
+import JSZip from 'jszip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../components/ui/DropdownMenu';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserFileStorage } from '../hooks/useUserFileStorage';
 import ShareModal from '../components/ShareModal';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
+import { calculatePinningCost } from '../lib/pinningService';
 import styles from '../styles/Dashboard.module.css';
 
 interface ShareConfig {
@@ -61,6 +70,11 @@ const Dashboard: NextPage = () => {
   const [uploadQueue, setUploadQueue] = useState<UploadProgress[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [savedSearches, setSavedSearches] = useState<Array<{ name: string; query: string; filters: typeof filters }>>([]);
+  const [showSavedSearchesMenu, setShowSavedSearchesMenu] = useState(false);
   const [activeView, setActiveView] = useState<'drive' | 'recent' | 'starred' | 'trash'>('drive');
   const [renamingIndex, setRenamingIndex] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -77,8 +91,8 @@ const Dashboard: NextPage = () => {
   });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -136,6 +150,7 @@ const Dashboard: NextPage = () => {
     moveToTrash,
     restoreFromTrash,
     permanentlyDelete,
+    autoCleanupTrash,
     updateLastAccessed,
     // View functions
     getCurrentFolderItems,
@@ -160,6 +175,231 @@ const Dashboard: NextPage = () => {
       router.push('/');
     }
   }, [user, loading, router]);
+
+  // Load recent searches and saved searches from localStorage
+  useEffect(() => {
+    if (user) {
+      const saved = localStorage.getItem(`recent_searches_${user.uid}`);
+      if (saved) {
+        try {
+          setRecentSearches(JSON.parse(saved));
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+      const savedSearchesData = localStorage.getItem(`saved_searches_${user.uid}`);
+      if (savedSearchesData) {
+        try {
+          setSavedSearches(JSON.parse(savedSearchesData));
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+    }
+  }, [user]);
+
+  // Generate search suggestions based on file names
+  useEffect(() => {
+    if (searchTerm.length > 0) {
+      const suggestions = uploadedFiles
+        .filter(file => 
+          !file.trashed && 
+          file.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .map(file => file.name)
+        .slice(0, 5);
+      setSearchSuggestions(suggestions);
+      setShowSuggestions(true);
+    } else {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [searchTerm, uploadedFiles]);
+
+  // Save search to recent searches
+  const saveSearch = (term: string) => {
+    if (!user || !term.trim()) return;
+    
+    const updated = [term, ...recentSearches.filter(s => s !== term)].slice(0, 10);
+    setRecentSearches(updated);
+    localStorage.setItem(`recent_searches_${user.uid}`, JSON.stringify(updated));
+  };
+
+  // Save current search as a saved search
+  const saveCurrentSearch = () => {
+    if (!user) return;
+    
+    const hasActiveSearch = searchTerm.trim() || Object.values(filters).some(v => v !== 'all' && v !== '');
+    if (!hasActiveSearch) {
+      showToast('No search query or filters to save', 'info');
+      return;
+    }
+
+    setInputModal({
+      isOpen: true,
+      title: 'Save Search',
+      message: 'Enter a name for this search:',
+      placeholder: 'Search name (e.g., "Large PDFs", "Pinned Images")',
+      defaultValue: '',
+      onConfirm: (name) => {
+        if (!name.trim()) {
+          setInputModal({ ...inputModal, isOpen: false });
+          return;
+        }
+        const newSavedSearch = {
+          name: name.trim(),
+          query: searchTerm,
+          filters: { ...filters }
+        };
+        const updated = [...savedSearches.filter(s => s.name !== name.trim()), newSavedSearch];
+        setSavedSearches(updated);
+        localStorage.setItem(`saved_searches_${user.uid}`, JSON.stringify(updated));
+        setInputModal({ ...inputModal, isOpen: false });
+        showToast('✅ Search saved successfully', 'success');
+      }
+    });
+  };
+
+  // Load a saved search
+  const loadSavedSearch = (savedSearch: { name: string; query: string; filters: typeof filters }) => {
+    setSearchTerm(savedSearch.query);
+    setFilters(savedSearch.filters);
+    setShowSuggestions(false);
+    showToast(`Loaded search: ${savedSearch.name}`, 'success');
+  };
+
+  // Delete a saved search
+  const deleteSavedSearch = (name: string) => {
+    if (!user) return;
+    const updated = savedSearches.filter(s => s.name !== name);
+    setSavedSearches(updated);
+    localStorage.setItem(`saved_searches_${user.uid}`, JSON.stringify(updated));
+    showToast('✅ Search deleted', 'success');
+  };
+
+  // Auto-cleanup trash on mount and when entering trash view
+  useEffect(() => {
+    if (activeView === 'trash' && user && uploadedFiles.length > 0) {
+      // Cleanup files older than 30 days automatically
+      autoCleanupTrash().catch(console.error);
+    }
+  }, [activeView, user, uploadedFiles.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore shortcuts when typing in inputs, textareas, or when modals are open
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || confirmationModal.isOpen || inputModal.isOpen || shareModalFile) {
+        // Allow Escape to close modals
+        if (e.key === 'Escape' && (confirmationModal.isOpen || inputModal.isOpen || shareModalFile)) {
+          if (shareModalFile) {
+            setShareModalFile(null);
+          } else if (inputModal.isOpen) {
+            setInputModal({ ...inputModal, isOpen: false });
+          } else if (confirmationModal.isOpen) {
+            setConfirmationModal({ ...confirmationModal, isOpen: false });
+          }
+        }
+        return;
+      }
+
+      // Ctrl+K or Cmd+K or / - Focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.querySelector(`.${styles.searchInput}`) as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+      } else if (e.key === '/' && !searchTerm) {
+        e.preventDefault();
+        const searchInput = document.querySelector(`.${styles.searchInput}`) as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+      // Escape - Clear search, close menus
+      else if (e.key === 'Escape') {
+        if (searchTerm) {
+          setSearchTerm('');
+          setShowSuggestions(false);
+        }
+        if (showFilters) {
+          setShowFilters(false);
+        }
+      }
+      // Ctrl+N or Cmd+N - New folder (when in drive view)
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        if (activeView === 'drive') {
+          // Trigger folder creation via input modal directly
+          setInputModal({
+            isOpen: true,
+            title: 'Create Folder',
+            message: 'Enter folder name:',
+            placeholder: 'Folder name',
+            defaultValue: '',
+            onConfirm: async (folderName: string) => {
+              if (folderName.trim()) {
+                const success = await createFolder(folderName.trim(), currentFolderId);
+                if (success) {
+                  showToast('✅ Folder created successfully', 'success');
+                } else {
+                  showToast('❌ Failed to create folder', 'error');
+                }
+                setInputModal({ isOpen: false, title: '', message: '', placeholder: '', defaultValue: '', onConfirm: async () => {} });
+              }
+            }
+          });
+        }
+      }
+      // Ctrl+, or Cmd+, - Toggle theme
+      else if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault();
+        setTheme(theme === 'light' ? 'dark' : 'light');
+      }
+      // 1 - My Drive
+      else if (e.key === '1' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setActiveView('drive');
+        setCurrentFolderId(null);
+      }
+      // 2 - Recent
+      else if (e.key === '2' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setActiveView('recent');
+      }
+      // 3 - Starred
+      else if (e.key === '3' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setActiveView('starred');
+      }
+      // 4 - Trash
+      else if (e.key === '4' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        setActiveView('trash');
+      }
+      // g then v - Grid view
+      else if (e.key === 'g' && !e.ctrlKey && !e.metaKey) {
+        // Will handle on next key press
+        const handleNextKey = (nextEvent: KeyboardEvent) => {
+          if (nextEvent.key === 'v' || nextEvent.key === 'V') {
+            e.preventDefault();
+            setViewMode('grid');
+          } else if (nextEvent.key === 'l' || nextEvent.key === 'L') {
+            e.preventDefault();
+            setViewMode('list');
+          }
+          document.removeEventListener('keydown', handleNextKey);
+        };
+        document.addEventListener('keydown', handleNextKey, { once: true });
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [searchTerm, showFilters, activeView, theme, confirmationModal.isOpen, inputModal.isOpen, shareModalFile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle URL navigation for folders
   useEffect(() => {
@@ -193,17 +433,6 @@ const Dashboard: NextPage = () => {
     }
   }, [currentFolderId, router]);
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (openMenuId && !(event.target as Element).closest('.imageMenu')) {
-        setOpenMenuId(null);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [openMenuId]);
 
   // Safety mechanism: reset dragging state if drag seems stuck
   useEffect(() => {
@@ -223,11 +452,13 @@ const Dashboard: NextPage = () => {
     // Large file warning (> 100MB)
     const largeFiles = acceptedFiles.filter(f => f.size > 100 * 1024 * 1024);
     if (largeFiles.length > 0) {
+      const totalSize = largeFiles.reduce((sum, f) => sum + f.size, 0);
+      const costEstimate = calculatePinningCost(totalSize, 365);
       const fileNames = largeFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
       setConfirmationModal({
         isOpen: true,
         title: 'Large Files Detected',
-        message: `Large files detected:\n${fileNames}\n\nLarge files may take longer to upload and cost more to pin. Continue?`,
+        message: `Large files detected:\n${fileNames}\n\nTotal size: ${formatFileSize(totalSize)}\nEstimated pinning cost (1 year): ${costEstimate}\n\nLarge files may take longer to upload and cost more to pin. Continue?`,
         confirmText: 'Continue',
         cancelText: 'Cancel',
         onConfirm: async () => {
@@ -248,11 +479,13 @@ const Dashboard: NextPage = () => {
     // Large file warning (> 100MB)
     const largeFiles = acceptedFiles.filter(f => f.size > 100 * 1024 * 1024);
     if (largeFiles.length > 0) {
+      const totalSize = largeFiles.reduce((sum, f) => sum + f.size, 0);
+      const costEstimate = calculatePinningCost(totalSize, 365);
       const fileNames = largeFiles.map(f => `${f.name} (${formatFileSize(f.size)})`).join(', ');
       setConfirmationModal({
         isOpen: true,
         title: 'Large Files Detected',
-        message: `Large files detected:\n${fileNames}\n\nLarge files may take longer to upload and cost more to pin. Continue?`,
+        message: `Large files detected:\n${fileNames}\n\nTotal size: ${formatFileSize(totalSize)}\nEstimated pinning cost (1 year): ${costEstimate}\n\nLarge files may take longer to upload and cost more to pin. Continue?`,
         confirmText: 'Continue',
         cancelText: 'Cancel',
         onConfirm: async () => {
@@ -777,6 +1010,94 @@ const Dashboard: NextPage = () => {
     }
   };
 
+  // Get all files recursively (build folder structure)
+  const getAllFilesRecursively = (folderId: string | null, files: UploadedFile[], path: string = ''): Array<{file: UploadedFile, path: string}> => {
+    const result: Array<{file: UploadedFile, path: string}> = [];
+    
+    files.forEach(file => {
+      if (file.parentFolderId === folderId && !file.isFolder && !file.trashed) {
+        result.push({ file, path });
+      }
+    });
+
+    // Recurse into folders
+    files.forEach(folder => {
+      if (folder.isFolder && folder.parentFolderId === folderId && !folder.trashed) {
+        const folderPath = path ? `${path}/${folder.name}` : folder.name;
+        const folderFiles = getAllFilesRecursively(folder.id, files, folderPath);
+        result.push(...folderFiles);
+      }
+    });
+
+    return result;
+  };
+
+  const handleExportAll = async () => {
+    const nonTrashedFiles = uploadedFiles.filter(f => !f.trashed && !f.isFolder);
+    
+    if (nonTrashedFiles.length === 0) {
+      showToast('No files to export', 'info');
+      return;
+    }
+
+    try {
+      showToast('📦 Preparing ZIP file...', 'info');
+      const zip = new JSZip();
+      
+      // Get all files with their folder paths
+      const allFilesWithPaths = getAllFilesRecursively(null, uploadedFiles);
+      
+      if (allFilesWithPaths.length === 0) {
+        showToast('No files to export', 'info');
+        return;
+      }
+
+      let processed = 0;
+      const total = allFilesWithPaths.length;
+      
+      // Download and add each file to ZIP
+      for (const { file, path } of allFilesWithPaths) {
+        try {
+          const response = await fetch(file.gatewayUrl);
+          if (!response.ok) {
+            console.warn(`Failed to fetch ${file.name}, skipping...`);
+            continue;
+          }
+          const blob = await response.blob();
+          const zipPath = path ? `${path}/${file.name}` : file.name;
+          zip.file(zipPath, blob);
+          
+          processed++;
+          if (processed % 10 === 0 || processed === total) {
+            showToast(`📦 Exporting... ${processed}/${total} files`, 'info');
+          }
+        } catch (error) {
+          console.error(`Error fetching ${file.name}:`, error);
+          // Continue with other files even if one fails
+        }
+      }
+
+      // Generate ZIP file
+      showToast('📦 Generating ZIP file...', 'info');
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      
+      // Download the ZIP
+      const url = window.URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vault-export-${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      showToast(`✅ Exported ${processed} files successfully!`, 'success');
+    } catch (error) {
+      console.error('Export failed:', error);
+      showToast('❌ Export failed. Please try again.', 'error');
+    }
+  };
+
   const folderPath = getFolderPath(currentFolderId);
 
   const getViewTitle = () => {
@@ -827,7 +1148,27 @@ const Dashboard: NextPage = () => {
                 type="text"
                 placeholder="Search in Drive"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (e.target.value.trim() && e.target.value !== searchTerm) {
+                    saveSearch(e.target.value.trim());
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchTerm.trim()) {
+                    saveSearch(searchTerm.trim());
+                    setShowSuggestions(false);
+                  }
+                }}
+                onFocus={() => {
+                  if (searchTerm.length > 0 || recentSearches.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                onBlur={() => {
+                  // Delay to allow click on suggestions
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
                 className={styles.searchInput}
               />
               <button 
@@ -838,6 +1179,90 @@ const Dashboard: NextPage = () => {
                 🎚️
               </button>
             </div>
+            {/* Search Suggestions Dropdown */}
+            {showSuggestions && (searchSuggestions.length > 0 || (searchTerm.length === 0 && (recentSearches.length > 0 || savedSearches.length > 0))) && (
+              <div className={styles.searchSuggestions}>
+                {searchTerm.length === 0 && savedSearches.length > 0 && (
+                  <>
+                    <div className={styles.suggestionHeader}>
+                      <span>Saved Searches</span>
+                      <button 
+                        className={styles.saveSearchBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          saveCurrentSearch();
+                        }}
+                        title="Save current search"
+                      >
+                        💾 Save
+                      </button>
+                    </div>
+                    {savedSearches.map((savedSearch, idx) => (
+                      <div
+                        key={`saved-${idx}`}
+                        className={styles.suggestionItem}
+                        onClick={() => {
+                          loadSavedSearch(savedSearch);
+                        }}
+                      >
+                        <span className={styles.suggestionIcon}>⭐</span>
+                        <span className={styles.suggestionText}>{savedSearch.name}</span>
+                        <button
+                          className={styles.deleteSavedSearchBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteSavedSearch(savedSearch.name);
+                          }}
+                          title="Delete saved search"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {searchTerm.length === 0 && recentSearches.length > 0 && (
+                  <>
+                    {savedSearches.length > 0 && <div className={styles.suggestionDivider}></div>}
+                    <div className={styles.suggestionHeader}>Recent Searches</div>
+                    {recentSearches.map((search, idx) => (
+                      <div
+                        key={`recent-${idx}`}
+                        className={styles.suggestionItem}
+                        onClick={() => {
+                          setSearchTerm(search);
+                          saveSearch(search);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <span className={styles.suggestionIcon}>🕐</span>
+                        <span>{search}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {searchSuggestions.length > 0 && (
+                  <>
+                    {searchTerm.length > 0 && recentSearches.length > 0 && <div className={styles.suggestionDivider}></div>}
+                    <div className={styles.suggestionHeader}>Suggestions</div>
+                    {searchSuggestions.map((suggestion, idx) => (
+                      <div
+                        key={`suggestion-${idx}`}
+                        className={styles.suggestionItem}
+                        onClick={() => {
+                          setSearchTerm(suggestion);
+                          saveSearch(suggestion);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <span className={styles.suggestionIcon}>🔍</span>
+                        <span>{suggestion}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
             {showFilters && (
               <div className={styles.filterPanel}>
                 <div className={styles.filterGroup}>
@@ -925,25 +1350,90 @@ const Dashboard: NextPage = () => {
                   </div>
                 </div>
                 
-                <button 
-                  className={styles.clearFilters}
-                  onClick={() => setFilters({
-                    fileType: 'all',
-                    pinStatus: 'all',
-                    starStatus: 'all',
-                    sizeMin: '',
-                    sizeMax: '',
-                    dateFrom: '',
-                    dateTo: ''
-                  })}
-                >
-                  Clear All Filters
-                </button>
+                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                  <button 
+                    className={styles.clearFilters}
+                    onClick={() => setFilters({
+                      fileType: 'all',
+                      pinStatus: 'all',
+                      starStatus: 'all',
+                      sizeMin: '',
+                      sizeMax: '',
+                      dateFrom: '',
+                      dateTo: ''
+                    })}
+                  >
+                    Clear All Filters
+                  </button>
+                  <button 
+                    className={styles.saveSearchBtnFilter}
+                    onClick={() => {
+                      saveCurrentSearch();
+                      setShowFilters(false);
+                    }}
+                    title="Save current search with filters"
+                  >
+                    💾 Save Search
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
         <div className={styles.headerRight}>
+          {/* Keyboard Shortcuts Card */}
+          <div 
+            className={styles.keyboardShortcutsCard}
+            onMouseEnter={() => setShowKeyboardShortcuts(true)}
+            onMouseLeave={() => setShowKeyboardShortcuts(false)}
+          >
+            <span className={styles.keyboardShortcutsLabel}>⌨️ Keyboard Shortcuts</span>
+            {showKeyboardShortcuts && (
+              <div className={styles.keyboardShortcutsTooltip}>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>Ctrl+K</span> or <span className={styles.shortcutKey}>/</span>
+                  <span className={styles.shortcutAction}>Focus search</span>
+                </div>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>Esc</span>
+                  <span className={styles.shortcutAction}>Clear search / Close menus</span>
+                </div>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>Ctrl+N</span>
+                  <span className={styles.shortcutAction}>New folder</span>
+                </div>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>Ctrl+,</span>
+                  <span className={styles.shortcutAction}>Toggle theme</span>
+                </div>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>1</span>
+                  <span className={styles.shortcutAction}>My Drive</span>
+                </div>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>2</span>
+                  <span className={styles.shortcutAction}>Recent</span>
+                </div>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>3</span>
+                  <span className={styles.shortcutAction}>Starred</span>
+                </div>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>4</span>
+                  <span className={styles.shortcutAction}>Trash</span>
+                </div>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>g + v</span>
+                  <span className={styles.shortcutAction}>Grid view</span>
+                </div>
+                <div className={styles.shortcutItem}>
+                  <span className={styles.shortcutKey}>g + l</span>
+                  <span className={styles.shortcutAction}>List view</span>
+                </div>
+              </div>
+            )}
+          </div>
+          
           <button 
             className={styles.themeToggle}
             onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
@@ -951,12 +1441,27 @@ const Dashboard: NextPage = () => {
           >
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
-          <div className={styles.userInfo}>
-            <span className={styles.userEmail}>{user.email}</span>
-            <button className={styles.logoutBtn} onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
+          
+          {/* User Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className={styles.userDropdownTrigger}>
+                <span className={styles.userEmail}>{user.email}</span>
+                <span className={styles.dropdownArrow}>▼</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportAll}>
+                <span className={styles.dropdownIcon}>📦</span>
+                Export All
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <span className={styles.dropdownIcon}>🚪</span>
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -1024,6 +1529,11 @@ const Dashboard: NextPage = () => {
                 ? '✅ New files will be pinned automatically' 
                 : '⚠️ Files may be lost without pinning!'}
             </p>
+            {autoPinEnabled && storageStats.pinnedSize > 0 && (
+              <p className={styles.autoPinCost}>
+                💰 Estimated cost (1 year): {calculatePinningCost(storageStats.pinnedSize, 365)}
+              </p>
+            )}
           </div>
 
           <div className={styles.storageInfo}>
@@ -1044,6 +1554,14 @@ const Dashboard: NextPage = () => {
                   {storageStats.pinnedCount} ({formatFileSize(storageStats.pinnedSize)})
                 </span>
               </div>
+              {storageStats.pinnedSize > 0 && (
+                <div className={styles.statRow}>
+                  <span className={styles.statLabel}>💰 Est. Cost:</span>
+                  <span className={styles.statValue}>
+                    {calculatePinningCost(storageStats.pinnedSize, 365)}/year
+                  </span>
+                </div>
+              )}
               <div className={styles.statRow}>
                 <span className={styles.statLabel}>⚠️ Unpinned:</span>
                 <span className={styles.statValue + ' ' + (storageStats.unpinnedCount > 0 ? styles.warning : '')}>
@@ -1056,23 +1574,6 @@ const Dashboard: NextPage = () => {
                 </p>
               )}
             </div>
-            {uploadedFiles.length > 0 && (
-              <button 
-                className={styles.syncBtn}
-                onClick={() => {
-                  const userFileListUri = localStorage.getItem(`user_file_list_uri_${user?.uid}`);
-                  if (userFileListUri) {
-                    navigator.clipboard.writeText(userFileListUri);
-                    showToast('IPFS URI copied! Paste this in another browser to sync your files.', 'success');
-                  } else {
-                    showToast('No IPFS URI found. Upload a file first.', 'error');
-                  }
-                }}
-                title="Copy IPFS URI to sync across browsers"
-              >
-                🔗 Sync
-              </button>
-            )}
           </div>
         </aside>
 
@@ -1164,6 +1665,64 @@ const Dashboard: NextPage = () => {
               ))}
             </div>
           )}
+
+          {/* Trash Auto-Delete Warning */}
+          {activeView === 'trash' && (() => {
+            const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+            const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+            const now = Date.now();
+            const trashedFiles = getTrashedItems();
+            const expiredFiles = trashedFiles.filter(f => f.trashedDate && (now - f.trashedDate) >= thirtyDaysMs);
+            const warningFiles = trashedFiles.filter(f => {
+              if (!f.trashedDate) return false;
+              const age = now - f.trashedDate;
+              return age >= (thirtyDaysMs - sevenDaysMs) && age < thirtyDaysMs;
+            });
+            
+            if (expiredFiles.length === 0 && warningFiles.length === 0) return null;
+            
+            return (
+              <div className={styles.trashWarningBanner}>
+                <div className={styles.trashWarningContent}>
+                  <span className={styles.trashWarningIcon}>⚠️</span>
+                  <div className={styles.trashWarningText}>
+                    {expiredFiles.length > 0 && (
+                      <strong>{expiredFiles.length} item{expiredFiles.length !== 1 ? 's' : ''} will be permanently deleted and unpinned automatically (older than 30 days)</strong>
+                    )}
+                    {expiredFiles.length > 0 && warningFiles.length > 0 && <span> • </span>}
+                    {warningFiles.length > 0 && (() => {
+                      const oldestWarningFile = warningFiles.reduce((oldest, f) => {
+                        if (!oldest.trashedDate) return f;
+                        if (!f.trashedDate) return oldest;
+                        const age = now - f.trashedDate;
+                        const oldestAge = now - oldest.trashedDate;
+                        return age > oldestAge ? f : oldest;
+                      }, warningFiles[0]);
+                      const daysRemaining = oldestWarningFile.trashedDate 
+                        ? Math.max(0, Math.ceil((thirtyDaysMs - (now - oldestWarningFile.trashedDate)) / (24 * 60 * 60 * 1000)))
+                        : 0;
+                      return (
+                        <span>{warningFiles.length} item{warningFiles.length !== 1 ? 's' : ''} will be deleted in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}</span>
+                      );
+                    })()}
+                  </div>
+                  {expiredFiles.length > 0 && (
+                    <button
+                      className={styles.cleanupTrashBtn}
+                      onClick={async () => {
+                        const result = await autoCleanupTrash();
+                        if (result.deleted > 0 || result.unpinned > 0) {
+                          showToast(`✅ ${result.deleted} item${result.deleted !== 1 ? 's' : ''} deleted${result.unpinned > 0 ? `, ${result.unpinned} unpinned` : ''}`, 'success');
+                        }
+                      }}
+                    >
+                      Clean Up Now
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Toolbar */}
           <div className={styles.toolbar}>
@@ -1492,59 +2051,60 @@ const Dashboard: NextPage = () => {
                     )}
                     
                     {/* 3-dot menu button */}
-                    <div className={styles.menuContainer + ' imageMenu'}>
-                      <button 
-                        className={styles.moreBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(openMenuId === file.id ? null : file.id);
-                        }}
-                        title="More actions"
-                      >
-                        ⋮
-                      </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button 
+                          className={styles.moreBtn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                          title="More actions"
+                        >
+                          ⋮
+                        </button>
+                      </DropdownMenuTrigger>
                       
-                      {/* Dropdown menu */}
-                      {openMenuId === file.id && (
-                        <div className={styles.dropdownMenu + ' imageMenu'}>
-                          {activeView !== 'trash' ? (
-                            <>
-                              {!file.isFolder && (
-                                <>
-                                  <button onClick={(e) => { e.stopPropagation(); handleDownload(file); setOpenMenuId(null); }}>
-                                    ⬇️ Download
-                                  </button>
-                                  <button onClick={(e) => { e.stopPropagation(); window.open(file.gatewayUrl, '_blank'); setOpenMenuId(null); }}>
-                                    👁️ Open
-                                  </button>
-                                  <button onClick={(e) => { e.stopPropagation(); copyToClipboard(file.gatewayUrl); setOpenMenuId(null); }}>
-                                    🔗 Copy Link
-                                  </button>
-                                </>
-                              )}
-                              <button onClick={(e) => { e.stopPropagation(); handleShare(file.id); setOpenMenuId(null); }}>
-                                🔗 Share
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); handleRename(file.id); setOpenMenuId(null); }}>
-                                ✏️ Rename
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); handleDelete(file.id); setOpenMenuId(null); }} className={styles.menuDanger}>
-                                🗑️ Trash
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button onClick={(e) => { e.stopPropagation(); handleRestore(file.id); setOpenMenuId(null); }}>
-                                ↩️ Restore
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); handleDelete(file.id); setOpenMenuId(null); }} className={styles.menuDanger}>
-                                ❌ Delete Forever
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                      <DropdownMenuContent align="end">
+                        {activeView !== 'trash' ? (
+                          <>
+                            {!file.isFolder && (
+                              <>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDownload(file); }}>
+                                  ⬇️ Download
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(file.gatewayUrl, '_blank'); }}>
+                                  👁️ Open
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyToClipboard(file.gatewayUrl); }}>
+                                  🔗 Copy Link
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                              </>
+                            )}
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(file.id); }}>
+                              🔗 Share
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(file.id); }}>
+                              ✏️ Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }} className={styles.menuDanger}>
+                              🗑️ Trash
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
+                          <>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRestore(file.id); }}>
+                              ↩️ Restore
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }} className={styles.menuDanger}>
+                              ❌ Delete Forever
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
                 );

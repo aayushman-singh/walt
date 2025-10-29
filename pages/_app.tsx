@@ -18,7 +18,8 @@ function MyApp({ Component, pageProps }: AppProps) {
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Vault Labs - Decentralized Storage</title>
-        <link rel="shortcut icon" type="image/icon" href="assets/logo/favicon.png" />
+        <link rel="shortcut icon" type="image/png" href="/vault-labs-icon.png" />
+        <link rel="icon" type="image/png" href="/vault-labs-icon.png" />
         {/* Add other global head elements here */}
       </Head>
       <AuthProvider>

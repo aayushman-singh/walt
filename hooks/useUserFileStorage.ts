@@ -491,10 +491,70 @@ export const useUserFileStorage = (userUid: string | null) => {
 
   // Permanently delete
   const permanentlyDelete = async (index: number): Promise<boolean> => {
+    const file = uploadedFiles[index];
+    if (!file) return false;
+
+    // Unpin file before permanent deletion if it's pinned
+    if (file.isPinned && !file.isFolder) {
+      const pinningService = getPinningService();
+      if (pinningService) {
+        try {
+          await pinningService.unpinFile(file.ipfsUri);
+        } catch (error) {
+          console.error('Failed to unpin file during permanent delete:', error);
+        }
+      }
+    }
+
     const updatedFiles = uploadedFiles.filter((_, i) => i !== index);
     setUploadedFiles(updatedFiles);
     await saveUserFiles(updatedFiles);
     return true;
+  };
+
+  // Auto-cleanup trash: unpin and delete files older than 30 days
+  const autoCleanupTrash = async (): Promise<{ unpinned: number; deleted: number }> => {
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    const trashedFiles = uploadedFiles.filter(f => f.trashed && f.trashedDate && f.trashedDate < thirtyDaysAgo);
+    
+    let unpinnedCount = 0;
+    let deletedCount =  0;
+    const updatedFiles = [...uploadedFiles];
+    const pinningService = getPinningService();
+
+    for (let i = updatedFiles.length - 1; i >= 0; i--) {
+      const file = updatedFiles[i];
+      if (!file.trashed || !file.trashedDate || file.trashedDate >= thirtyDaysAgo) continue;
+
+      // Unpin if pinned (non-folders only)
+      if (file.isPinned && !file.isFolder && pinningService) {
+        try {
+          await pinningService.unpinFile(file.ipfsUri);
+          updatedFiles[i] = {
+            ...file,
+            isPinned: false,
+            pinService: undefined,
+            pinDate: undefined,
+            pinExpiry: undefined,
+            pinSize: undefined
+          };
+          unpinnedCount++;
+        } catch (error) {
+          console.error('Failed to unpin during auto-cleanup:', error);
+        }
+      }
+
+      // Delete files older than 30 days
+      updatedFiles.splice(i, 1);
+      deletedCount++;
+    }
+
+    if (deletedCount > 0 || unpinnedCount > 0) {
+      setUploadedFiles(updatedFiles);
+      await saveUserFiles(updatedFiles);
+    }
+
+    return { unpinned: unpinnedCount, deleted: deletedCount };
   };
 
   // Update last accessed time
@@ -765,6 +825,7 @@ export const useUserFileStorage = (userUid: string | null) => {
     moveToTrash,
     restoreFromTrash,
     permanentlyDelete,
+    autoCleanupTrash,
     updateLastAccessed,
     // View functions
     getCurrentFolderItems,

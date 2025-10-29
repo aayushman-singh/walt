@@ -8,7 +8,7 @@
 - [x] 3. **Auto-pin Option** - Automatic pinning on upload with toggle ✅
 - [ ] 4. **Pin Expiry/Renewal** - Set expiration dates for pins with renewal notifications (Future enhancement)
 - [x] 5. **Pinning Services Integration** - Connect to Pinata, Web3.Storage, or other pinning services ✅
-- [ ] 6. **Pin Cost Calculator** - Show storage costs and pin duration estimates (Basic implementation in lib)
+- [x] 6. **Pin Cost Calculator** - Show storage costs and pin duration estimates ✅
 - [ ] 7. **Pin History/Audit Log** - Track pinning/unpinning actions (Future enhancement)
 
 ### Storage Management (Phase 1)
@@ -23,8 +23,9 @@
 ✅ Pin/unpin buttons on each file
 ✅ Auto-pin toggle in sidebar
 ✅ Storage statistics showing pinned vs unpinned files
-✅ Large file warning (>100MB) before upload
+✅ Large file warning (>100MB) before upload with cost estimates
 ✅ Warning messages when unpinning files
+✅ Pin cost calculator displayed in UI (auto-pin section, storage stats, large file warnings)
 ✅ Documentation in README with setup instructions
 
 ---
@@ -70,6 +71,7 @@
 ✅ **Consistent star button placement (overlay for images/folders)**
 ✅ Functional Trash with soft delete and restore
 ✅ Permanent delete from trash
+✅ **Auto-cleanup trash after 30 days** - Automatically unpins and permanently deletes items older than 30 days with warning banner
 ✅ File download functionality
 ✅ Sorting by name, date, size, type with direction toggle
 ✅ **Optional sorting mode (prevents jarring real-time sorts)**
@@ -141,10 +143,10 @@
 ## **📋 Additional Features (Backlog)**
 
 ### Search & Filtering
-- [ ] 30. **Advanced Search Filters** - Filter by type, date, size, tags, pin status
-- [ ] 31. **Search Suggestions** - Auto-complete and recent searches
+- [x] 30. **Advanced Search Filters** - Filter by type, date, size, tags, pin status ✅
+- [x] 31. **Search Suggestions** - Auto-complete and recent searches ✅
 - [ ] 32. **Filter by Owner** - In shared environments
-- [ ] 33. **Saved Searches** - Save common search queries
+- [x] 33. **Saved Searches** - Save common search queries ✅
 
 ### File Management (Additional)
 - [ ] 28. **Tags/Labels System** - Categorize files with custom tags
@@ -155,7 +157,7 @@
 - [ ] 43. **Storage Cleanup Tools** - Find large/old files to delete
 
 ### Upload Features
-- [ ] 44. **Upload Progress Bar** - Individual file progress (not just "Uploading...")
+- [x] 44. **Upload Progress Bar** - Individual file progress with percentage ✅
 - [ ] 45. **Pause/Resume Uploads** - Control long uploads
 - [ ] 46. **Upload Queue Management** - Manage multiple uploads
 - [ ] 47. **Folder Upload** - Upload entire folders with structure
@@ -166,14 +168,14 @@
 - [ ] 50. **Desktop Sync Client** - Desktop app for file sync
 - [ ] 51. **Conflict Resolution** - Handle sync conflicts
 - [ ] 52. **Backup Schedule** - Automatic backups to IPFS
-- [ ] 53. **Export All Files** - Download entire drive as ZIP
+- [x] 53. **Export All Files** - Download entire drive as ZIP ✅
 
 ### Settings & Preferences
 - [ ] 59. **User Settings Page** - Preferences, notifications, account settings
 - [x] 60. **Theme Toggle** - Dark/light mode ✅
 - [x] 61. **Default View Preference** - Remember grid/list preference ✅
 - [x] 62. **Upload Settings** - Default pinning options (auto-pin toggle) ✅
-- [ ] 63. **Keyboard Shortcuts** - Hotkeys for common actions
+- [x] 63. **Keyboard Shortcuts** - Hotkeys for common actions ✅
 
 ### Security & Privacy
 - [ ] 64. **Two-Factor Authentication** - Additional security layer
