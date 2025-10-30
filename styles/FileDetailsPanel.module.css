@@ -1,0 +1,114 @@
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 380px;
+  background: var(--color-surface, #111);
+  color: var(--color-text, #fff);
+  border-left: 1px solid rgba(255,255,255,0.08);
+  box-shadow: -12px 0 24px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--color-surface-2, #1a1a1a);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.closeBtn {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.section {
+  padding: 12px 16px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 8px 12px;
+}
+
+.metaLabel {
+  opacity: 0.7;
+}
+
+.metaValue {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.activityItem {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px 12px;
+  font-size: 13px;
+}
+
+.activityTime {
+  opacity: 0.7;
+}
+
+.activityDesc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  opacity: 0.7;
+}
+
+

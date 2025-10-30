@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserFileStorage } from '../hooks/useUserFileStorage';
 import ShareModal from '../components/ShareModal';
 import PreviewModal from '../components/PreviewModal';
+import FileDetailsPanel from '../components/FileDetailsPanel';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
@@ -81,6 +82,7 @@ const Dashboard: NextPage = () => {
   const [renameValue, setRenameValue] = useState('');
   const [shareModalFile, setShareModalFile] = useState<UploadedFile | null>(null);
   const [previewModalFile, setPreviewModalFile] = useState<UploadedFile | null>(null);
+  const [detailsPanelFile, setDetailsPanelFile] = useState<UploadedFile | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     fileType: 'all' as 'all' | 'image' | 'video' | 'audio' | 'document' | 'folder' | 'other',
@@ -866,6 +868,11 @@ const Dashboard: NextPage = () => {
   const handlePreview = (file: UploadedFile) => {
     if (file.isFolder) return;
     setPreviewModalFile(file);
+  };
+
+  const handleShowDetails = (file: UploadedFile) => {
+    if (file.isFolder) return;
+    setDetailsPanelFile(file);
   };
 
   const handleRename = async (fileId: string) => {
@@ -2079,6 +2086,9 @@ const Dashboard: NextPage = () => {
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePreview(file); }}>
                                   👁️ Preview
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShowDetails(file); }}>
+                                  🧾 Details
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDownload(file); }}>
                                   ⬇️ Download
                                 </DropdownMenuItem>
@@ -2145,6 +2155,18 @@ const Dashboard: NextPage = () => {
           fileType={previewModalFile.type}
           gatewayUrl={previewModalFile.gatewayUrl}
           onClose={() => setPreviewModalFile(null)}
+        />
+      )}
+
+      {/* Details Panel */}
+      {detailsPanelFile && (
+        <FileDetailsPanel
+          isOpen={true}
+          file={detailsPanelFile as any}
+          onClose={() => setDetailsPanelFile(null)}
+          onDownload={() => handleDownload(detailsPanelFile)}
+          onShare={() => handleShare(detailsPanelFile.id)}
+          onTogglePin={() => handlePinToggle(detailsPanelFile.id, detailsPanelFile)}
         />
       )}
 

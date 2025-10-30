@@ -47,8 +47,8 @@
 
 ### File Management
 - [x] 23. **Download Files** - Direct download button (not just view) ✅
-- [ ] 24. **File Preview/Viewer** - Preview PDFs, videos, audio, documents (not just images) - *Future enhancement*
-- [ ] 25. **File Details Panel** - Right sidebar with metadata, activity, sharing info - *Future enhancement*
+- [x] 24. **File Preview/Viewer** - Preview PDFs, videos, audio, documents (not just images) ✅
+- [x] 25. **File Details Panel** - Right sidebar with metadata, activity, sharing info ✅
 
 ### Views & Display
 - [x] 34. **Sorting Options** - Sort by name, date, size, type ✅
@@ -142,8 +142,6 @@
 
 ## **🧭 Next Planned Features** [PLANNED]
 
-- [ ] 24. **File Preview/Viewer** - Preview PDFs, videos, audio, docs
-- [ ] 25. **File Details Panel** - Right sidebar with metadata, activity, sharing
 - [ ] 26. **Version History** - Track file versions and restore
 - [ ] 57. **Notifications** - Email/push for shares, comments, activity
 - [ ] 73. **API Routes** - RESTful endpoints for file operations
