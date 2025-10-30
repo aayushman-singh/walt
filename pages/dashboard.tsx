@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useUserFileStorage } from '../hooks/useUserFileStorage';
 import ShareModal from '../components/ShareModal';
+import PreviewModal from '../components/PreviewModal';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
@@ -79,6 +80,7 @@ const Dashboard: NextPage = () => {
   const [renamingIndex, setRenamingIndex] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [shareModalFile, setShareModalFile] = useState<UploadedFile | null>(null);
+  const [previewModalFile, setPreviewModalFile] = useState<UploadedFile | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     fileType: 'all' as 'all' | 'image' | 'video' | 'audio' | 'document' | 'folder' | 'other',
@@ -859,6 +861,11 @@ const Dashboard: NextPage = () => {
       updateLastAccessed(index);
       window.open(file.gatewayUrl, '_blank');
     }
+  };
+
+  const handlePreview = (file: UploadedFile) => {
+    if (file.isFolder) return;
+    setPreviewModalFile(file);
   };
 
   const handleRename = async (fileId: string) => {
@@ -2069,11 +2076,14 @@ const Dashboard: NextPage = () => {
                           <>
                             {!file.isFolder && (
                               <>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePreview(file); }}>
+                                  👁️ Preview
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDownload(file); }}>
                                   ⬇️ Download
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(file.gatewayUrl, '_blank'); }}>
-                                  👁️ Open
+                                  🔎 Open in new tab
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyToClipboard(file.gatewayUrl); }}>
                                   🔗 Copy Link
@@ -2124,6 +2134,17 @@ const Dashboard: NextPage = () => {
           onDisableShare={handleDisableShare}
           existingShare={shareModalFile.shareConfig}
           isFolder={shareModalFile.isFolder}
+        />
+      )}
+
+      {/* Preview Modal */}
+      {previewModalFile && (
+        <PreviewModal
+          isOpen={true}
+          fileName={previewModalFile.name}
+          fileType={previewModalFile.type}
+          gatewayUrl={previewModalFile.gatewayUrl}
+          onClose={() => setPreviewModalFile(null)}
         />
       )}
 

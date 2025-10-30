@@ -92,7 +92,7 @@
 ### Sharing & Permissions
 - [x] 17. **Share Files/Folders** - Generate shareable links with permissions ✅
 - [x] 18. **Permission Levels** - Viewer, Editor roles ✅
-- [ ] 19. **Public/Private Toggle** - Control file visibility (Implemented via enable/disable)
+ - [x] 19. **Public/Private Toggle** - Control file visibility (Implemented via enable/disable) ✅
 - [ ] 20. **Share via Email** - Invite users directly - *Future enhancement*
 - [x] 21. **Expiring Share Links** - Time-limited access links ✅
 - [x] 22. **Password-Protected Shares** - Add password to shared links ✅
@@ -137,6 +137,25 @@
 - [ ] 70. **Offline Mode** - Access files offline with sync when online
 - [ ] 71. **Document Scanner** - Scan documents via mobile camera
 - [ ] 72. **Accessibility Features** - Screen reader support, keyboard navigation
+
+---
+
+## **🧭 Next Planned Features** [PLANNED]
+
+- [ ] 24. **File Preview/Viewer** - Preview PDFs, videos, audio, docs
+- [ ] 25. **File Details Panel** - Right sidebar with metadata, activity, sharing
+- [ ] 26. **Version History** - Track file versions and restore
+- [ ] 57. **Notifications** - Email/push for shares, comments, activity
+- [ ] 73. **API Routes** - RESTful endpoints for file operations
+- [ ] 74. **Firestore Integration** - Individual file metadata storage
+- [ ] 77. **Error Handling** - Friendly errors and retry logic
+- [ ] 78. **Loading States** - Skeletons and progressive loading
+- [ ] 75. **Caching Strategy** - Cache frequently accessed files
+- [ ] 76. **CDN Integration** - Faster delivery via gateways/CDN
+- [ ] 42. **Duplicate Detection** - Detect and warn on duplicates
+- [ ] 43. **Storage Cleanup Tools** - Find large/old files to delete
+- [ ] 28. **Tags/Labels System** - Custom tags, filtering, saved views
+- [ ] 64. **Two-Factor Authentication** - Strengthen account security
 
 ---
 
@@ -215,9 +234,9 @@
 - ✅ File list storage on IPFS
 - ✅ Basic search functionality
 - ✅ Grid/List view toggle
-- ❌ NO pinning management (files may disappear!)
-- ❌ NO folder structure
-- ❌ NO sharing capabilities
+- ✅ Pinning management (manual, auto-pin, status, cost calc)
+- ✅ Folder structure with navigation and DnD
+- ✅ Sharing capabilities (links, roles, expiry, password)
 - ❌ NO version history
 
 ### Priority Justification
