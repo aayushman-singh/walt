@@ -1,0 +1,311 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark .modal {
+  background: #1e1e1e;
+  color: #fff;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dark .header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: #5f6368;
+  transition: color 0.2s;
+}
+
+.closeBtn:hover {
+  color: #202124;
+}
+
+.dark .closeBtn {
+  color: #fff;
+}
+
+.dark .closeBtn:hover {
+  color: #ccc;
+}
+
+.content {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputSection label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #5f6368;
+}
+
+.dark .inputSection label {
+  color: #ccc;
+}
+
+.inputWrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.tagInput {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.dark .tagInput {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.addBtn {
+  padding: 8px 16px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.addBtn:hover:not(:disabled) {
+  background: #1765cc;
+}
+
+.addBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px;
+  background: #f8f9fa;
+}
+
+.dark .suggestions {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.suggestionItem {
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.suggestionItem:hover {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+}
+
+.dark .suggestionItem {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.dark .suggestionItem:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.currentTags,
+.allTags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.currentTags label,
+.allTags label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #5f6368;
+}
+
+.dark .currentTags label,
+.dark .allTags label {
+  color: #ccc;
+}
+
+.emptyTags {
+  padding: 20px;
+  text-align: center;
+  color: #5f6368;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.dark .emptyTags {
+  color: #888;
+}
+
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #e8f0fe;
+  border: 1px solid #1a73e8;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a73e8;
+}
+
+.dark .tag {
+  background: rgba(26, 115, 232, 0.2);
+  border-color: #4a9eff;
+  color: #4a9eff;
+}
+
+.removeTagBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1a73e8;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.removeTagBtn:hover {
+  color: #ea4335;
+}
+
+.dark .removeTagBtn {
+  color: #4a9eff;
+}
+
+.dark .removeTagBtn:hover {
+  color: #ff6b6b;
+}
+
+.allTagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.dark .allTagsList {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tagChip {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #dadce0;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #5f6368;
+}
+
+.tagChip:hover {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+  color: #1a73e8;
+}
+
+.tagChip.added {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+  color: #1a73e8;
+  font-weight: 500;
+}
+
+.dark .tagChip {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ccc;
+}
+
+.dark .tagChip:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.dark .tagChip.added {
+  background: rgba(26, 115, 232, 0.2);
+  border-color: #4a9eff;
+  color: #4a9eff;
+}
+

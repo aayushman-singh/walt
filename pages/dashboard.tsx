@@ -13,9 +13,13 @@ import {
 } from '../components/ui/DropdownMenu';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserFileStorage } from '../hooks/useUserFileStorage';
+import { ErrorHandler } from '../lib/errorHandler';
 import ShareModal from '../components/ShareModal';
 import PreviewModal from '../components/PreviewModal';
 import FileDetailsPanel from '../components/FileDetailsPanel';
+import SkeletonLoader from '../components/SkeletonLoader';
+import StorageCleanupModal from '../components/StorageCleanupModal';
+import TagManager from '../components/TagManager';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
@@ -83,11 +87,14 @@ const Dashboard: NextPage = () => {
   const [shareModalFile, setShareModalFile] = useState<UploadedFile | null>(null);
   const [previewModalFile, setPreviewModalFile] = useState<UploadedFile | null>(null);
   const [detailsPanelFile, setDetailsPanelFile] = useState<UploadedFile | null>(null);
+  const [showStorageCleanup, setShowStorageCleanup] = useState(false);
+  const [tagManagerFile, setTagManagerFile] = useState<UploadedFile | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     fileType: 'all' as 'all' | 'image' | 'video' | 'audio' | 'document' | 'folder' | 'other',
     pinStatus: 'all' as 'all' | 'pinned' | 'unpinned',
     starStatus: 'all' as 'all' | 'starred' | 'unstarred',
+    tags: [] as string[],
     sizeMin: '' as string,
     sizeMax: '' as string,
     dateFrom: '' as string,
@@ -135,6 +142,8 @@ const Dashboard: NextPage = () => {
   const { 
     uploadedFiles, 
     loading: filesLoading, 
+    error: filesError,
+    clearError: clearFilesError,
     addFiles, 
     removeFile, 
     clearAllFiles,
@@ -170,7 +179,17 @@ const Dashboard: NextPage = () => {
     // Sharing functions
     enableSharing,
     disableSharing,
-    addActivityLog
+    addActivityLog,
+    // Duplicate functions
+    checkDuplicates,
+    duplicateFile,
+    getFileDuplicates,
+    // Tag functions
+    addTags,
+    removeTags,
+    setTags,
+    getAllTags,
+    getFilesByTag
   } = useUserFileStorage(user?.uid || null);
 
   // Redirect to home if not authenticated
@@ -350,7 +369,8 @@ const Dashboard: NextPage = () => {
                 if (success) {
                   showToast('✅ Folder created successfully', 'success');
                 } else {
-                  showToast('❌ Failed to create folder', 'error');
+                  const appError = ErrorHandler.createAppError(new Error('Failed to create folder'));
+          showToast(appError.userMessage, 'error');
                 }
                 setInputModal({ isOpen: false, title: '', message: '', placeholder: '', defaultValue: '', onConfirm: async () => {} });
               }
@@ -515,7 +535,8 @@ const Dashboard: NextPage = () => {
     if (success) {
       showToast(`File moved to ${targetFolderId ? 'folder' : 'root'}`, 'success');
     } else {
-      showToast('Failed to move file', 'error');
+      const appError = ErrorHandler.createAppError(new Error('Failed to move file'));
+      showToast(appError.userMessage, 'error');
     }
     
     // Reset dragging state after move
@@ -569,6 +590,24 @@ const Dashboard: NextPage = () => {
         parentFolderId: folderId,
         modifiedDate: Date.now()
       }));
+
+      // Check for duplicates before adding
+      const duplicateWarnings: string[] = [];
+      newFiles.forEach(file => {
+        const duplicates = checkDuplicates(file, folderId);
+        if (duplicates.length > 0) {
+          const dup = duplicates[0];
+          if (dup.confidence === 'high') {
+            duplicateWarnings.push(`"${file.name}" already exists (same content)`);
+          } else if (dup.confidence === 'medium') {
+            duplicateWarnings.push(`"${file.name}" may be a duplicate (same name, size, type)`);
+          }
+        }
+      });
+
+      if (duplicateWarnings.length > 0) {
+        showToast(`⚠️ Possible duplicates detected: ${duplicateWarnings.slice(0, 2).join(', ')}${duplicateWarnings.length > 2 ? '...' : ''}`, 'info');
+      }
 
       await addFiles(newFiles, folderId);
       
@@ -634,6 +673,24 @@ const Dashboard: NextPage = () => {
         parentFolderId: currentFolderId,
         modifiedDate: Date.now()
       }));
+
+      // Check for duplicates before adding
+      const duplicateWarnings: string[] = [];
+      newFiles.forEach(file => {
+        const duplicates = checkDuplicates(file, currentFolderId);
+        if (duplicates.length > 0) {
+          const dup = duplicates[0];
+          if (dup.confidence === 'high') {
+            duplicateWarnings.push(`"${file.name}" already exists (same content)`);
+          } else if (dup.confidence === 'medium') {
+            duplicateWarnings.push(`"${file.name}" may be a duplicate (same name, size, type)`);
+          }
+        }
+      });
+
+      if (duplicateWarnings.length > 0) {
+        showToast(`⚠️ Possible duplicates detected: ${duplicateWarnings.slice(0, 2).join(', ')}${duplicateWarnings.length > 2 ? '...' : ''}`, 'info');
+      }
 
       await addFiles(newFiles, currentFolderId);
       
@@ -771,6 +828,15 @@ const Dashboard: NextPage = () => {
       if (filters.starStatus === 'unstarred' && file.starred) return false;
     }
     
+    // Tags filter
+    if (filters.tags.length > 0) {
+      const fileTags = file.tags || [];
+      const hasAllTags = filters.tags.every(filterTag =>
+        fileTags.some(fileTag => fileTag.toLowerCase() === filterTag.toLowerCase())
+      );
+      if (!hasAllTags) return false;
+    }
+    
     // Size filter (in MB)
     if (!file.isFolder && file.size) {
       const sizeInMB = file.size / (1024 * 1024);
@@ -810,7 +876,8 @@ const Dashboard: NextPage = () => {
           if (success) {
             showToast('File unpinned', 'info');
           } else {
-            showToast('Failed to unpin file', 'error');
+            const appError = ErrorHandler.createAppError(new Error('Failed to unpin file'));
+            showToast(appError.userMessage, 'error');
           }
           setConfirmationModal({ ...confirmationModal, isOpen: false });
         },
@@ -821,7 +888,8 @@ const Dashboard: NextPage = () => {
       if (success) {
         showToast('File pinned successfully', 'success');
       } else {
-        showToast('Failed to pin file', 'error');
+        const appError = ErrorHandler.createAppError(new Error('Failed to pin file'));
+        showToast(appError.userMessage, 'error');
       }
     }
   };
@@ -841,7 +909,8 @@ const Dashboard: NextPage = () => {
         if (success) {
           showToast('✅ Folder created successfully', 'success');
         } else {
-          showToast('❌ Failed to create folder', 'error');
+          const appError = ErrorHandler.createAppError(new Error('Failed to create folder'));
+          showToast(appError.userMessage, 'error');
         }
         setInputModal({ ...inputModal, isOpen: false });
       }
@@ -895,7 +964,8 @@ const Dashboard: NextPage = () => {
         if (success) {
           showToast('✅ Renamed successfully', 'success');
         } else {
-          showToast('❌ Failed to rename', 'error');
+          const appError = ErrorHandler.createAppError(new Error('Failed to rename'));
+          showToast(appError.userMessage, 'error');
         }
         setInputModal({ ...inputModal, isOpen: false });
       }
@@ -981,8 +1051,56 @@ const Dashboard: NextPage = () => {
         await addActivityLog(index, 'downloaded');
       }
     } catch (error) {
-      console.error('Download failed:', error);
-      showToast('❌ Download failed. Please try opening the file instead.', 'error');
+      const appError = ErrorHandler.createAppError(error);
+      ErrorHandler.logError(appError, 'handleDownload');
+      showToast(appError.userMessage || 'Download failed. Please try opening the file instead.', 'error');
+    }
+  };
+
+  const handleDuplicate = async (fileId: string) => {
+    const file = uploadedFiles.find(f => f.id === fileId);
+    if (!file || file.isFolder) return;
+
+    const index = uploadedFiles.findIndex(f => f.id === fileId);
+    const success = await duplicateFile(index);
+    if (success) {
+      showToast(`✅ File duplicated: "${file.name}"`, 'success');
+    } else {
+      const appError = ErrorHandler.createAppError(new Error('Failed to duplicate file'));
+      showToast(appError.userMessage, 'error');
+    }
+  };
+
+  const handleManageTags = async (fileId: string) => {
+    const file = uploadedFiles.find(f => f.id === fileId);
+    if (file) {
+      setTagManagerFile(file);
+    }
+  };
+
+  const handleAddTag = async (fileId: string, tag: string) => {
+    const index = uploadedFiles.findIndex(f => f.id === fileId);
+    if (index !== -1) {
+      const success = await addTags(index, [tag]);
+      if (success) {
+        showToast(`✅ Tag "${tag}" added`, 'success');
+      } else {
+        const appError = ErrorHandler.createAppError(new Error('Failed to add tag'));
+        showToast(appError.userMessage, 'error');
+      }
+    }
+  };
+
+  const handleRemoveTag = async (fileId: string, tag: string) => {
+    const index = uploadedFiles.findIndex(f => f.id === fileId);
+    if (index !== -1) {
+      const success = await removeTags(index, [tag]);
+      if (success) {
+        showToast(`✅ Tag "${tag}" removed`, 'success');
+      } else {
+        const appError = ErrorHandler.createAppError(new Error('Failed to remove tag'));
+        showToast(appError.userMessage, 'error');
+      }
     }
   };
 
@@ -1132,12 +1250,12 @@ const Dashboard: NextPage = () => {
     }
   };
 
-  // Show loading spinner while checking auth or loading files
-  if (loading || filesLoading) {
+  // Show loading spinner only for initial auth check
+  if (loading) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.spinner}></div>
-        <p>{loading ? 'Loading...' : 'Loading your files...'}</p>
+        <p>Loading...</p>
       </div>
     );
   }
@@ -1321,6 +1439,39 @@ const Dashboard: NextPage = () => {
                     <option value="unstarred">☆ Unstarred</option>
                   </select>
                 </div>
+
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Tags</label>
+                  <div className={styles.tagFilter}>
+                    {getAllTags().length > 0 ? (
+                      <select
+                        multiple
+                        value={filters.tags}
+                        onChange={(e) => {
+                          const selectedTags = Array.from(e.target.selectedOptions, option => option.value);
+                          setFilters({...filters, tags: selectedTags});
+                        }}
+                        className={styles.tagSelect}
+                        size={Math.min(5, getAllTags().length + 1)}
+                      >
+                        {getAllTags().map(tag => (
+                          <option key={tag} value={tag}>{tag}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className={styles.noTagsHint}>No tags yet - add tags to files to filter by them</span>
+                    )}
+                    {filters.tags.length > 0 && (
+                      <button
+                        className={styles.clearTagFilterBtn}
+                        onClick={() => setFilters({...filters, tags: []})}
+                        title="Clear tag filter"
+                      >
+                        Clear Tags
+                      </button>
+                    )}
+                  </div>
+                </div>
                 
                 <div className={styles.filterGroup}>
                   <label className={styles.filterLabel}>Size (MB)</label>
@@ -1371,6 +1522,7 @@ const Dashboard: NextPage = () => {
                       fileType: 'all',
                       pinStatus: 'all',
                       starStatus: 'all',
+                      tags: [],
                       sizeMin: '',
                       sizeMax: '',
                       dateFrom: '',
@@ -1458,11 +1610,9 @@ const Dashboard: NextPage = () => {
           
           {/* User Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className={styles.userDropdownTrigger}>
-                <span className={styles.userEmail}>{user.email}</span>
-                <span className={styles.dropdownArrow}>▼</span>
-              </button>
+            <DropdownMenuTrigger className={styles.userDropdownTrigger}>
+              <span className={styles.userEmail}>{user.email}</span>
+              <span className={styles.dropdownArrow}>▼</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleExportAll}>
@@ -1552,7 +1702,16 @@ const Dashboard: NextPage = () => {
 
           <div className={styles.storageInfo}>
             <div className={styles.storageStats}>
-              <h4 className={styles.storageTitle}>Storage Overview</h4>
+              <div className={styles.storageHeader}>
+                <h4 className={styles.storageTitle}>Storage Overview</h4>
+                <button
+                  className={styles.cleanupBtn}
+                  onClick={() => setShowStorageCleanup(true)}
+                  title="Storage cleanup tools"
+                >
+                  🧹 Cleanup
+                </button>
+              </div>
               <div className={styles.statRow}>
                 <span className={styles.statLabel}>Total Files:</span>
                 <span className={styles.statValue}>{storageStats.totalFiles}</span>
@@ -1805,7 +1964,17 @@ const Dashboard: NextPage = () => {
           )}
 
           {/* Files Display */}
-          {filteredFiles.length === 0 ? (
+          {filesLoading ? (
+            viewMode === 'grid' ? (
+              <div className={styles.fileGrid}>
+                <SkeletonLoader type="file-card" count={8} />
+              </div>
+            ) : (
+              <div className={styles.fileList}>
+                <SkeletonLoader type="file-row" count={10} />
+              </div>
+            )
+          ) : filteredFiles.length === 0 ? (
             <div className={styles.emptyState}>
               <span className={styles.emptyIcon}>
                 {activeView === 'trash' ? '🗑️' : activeView === 'starred' ? '⭐' : '📂'}
@@ -2040,6 +2209,20 @@ const Dashboard: NextPage = () => {
                         </>
                       )}
                     </div>
+                    {file.tags && file.tags.length > 0 && (
+                      <div className={styles.fileTags}>
+                        {file.tags.slice(0, 3).map((tag, idx) => (
+                          <span key={idx} className={styles.tagBadge} title={`Tag: ${tag}`}>
+                            {tag}
+                          </span>
+                        ))}
+                        {file.tags.length > 3 && (
+                          <span className={styles.tagBadge} title={`${file.tags.length - 3} more tags`}>
+                            +{file.tags.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* File Actions */}
@@ -2104,6 +2287,12 @@ const Dashboard: NextPage = () => {
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(file.id); }}>
                               🔗 Share
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(file.id); }}>
+                              📋 Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleManageTags(file.id); }}>
+                              🏷️ Manage Tags
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(file.id); }}>
                               ✏️ Rename
                             </DropdownMenuItem>
@@ -2155,6 +2344,54 @@ const Dashboard: NextPage = () => {
           fileType={previewModalFile.type}
           gatewayUrl={previewModalFile.gatewayUrl}
           onClose={() => setPreviewModalFile(null)}
+        />
+      )}
+
+      {/* Tag Manager Modal */}
+      {tagManagerFile && (
+        <TagManager
+          fileId={tagManagerFile.id}
+          currentTags={tagManagerFile.tags || []}
+          allTags={getAllTags()}
+          onAddTag={(tag) => {
+            handleAddTag(tagManagerFile.id, tag);
+            // Update local state to reflect the change
+            const index = uploadedFiles.findIndex(f => f.id === tagManagerFile.id);
+            if (index !== -1) {
+              const updatedFile = { ...tagManagerFile, tags: [...(tagManagerFile.tags || []), tag.toLowerCase()] };
+              setTagManagerFile(updatedFile);
+            }
+          }}
+          onRemoveTag={(tag) => {
+            handleRemoveTag(tagManagerFile.id, tag);
+            // Update local state to reflect the change
+            const index = uploadedFiles.findIndex(f => f.id === tagManagerFile.id);
+            if (index !== -1) {
+              const updatedFile = { ...tagManagerFile, tags: (tagManagerFile.tags || []).filter(t => t.toLowerCase() !== tag.toLowerCase()) };
+              setTagManagerFile(updatedFile);
+            }
+          }}
+          onClose={() => setTagManagerFile(null)}
+        />
+      )}
+
+      {/* Storage Cleanup Modal */}
+      {showStorageCleanup && (
+        <StorageCleanupModal
+          isOpen={true}
+          files={uploadedFiles}
+          onClose={() => setShowStorageCleanup(false)}
+          onDelete={(fileIds) => {
+            // Delete selected files
+            fileIds.forEach(fileId => {
+              const index = uploadedFiles.findIndex(f => f.id === fileId);
+              if (index !== -1) {
+                permanentlyDelete(index);
+              }
+            });
+            showToast(`✅ Deleted ${fileIds.length} file${fileIds.length !== 1 ? 's' : ''}`, 'success');
+            setShowStorageCleanup(false);
+          }}
         />
       )}
 

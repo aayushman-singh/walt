@@ -1,6 +1,6 @@
 import { useStorageUpload } from '@thirdweb-dev/react';
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, writeBatch } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { 
   getPinningService, 
@@ -8,6 +8,8 @@ import {
   getPinningConfigFromEnv,
   PinStatus 
 } from '../lib/pinningService';
+import { ErrorHandler, ErrorType, AppError } from '../lib/errorHandler';
+import { checkNewFileForDuplicates, getAllDuplicates, DuplicateMatch } from '../lib/duplicateDetection';
 
 interface ShareConfig {
   shareId: string;
@@ -55,6 +57,8 @@ interface UploadedFile {
   // Sharing metadata (Phase 3)
   shareConfig?: ShareConfig;
   activityLog?: ActivityLog[];
+  // Tags/Labels
+  tags?: string[];
 }
 
 // Helper type for cleaner code
@@ -69,6 +73,7 @@ interface UserFileList {
 export const useUserFileStorage = (userUid: string | null) => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<AppError | null>(null);
   const [autoPinEnabled, setAutoPinEnabled] = useState(true); // Auto-pin by default
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null); // null = root
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'size' | 'type'>('date');
@@ -206,11 +211,68 @@ export const useUserFileStorage = (userUid: string | null) => {
         await saveUserFiles(filesWithIds);
       }
       
+      } catch (error) {
+        const appError = ErrorHandler.createAppError(error, ErrorType.IPFS);
+        ErrorHandler.logError(appError, 'loadUserFiles');
+        setError(appError);
+        setUploadedFiles([]);
+      } finally {
+        setLoading(false);
+      }
+  };
+
+  // Sync individual file metadata to Firestore
+  const syncFilesToFirestore = async (files: UploadedFile[]) => {
+    if (!userUid) return;
+
+    try {
+      // Firestore batches are limited to 500 operations
+      const BATCH_SIZE = 500;
+      
+      for (let i = 0; i < files.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        const filesBatch = files.slice(i, i + BATCH_SIZE);
+        
+        for (const file of filesBatch) {
+          const fileDocRef = doc(db, 'users', userUid, 'files', file.id);
+          
+          // Prepare file metadata for Firestore (omit IPFS-heavy data like activityLog)
+          const fileMetadata = {
+            id: file.id,
+            name: file.name,
+            ipfsUri: file.ipfsUri,
+            gatewayUrl: file.gatewayUrl,
+            timestamp: file.timestamp,
+            type: file.type,
+            size: file.size || null,
+            isPinned: file.isPinned || false,
+            pinService: file.pinService || null,
+            pinDate: file.pinDate || null,
+            pinExpiry: file.pinExpiry || null,
+            parentFolderId: file.parentFolderId || null,
+            isFolder: file.isFolder || false,
+            starred: file.starred || false,
+            trashed: file.trashed || false,
+            trashedDate: file.trashedDate || null,
+            lastAccessed: file.lastAccessed || null,
+            modifiedDate: file.modifiedDate || file.timestamp,
+            userId: userUid,
+            lastSynced: Date.now()
+          };
+
+          batch.set(fileDocRef, fileMetadata, { merge: true });
+        }
+        
+        // Commit batch before moving to next batch
+        await batch.commit();
+      }
+      
+      console.log('Synced', files.length, 'files to Firestore');
     } catch (error) {
-      console.error('Failed to load user files:', error);
-      setUploadedFiles([]);
-    } finally {
-      setLoading(false);
+      const appError = ErrorHandler.createAppError(error, ErrorType.FIRESTORE);
+      ErrorHandler.logError(appError, 'syncFilesToFirestore');
+      // Don't throw - Firestore sync is optional enhancement
+      // Don't set error state either - this is background sync
     }
   };
 
@@ -240,13 +302,85 @@ export const useUserFileStorage = (userUid: string | null) => {
         userId: userUid
       }, { merge: true });
       
+      // Sync individual file metadata to Firestore (enhancement)
+      await syncFilesToFirestore(files);
+      
       console.log('User file list saved to IPFS:', fileListUri[0]);
       console.log('IPFS Gateway URL:', fileListUri[0].replace('ipfs://', 'https://ipfs.io/ipfs/'));
       console.log('URI stored in Firestore');
     } catch (error) {
-      console.error('Failed to save user files:', error);
-      throw error; // Propagate error so caller knows save failed
+      const appError = ErrorHandler.createAppError(error, ErrorType.FIRESTORE);
+      ErrorHandler.logError(appError, 'saveUserFiles');
+      setError(appError);
+      throw appError; // Propagate error so caller knows save failed
     }
+  };
+
+  // Check for duplicates before adding files
+  const checkDuplicates = (newFile: UploadedFile, parentFolderId: string | null = null): DuplicateMatch[] => {
+    return checkNewFileForDuplicates(uploadedFiles, {
+      name: newFile.name,
+      size: newFile.size,
+      type: newFile.type,
+      ipfsUri: newFile.ipfsUri,
+      parentFolderId: parentFolderId !== undefined ? parentFolderId : currentFolderId
+    });
+  };
+
+  // Duplicate a file (copy with new ID and name)
+  const duplicateFile = async (index: number): Promise<boolean> => {
+    const file = uploadedFiles[index];
+    if (!file || file.isFolder) return false;
+
+    try {
+      // Create a duplicate with new ID and name
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+      const ext = file.name.includes('.') ? '.' + file.name.split('.').pop() : '';
+      let newName = `${nameWithoutExt} (copy)${ext}`;
+      
+      // If copy already exists, increment number
+      let counter = 1;
+      while (uploadedFiles.some(f => 
+        f.name === newName && 
+        f.parentFolderId === file.parentFolderId &&
+        !f.trashed &&
+        !f.isFolder
+      )) {
+        counter++;
+        newName = `${nameWithoutExt} (copy ${counter})${ext}`;
+      }
+
+      const duplicatedFile: UploadedFile = {
+        ...file,
+        id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: newName,
+        timestamp: Date.now(),
+        modifiedDate: Date.now(),
+        starred: false, // Reset starred status for duplicate
+        shareConfig: undefined, // Don't copy share config
+        activityLog: [] // Start fresh activity log
+      };
+
+      const updatedFiles = [duplicatedFile, ...uploadedFiles];
+      setUploadedFiles(updatedFiles);
+      await saveUserFiles(updatedFiles);
+      await addActivityLog(index, 'created', `Duplicated as "${newName}"`);
+      
+      return true;
+    } catch (error) {
+      const appError = ErrorHandler.createAppError(error, ErrorType.FIRESTORE);
+      ErrorHandler.logError(appError, 'duplicateFile');
+      setError(appError);
+      return false;
+    }
+  };
+
+  // Get duplicates for a file
+  const getFileDuplicates = (fileId: string): DuplicateMatch[] => {
+    const file = uploadedFiles.find(f => f.id === fileId);
+    if (!file || file.isFolder) return [];
+    
+    return getAllDuplicates(uploadedFiles, file);
   };
 
   // Add new files
@@ -312,10 +446,14 @@ export const useUserFileStorage = (userUid: string | null) => {
         return true;
       }
 
-      console.error('Pin failed:', result.error);
+      const appError = ErrorHandler.createAppError(result.error, ErrorType.PINNING);
+      ErrorHandler.logError(appError, 'pinFile');
+      setError(appError);
       return false;
     } catch (error) {
-      console.error('Pin error:', error);
+      const appError = ErrorHandler.createAppError(error, ErrorType.PINNING);
+      ErrorHandler.logError(appError, 'pinFile');
+      setError(appError);
       return false;
     }
   };
@@ -349,10 +487,14 @@ export const useUserFileStorage = (userUid: string | null) => {
         return true;
       }
 
-      console.error('Unpin failed:', result.error);
+      const appError = ErrorHandler.createAppError(result.error, ErrorType.PINNING);
+      ErrorHandler.logError(appError, 'unpinFile');
+      setError(appError);
       return false;
     } catch (error) {
-      console.error('Unpin error:', error);
+      const appError = ErrorHandler.createAppError(error, ErrorType.PINNING);
+      ErrorHandler.logError(appError, 'unpinFile');
+      setError(appError);
       return false;
     }
   };
@@ -791,6 +933,124 @@ export const useUserFileStorage = (userUid: string | null) => {
     );
   };
 
+  // Add tags to a file
+  const addTags = async (index: number, newTags: string[]): Promise<boolean> => {
+    const file = uploadedFiles[index];
+    if (!file) return false;
+
+    try {
+      // Normalize tags (lowercase, trim, remove duplicates)
+      const normalizedTags = newTags
+        .map(tag => tag.trim().toLowerCase())
+        .filter(tag => tag.length > 0)
+        .filter((tag, idx, arr) => arr.indexOf(tag) === idx);
+
+      const existingTags = file.tags || [];
+      const tagSet = new Set([...existingTags, ...normalizedTags]);
+      const updatedTags = Array.from(tagSet);
+
+      const updatedFiles = [...uploadedFiles];
+      updatedFiles[index] = {
+        ...file,
+        tags: updatedTags,
+        modifiedDate: Date.now()
+      };
+
+      setUploadedFiles(updatedFiles);
+      await saveUserFiles(updatedFiles);
+      await addActivityLog(index, 'modified', `Added tags: ${normalizedTags.join(', ')}`);
+      
+      return true;
+    } catch (error) {
+      const appError = ErrorHandler.createAppError(error, ErrorType.FIRESTORE);
+      ErrorHandler.logError(appError, 'addTags');
+      setError(appError);
+      return false;
+    }
+  };
+
+  // Remove tags from a file
+  const removeTags = async (index: number, tagsToRemove: string[]): Promise<boolean> => {
+    const file = uploadedFiles[index];
+    if (!file) return false;
+
+    try {
+      const normalizedTags = tagsToRemove.map(tag => tag.toLowerCase());
+      const existingTags = file.tags || [];
+      const updatedTags = existingTags.filter(tag => !normalizedTags.includes(tag.toLowerCase()));
+
+      const updatedFiles = [...uploadedFiles];
+      updatedFiles[index] = {
+        ...file,
+        tags: updatedTags,
+        modifiedDate: Date.now()
+      };
+
+      setUploadedFiles(updatedFiles);
+      await saveUserFiles(updatedFiles);
+      await addActivityLog(index, 'modified', `Removed tags: ${normalizedTags.join(', ')}`);
+      
+      return true;
+    } catch (error) {
+      const appError = ErrorHandler.createAppError(error, ErrorType.FIRESTORE);
+      ErrorHandler.logError(appError, 'removeTags');
+      setError(appError);
+      return false;
+    }
+  };
+
+  // Set tags for a file (replace all tags)
+  const setTags = async (index: number, tags: string[]): Promise<boolean> => {
+    const file = uploadedFiles[index];
+    if (!file) return false;
+
+    try {
+      // Normalize tags
+      const normalizedTags = tags
+        .map(tag => tag.trim().toLowerCase())
+        .filter(tag => tag.length > 0)
+        .filter((tag, idx, arr) => arr.indexOf(tag) === idx);
+
+      const updatedFiles = [...uploadedFiles];
+      updatedFiles[index] = {
+        ...file,
+        tags: normalizedTags,
+        modifiedDate: Date.now()
+      };
+
+      setUploadedFiles(updatedFiles);
+      await saveUserFiles(updatedFiles);
+      await addActivityLog(index, 'modified', `Set tags: ${normalizedTags.join(', ')}`);
+      
+      return true;
+    } catch (error) {
+      const appError = ErrorHandler.createAppError(error, ErrorType.FIRESTORE);
+      ErrorHandler.logError(appError, 'setTags');
+      setError(appError);
+      return false;
+    }
+  };
+
+  // Get all unique tags from all files
+  const getAllTags = (): string[] => {
+    const allTags = new Set<string>();
+    uploadedFiles.forEach(file => {
+      if (file.tags && file.tags.length > 0 && !file.trashed) {
+        file.tags.forEach(tag => allTags.add(tag));
+      }
+    });
+    return Array.from(allTags).sort();
+  };
+
+  // Get files by tag
+  const getFilesByTag = (tag: string): UploadedFile[] => {
+    return uploadedFiles.filter(f => 
+      !f.trashed && 
+      f.tags && 
+      f.tags.some(t => t.toLowerCase() === tag.toLowerCase())
+    );
+  };
+
   // Load files when user changes
   useEffect(() => {
     if (userUid) {
@@ -803,6 +1063,8 @@ export const useUserFileStorage = (userUid: string | null) => {
   return {
     uploadedFiles,
     loading,
+    error,
+    clearError: () => setError(null),
     addFiles,
     removeFile,
     clearAllFiles,
@@ -853,6 +1115,16 @@ export const useUserFileStorage = (userUid: string | null) => {
     getFileByShareId,
     recordShareAccess,
     getSharedFiles,
-    addActivityLog
+    addActivityLog,
+    // Duplicate functions
+    checkDuplicates,
+    duplicateFile,
+    getFileDuplicates,
+    // Tag functions
+    addTags,
+    removeTags,
+    setTags,
+    getAllTags,
+    getFilesByTag
   };
 };

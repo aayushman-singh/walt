@@ -102,3 +102,5 @@ const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({ isOpen, file, onClo
 export default FileDetailsPanel;
 
 
+
+
