@@ -169,7 +169,7 @@
 - [x] 28. **Tags/Labels System** - Categorize files with custom tags ✅
 - [x] 29. **File Properties** - View/edit custom metadata ✅
 - [x] 37. **File Preview on Hover** - Quick preview without opening ✅
-- [ ] 38. **Custom Columns** - Show/hide columns in list view
+- [x] 38. **Custom Columns** - Show/hide columns in list view ✅
 - [x] 42. **Duplicate Detection** - Detect and warn about duplicate files ✅
 - [x] 43. **Storage Cleanup Tools** - Find large/old files to delete ✅
 
@@ -215,33 +215,4 @@
 - [x] 81. **Empty State Improvements** - Better empty state designs ✅
 - [x] 82. **Contextual Menus** - 3-dot dropdown menus for actions ✅
 - [x] 83. **Tooltips** - Helpful tooltips throughout interface ✅
-
----
-
-## **Notes**
-
-### IPFS Pinning Information
-- IPFS "pin it or lose it" is **NOT deprecated** and remains core to IPFS data persistence
-- Unpinned files may be garbage collected from IPFS nodes
-- Pinning services (Pinata, Web3.Storage, Filebase) provide reliable long-term storage
-- Consider implementing a warning system when files are unpinned
-
-### Current Implementation Status
-- ✅ Basic file upload to IPFS
-- ✅ User authentication (Firebase)
-- ✅ File list storage on IPFS
-- ✅ Basic search functionality
-- ✅ Grid/List view toggle
-- ✅ Pinning management (manual, auto-pin, status, cost calc)
-- ✅ Folder structure with navigation and DnD
-- ✅ Sharing capabilities (links, roles, expiry, password)
-- ❌ NO version history
-
-### Priority Justification
-**Phase 1** is critical because without proper pinning:
-- Files uploaded by users may disappear after garbage collection
-- No guarantee of data persistence
-- Poor user experience and data loss risk
-
-This violates the core promise of reliable storage!
 

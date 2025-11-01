@@ -1054,6 +1054,33 @@
   color: #1a73e8;
 }
 
+.columnSettingsBtn {
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+
+.columnSettingsBtn:hover {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+}
+
+.dark .columnSettingsBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.dark .columnSettingsBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #4a9eff;
+}
+
 .clearBtn {
   background: white;
   border: 1px solid #dadce0;
@@ -1508,6 +1535,40 @@
   overflow: hidden;
 }
 
+.dark .fileList {
+  background: #1e1e1e;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e0e0e0;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #5f6368;
+  gap: 16px;
+}
+
+.dark .listHeader {
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  color: #ccc;
+}
+
+.listColumn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .fileRow {
   display: flex;
   align-items: center;
@@ -1515,6 +1576,60 @@
   border-bottom: 1px solid #e0e0e0;
   transition: background 0.2s;
   gap: 16px;
+}
+
+.dark .fileRow {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.fileRow:hover {
+  background: #f8f9fa;
+}
+
+.dark .fileRow:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fileIconSmall {
+  font-size: 20px;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.fileNameList {
+  font-size: 14px;
+  color: #202124;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dark .fileNameList {
+  color: #fff;
+}
+
+.tagsListInline {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.tagBadgeSmall {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #e8f0fe;
+  border: 1px solid #1a73e8;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #1a73e8;
+  white-space: nowrap;
+}
+
+.dark .tagBadgeSmall {
+  background: rgba(26, 115, 232, 0.2);
+  border-color: #4a9eff;
+  color: #4a9eff;
 }
 
 .fileRow:last-child {

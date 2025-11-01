@@ -21,6 +21,7 @@ import SkeletonLoader from '../components/SkeletonLoader';
 import StorageCleanupModal from '../components/StorageCleanupModal';
 import TagManager from '../components/TagManager';
 import FilePreviewHover from '../components/FilePreviewHover';
+import ColumnSettings from '../components/ColumnSettings';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
@@ -93,6 +94,16 @@ const Dashboard: NextPage = () => {
   const [hoverPreviewFile, setHoverPreviewFile] = useState<UploadedFile | null>(null);
   const [hoverPreviewPosition, setHoverPreviewPosition] = useState({ x: 0, y: 0 });
   const [showFilters, setShowFilters] = useState(false);
+  const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState({
+    name: true,
+    size: true,
+    type: true,
+    modified: true,
+    pinStatus: true,
+    tags: true,
+    starStatus: true,
+  });
   const [filters, setFilters] = useState({
     fileType: 'all' as 'all' | 'image' | 'video' | 'audio' | 'document' | 'folder' | 'other',
     pinStatus: 'all' as 'all' | 'pinned' | 'unpinned',
@@ -196,6 +207,28 @@ const Dashboard: NextPage = () => {
     // Custom Properties functions
     updateCustomProperties
   } = useUserFileStorage(user?.uid || null);
+
+  // Load column preferences from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vault_list_columns');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setVisibleColumns(prev => ({ ...prev, ...parsed }));
+        } catch (e) {
+          console.error('Failed to load column preferences:', e);
+        }
+      }
+    }
+  }, []);
+
+  // Save column preferences to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('vault_list_columns', JSON.stringify(visibleColumns));
+    }
+  }, [visibleColumns]);
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -1974,6 +2007,15 @@ const Dashboard: NextPage = () => {
               >
                 ☰
               </button>
+              {viewMode === 'list' && (
+                <button
+                  className={styles.columnSettingsBtn}
+                  onClick={() => setShowColumnSettings(!showColumnSettings)}
+                  title="Column settings"
+                >
+                  📊
+                </button>
+              )}
               {uploadedFiles.length > 0 && activeView !== 'trash' && (
                 <button className={styles.clearBtn} onClick={clearAll}>
                   Clear All
@@ -2053,13 +2095,13 @@ const Dashboard: NextPage = () => {
                 </>
               )}
             </div>
-          ) : (
-            <div className={viewMode === 'grid' ? styles.fileGrid : styles.fileList}>
+          ) : viewMode === 'grid' ? (
+            <div className={styles.fileGrid}>
               {filteredFiles.map((file) => {
                 return (
                 <div 
                   key={file.id} 
-                  className={viewMode === 'grid' ? styles.fileCard : styles.fileRow}
+                  className={styles.fileCard}
                   onClick={() => file.isFolder ? handleFileClick(file) : null}
                   onDoubleClick={() => !file.isFolder ? handleFileClick(file) : null}
                   onMouseEnter={(e) => {
@@ -2364,6 +2406,152 @@ const Dashboard: NextPage = () => {
                 );
               })}
             </div>
+          ) : (
+            <div className={styles.fileList}>
+              {/* Column Headers */}
+              <div className={styles.listHeader}>
+                {visibleColumns.name && <div className={styles.listColumn} style={{ flex: '2' }}>Name</div>}
+                {visibleColumns.size && <div className={styles.listColumn} style={{ flex: '1' }}>Size</div>}
+                {visibleColumns.type && <div className={styles.listColumn} style={{ flex: '1' }}>Type</div>}
+                {visibleColumns.modified && <div className={styles.listColumn} style={{ flex: '1' }}>Modified</div>}
+                {visibleColumns.pinStatus && <div className={styles.listColumn} style={{ flex: '0.5' }}>Pin</div>}
+                {visibleColumns.tags && <div className={styles.listColumn} style={{ flex: '1.5' }}>Tags</div>}
+                {visibleColumns.starStatus && <div className={styles.listColumn} style={{ flex: '0.5' }}>⭐</div>}
+                <div className={styles.listColumn} style={{ flex: '0.5' }}>Actions</div>
+              </div>
+              
+              {/* File Rows */}
+              {filteredFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className={styles.fileRow}
+                  onClick={() => file.isFolder ? handleFileClick(file) : null}
+                  onDoubleClick={() => !file.isFolder ? handleFileClick(file) : null}
+                  data-folder-id={file.isFolder ? file.id : undefined}
+                  data-file-id={!file.isFolder ? file.id : undefined}
+                >
+                  {/* Name Column */}
+                  {visibleColumns.name && (
+                    <div className={styles.listColumn} style={{ flex: '2' }}>
+                      <div className={styles.fileIconSmall}>
+                        {file.isFolder ? '📁' : getFileIcon(file.type)}
+                      </div>
+                      <span className={styles.fileNameList} title={file.name}>{file.name}</span>
+                    </div>
+                  )}
+                  
+                  {/* Size Column */}
+                  {visibleColumns.size && (
+                    <div className={styles.listColumn} style={{ flex: '1' }}>
+                      {file.isFolder ? '—' : formatFileSize(file.size)}
+                    </div>
+                  )}
+                  
+                  {/* Type Column */}
+                  {visibleColumns.type && (
+                    <div className={styles.listColumn} style={{ flex: '1' }}>
+                      {file.isFolder ? 'Folder' : file.type || 'unknown'}
+                    </div>
+                  )}
+                  
+                  {/* Modified Column */}
+                  {visibleColumns.modified && (
+                    <div className={styles.listColumn} style={{ flex: '1' }}>
+                      {new Date(file.modifiedDate || file.timestamp).toLocaleDateString()}
+                    </div>
+                  )}
+                  
+                  {/* Pin Status Column */}
+                  {visibleColumns.pinStatus && (
+                    <div className={styles.listColumn} style={{ flex: '0.5' }}>
+                      {!file.isFolder && (file.isPinned ? '📌' : '📍')}
+                    </div>
+                  )}
+                  
+                  {/* Tags Column */}
+                  {visibleColumns.tags && (
+                    <div className={styles.listColumn} style={{ flex: '1.5' }}>
+                      {file.tags && file.tags.length > 0 ? (
+                        <div className={styles.tagsListInline}>
+                          {file.tags.slice(0, 2).map((tag, idx) => (
+                            <span key={idx} className={styles.tagBadgeSmall}>{tag}</span>
+                          ))}
+                          {file.tags.length > 2 && <span className={styles.tagBadgeSmall}>+{file.tags.length - 2}</span>}
+                        </div>
+                      ) : '—'}
+                    </div>
+                  )}
+                  
+                  {/* Star Status Column */}
+                  {visibleColumns.starStatus && (
+                    <div className={styles.listColumn} style={{ flex: '0.5' }}>
+                      {file.starred ? '⭐' : '☆'}
+                    </div>
+                  )}
+                  
+                  {/* Actions Column */}
+                  <div className={styles.listColumn} style={{ flex: '0.5' }}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button 
+                          className={styles.moreBtn}
+                          onClick={(e) => e.stopPropagation()}
+                          title="More actions"
+                        >
+                          ⋮
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {activeView !== 'trash' ? (
+                          <>
+                            {!file.isFolder && (
+                              <>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePreview(file); }}>
+                                  👁️ Preview
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShowDetails(file); }}>
+                                  🧾 Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDownload(file); }}>
+                                  ⬇️ Download
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                              </>
+                            )}
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShare(file.id); }}>
+                              🔗 Share
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(file.id); }}>
+                              📋 Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleManageTags(file.id); }}>
+                              🏷️ Manage Tags
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(file.id); }}>
+                              ✏️ Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }} className={styles.menuDanger}>
+                              🗑️ Trash
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
+                          <>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRestore(file.id); }}>
+                              ↩️ Restore
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }} className={styles.menuDanger}>
+                              ❌ Delete Forever
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </main>
       </div>
@@ -2389,6 +2577,20 @@ const Dashboard: NextPage = () => {
           fileType={previewModalFile.type}
           gatewayUrl={previewModalFile.gatewayUrl}
           onClose={() => setPreviewModalFile(null)}
+        />
+      )}
+
+      {/* Column Settings Modal */}
+      {showColumnSettings && (
+        <ColumnSettings
+          visibleColumns={visibleColumns}
+          onToggleColumn={(column) => {
+            setVisibleColumns(prev => ({
+              ...prev,
+              [column]: !prev[column as keyof typeof prev]
+            }));
+          }}
+          onClose={() => setShowColumnSettings(false)}
         />
       )}
 
