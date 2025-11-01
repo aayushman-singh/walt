@@ -1752,6 +1752,10 @@ const Dashboard: NextPage = () => {
               <span className={styles.dropdownArrow}>▼</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => router.push('/settings')}>
+                <span className={styles.dropdownIcon}>⚙️</span>
+                Settings
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportAll}>
                 <span className={styles.dropdownIcon}>📦</span>
                 Export All

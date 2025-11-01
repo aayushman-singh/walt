@@ -1,0 +1,312 @@
+.container {
+  min-height: 100vh;
+  background: #f8f9fa;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.dark .container {
+  background: #070529;
+  color: #fff;
+}
+
+.header {
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.dark .header {
+  background: #070529;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.headerContent {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.backBtn {
+  background: none;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #5f6368;
+  transition: all 0.2s;
+}
+
+.dark .backBtn {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.backBtn:hover {
+  background: #f8f9fa;
+  border-color: #5f6368;
+}
+
+.dark .backBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #202124;
+}
+
+.dark .title {
+  color: #fff;
+}
+
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 16px;
+  color: #666;
+}
+
+.dark .loading {
+  color: #aaa;
+}
+
+.section {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dark .section {
+  background: #1e1e1e;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.sectionTitle {
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #202124;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dark .sectionTitle {
+  color: #fff;
+  border-bottom-color: #333;
+}
+
+.settingItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dark .settingItem {
+  border-bottom-color: #333;
+}
+
+.settingItem:last-child {
+  border-bottom: none;
+}
+
+.settingInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.settingLabel {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  color: #202124;
+  margin-bottom: 4px;
+}
+
+.dark .settingLabel {
+  color: #fff;
+}
+
+.settingDescription {
+  margin: 0;
+  font-size: 14px;
+  color: #5f6368;
+  line-height: 1.4;
+}
+
+.dark .settingDescription {
+  color: #aaa;
+}
+
+.settingControl {
+  flex-shrink: 0;
+  margin-left: 24px;
+}
+
+.themeOption,
+.viewOption {
+  padding: 10px 20px;
+  background: #f8f9fa;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-right: 8px;
+  color: #5f6368;
+}
+
+.dark .themeOption,
+.dark .viewOption {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ccc;
+}
+
+.themeOption:hover,
+.viewOption:hover {
+  background: #e8f0fe;
+  border-color: #1a73e8;
+  color: #1a73e8;
+}
+
+.dark .themeOption:hover,
+.dark .viewOption:hover {
+  background: rgba(26, 115, 232, 0.2);
+  border-color: #4a9eff;
+  color: #4a9eff;
+}
+
+.themeOption.active,
+.viewOption.active {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: white;
+}
+
+.dark .themeOption.active,
+.dark .viewOption.active {
+  background: #4a9eff;
+  border-color: #4a9eff;
+  color: white;
+}
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+  cursor: pointer;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSlider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  border-radius: 26px;
+  transition: 0.3s;
+}
+
+.toggleSlider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.dark .toggleSlider {
+  background-color: #555;
+}
+
+.toggle input:checked + .toggleSlider {
+  background-color: #1a73e8;
+}
+
+.dark .toggle input:checked + .toggleSlider {
+  background-color: #4a9eff;
+}
+
+.toggle input:checked + .toggleSlider:before {
+  transform: translateX(24px);
+}
+
+.toggle input:disabled + .toggleSlider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actionBtn {
+  padding: 10px 20px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  background: #1557b0;
+}
+
+.dark .actionBtn {
+  background: #4a9eff;
+}
+
+.dark .actionBtn:hover {
+  background: #4285f4;
+}
+
+.dangerBtn {
+  padding: 10px 20px;
+  background: #ea4335;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.dangerBtn:hover {
+  background: #c5221f;
+}
+

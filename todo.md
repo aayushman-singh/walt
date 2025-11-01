@@ -188,7 +188,7 @@
 - [x] 53. **Export All Files** - Download entire drive as ZIP ✅
 
 ### Settings & Preferences
-- [ ] 59. **User Settings Page** - Preferences, notifications, account settings
+- [x] 59. **User Settings Page** - Preferences, notifications, account settings ✅
 - [x] 60. **Theme Toggle** - Dark/light mode ✅
 - [x] 61. **Default View Preference** - Remember grid/list preference ✅
 - [x] 62. **Upload Settings** - Default pinning options (auto-pin toggle) ✅
