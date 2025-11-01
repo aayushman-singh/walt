@@ -25,6 +25,7 @@ import ColumnSettings from '../components/ColumnSettings';
 import GatewaySettings from '../components/GatewaySettings';
 import TwoFactorSetup from '../components/TwoFactorSetup';
 import VersionHistory from '../components/VersionHistory';
+import NotificationBell from '../components/NotificationBell';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
@@ -1741,6 +1742,9 @@ const Dashboard: NextPage = () => {
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
           
+          {/* Notifications */}
+          <NotificationBell />
+
           {/* User Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger className={styles.userDropdownTrigger}>
