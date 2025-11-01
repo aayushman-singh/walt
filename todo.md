@@ -167,7 +167,7 @@
 
 ### File Management (Additional)
 - [x] 28. **Tags/Labels System** - Categorize files with custom tags ✅
-- [ ] 29. **File Properties** - View/edit custom metadata
+- [x] 29. **File Properties** - View/edit custom metadata ✅
 - [ ] 37. **File Preview on Hover** - Quick preview without opening
 - [ ] 38. **Custom Columns** - Show/hide columns in list view
 - [x] 42. **Duplicate Detection** - Detect and warn about duplicate files ✅

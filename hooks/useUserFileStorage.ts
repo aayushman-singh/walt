@@ -59,6 +59,8 @@ interface UploadedFile {
   activityLog?: ActivityLog[];
   // Tags/Labels
   tags?: string[];
+  // Custom Properties/Metadata
+  customProperties?: Record<string, string>;
 }
 
 // Helper type for cleaner code
@@ -1051,6 +1053,57 @@ export const useUserFileStorage = (userUid: string | null) => {
     );
   };
 
+  // Update custom properties for a file
+  const updateCustomProperties = async (index: number, properties: Record<string, string>): Promise<boolean> => {
+    const file = uploadedFiles[index];
+    if (!file) return false;
+
+    try {
+      // Remove empty values
+      const cleanedProperties: Record<string, string> = {};
+      Object.entries(properties).forEach(([key, value]) => {
+        if (key.trim() && value.trim()) {
+          cleanedProperties[key.trim()] = value.trim();
+        }
+      });
+
+      const updatedFiles = [...uploadedFiles];
+      updatedFiles[index] = {
+        ...file,
+        customProperties: Object.keys(cleanedProperties).length > 0 ? cleanedProperties : undefined,
+        modifiedDate: Date.now()
+      };
+
+      setUploadedFiles(updatedFiles);
+      await saveUserFiles(updatedFiles);
+      await addActivityLog(index, 'modified', `Updated custom properties`);
+      
+      return true;
+    } catch (error) {
+      const appError = ErrorHandler.createAppError(error, ErrorType.FIRESTORE);
+      ErrorHandler.logError(appError, 'updateCustomProperties');
+      setError(appError);
+      return false;
+    }
+  };
+
+  // Set a single custom property
+  const setCustomProperty = async (index: number, key: string, value: string): Promise<boolean> => {
+    const file = uploadedFiles[index];
+    if (!file) return false;
+
+    const currentProperties = file.customProperties || {};
+    const updatedProperties = { ...currentProperties };
+    
+    if (value.trim()) {
+      updatedProperties[key.trim()] = value.trim();
+    } else {
+      delete updatedProperties[key.trim()];
+    }
+
+    return await updateCustomProperties(index, updatedProperties);
+  };
+
   // Load files when user changes
   useEffect(() => {
     if (userUid) {
@@ -1125,6 +1178,9 @@ export const useUserFileStorage = (userUid: string | null) => {
     removeTags,
     setTags,
     getAllTags,
-    getFilesByTag
+    getFilesByTag,
+    // Custom Properties functions
+    updateCustomProperties,
+    setCustomProperty
   };
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from '../styles/FileDetailsPanel.module.css';
 
 interface ActivityLogEntry {
@@ -27,11 +27,13 @@ interface FileDetailsPanelProps {
     modifiedDate?: number;
     timestamp: number;
     activityLog?: ActivityLogEntry[];
+    customProperties?: Record<string, string>;
   } | null;
   onClose: () => void;
   onDownload: () => void;
   onShare: () => void;
   onTogglePin: () => void;
+  onUpdateProperties?: (properties: Record<string, string>) => Promise<void>;
 }
 
 const formatBytes = (bytes?: number) => {
@@ -42,8 +44,56 @@ const formatBytes = (bytes?: number) => {
   return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
 };
 
-const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({ isOpen, file, onClose, onDownload, onShare, onTogglePin }) => {
+const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({ 
+  isOpen, 
+  file, 
+  onClose, 
+  onDownload, 
+  onShare, 
+  onTogglePin,
+  onUpdateProperties 
+}) => {
+  const [editingProperties, setEditingProperties] = useState(false);
+  const [propertyKey, setPropertyKey] = useState('');
+  const [propertyValue, setPropertyValue] = useState('');
+  const [properties, setProperties] = useState<Record<string, string>>(file?.customProperties || {});
+
+  // Update local state when file changes
+  React.useEffect(() => {
+    if (file?.customProperties) {
+      setProperties(file.customProperties);
+    } else {
+      setProperties({});
+    }
+  }, [file?.customProperties]);
+
   if (!isOpen || !file) return null;
+
+  const handleAddProperty = async () => {
+    if (!propertyKey.trim() || !propertyValue.trim()) return;
+    if (!onUpdateProperties) return;
+
+    const updated = { ...properties, [propertyKey.trim()]: propertyValue.trim() };
+    await onUpdateProperties(updated);
+    setPropertyKey('');
+    setPropertyValue('');
+    setEditingProperties(false);
+  };
+
+  const handleDeleteProperty = async (key: string) => {
+    if (!onUpdateProperties) return;
+
+    const updated = { ...properties };
+    delete updated[key];
+    await onUpdateProperties(updated);
+  };
+
+  const handleUpdateProperty = async (key: string, value: string) => {
+    if (!onUpdateProperties) return;
+
+    const updated = { ...properties, [key]: value };
+    await onUpdateProperties(updated);
+  };
 
   const metaRows = [
     { label: 'Type', value: file.type || 'unknown' },
@@ -81,6 +131,97 @@ const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({ isOpen, file, onClo
       </div>
 
       <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.sectionTitle}>Custom Properties</div>
+          {!editingProperties && (
+            <button 
+              className={styles.addBtn}
+              onClick={() => setEditingProperties(true)}
+              title="Add custom property"
+            >
+              + Add
+            </button>
+          )}
+        </div>
+        
+        {editingProperties ? (
+          <div className={styles.propertyEditor}>
+            <div className={styles.propertyInputRow}>
+              <input
+                type="text"
+                placeholder="Property name"
+                value={propertyKey}
+                onChange={(e) => setPropertyKey(e.target.value)}
+                className={styles.propertyInput}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddProperty();
+                  } else if (e.key === 'Escape') {
+                    setEditingProperties(false);
+                    setPropertyKey('');
+                    setPropertyValue('');
+                  }
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Property value"
+                value={propertyValue}
+                onChange={(e) => setPropertyValue(e.target.value)}
+                className={styles.propertyInput}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddProperty();
+                  } else if (e.key === 'Escape') {
+                    setEditingProperties(false);
+                    setPropertyKey('');
+                    setPropertyValue('');
+                  }
+                }}
+              />
+              <button
+                className={styles.saveBtn}
+                onClick={handleAddProperty}
+                disabled={!propertyKey.trim() || !propertyValue.trim()}
+              >
+                ✓
+              </button>
+              <button
+                className={styles.cancelBtn}
+                onClick={() => {
+                  setEditingProperties(false);
+                  setPropertyKey('');
+                  setPropertyValue('');
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {Object.keys(properties).length > 0 ? (
+          <div className={styles.propertiesList}>
+            {Object.entries(properties).map(([key, value]) => (
+              <PropertyRow
+                key={key}
+                propertyKey={key}
+                propertyValue={value}
+                onUpdate={(newValue) => handleUpdateProperty(key, newValue)}
+                onDelete={() => handleDeleteProperty(key)}
+              />
+            ))}
+          </div>
+        ) : (
+          !editingProperties && (
+            <div className={styles.empty}>No custom properties. Click "Add" to create one.</div>
+          )
+        )}
+      </div>
+
+      <div className={styles.section}>
         <div className={styles.sectionTitle}>Recent Activity</div>
         {file.activityLog && file.activityLog.length > 0 ? (
           <div className={styles.activityList}>
@@ -99,8 +240,73 @@ const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({ isOpen, file, onClo
   );
 };
 
+interface PropertyRowProps {
+  propertyKey: string;
+  propertyValue: string;
+  onUpdate: (value: string) => void;
+  onDelete: () => void;
+}
+
+const PropertyRow: React.FC<PropertyRowProps> = ({ propertyKey, propertyValue, onUpdate, onDelete }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(propertyValue);
+
+  React.useEffect(() => {
+    setValue(propertyValue);
+  }, [propertyValue]);
+
+  const handleSave = () => {
+    if (value.trim() && value !== propertyValue) {
+      onUpdate(value);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setValue(propertyValue);
+    setIsEditing(false);
+  };
+
+  return (
+    <div className={styles.propertyRow}>
+      <div className={styles.propertyKey}>{propertyKey}</div>
+      {isEditing ? (
+        <div className={styles.propertyEdit}>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className={styles.propertyInput}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSave();
+              } else if (e.key === 'Escape') {
+                handleCancel();
+              }
+            }}
+            onBlur={handleSave}
+            autoFocus
+          />
+          <button className={styles.saveBtn} onClick={handleSave} title="Save">✓</button>
+          <button className={styles.cancelBtn} onClick={handleCancel} title="Cancel">✕</button>
+        </div>
+      ) : (
+        <div className={styles.propertyValueRow}>
+          <span className={styles.propertyValue} onClick={() => setIsEditing(true)} title="Click to edit">
+            {propertyValue}
+          </span>
+          <button 
+            className={styles.deleteBtn} 
+            onClick={onDelete}
+            title="Delete property"
+          >
+            🗑️
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default FileDetailsPanel;
-
-
-
-

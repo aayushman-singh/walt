@@ -189,7 +189,9 @@ const Dashboard: NextPage = () => {
     removeTags,
     setTags,
     getAllTags,
-    getFilesByTag
+    getFilesByTag,
+    // Custom Properties functions
+    updateCustomProperties
   } = useUserFileStorage(user?.uid || null);
 
   // Redirect to home if not authenticated
@@ -2402,6 +2404,21 @@ const Dashboard: NextPage = () => {
           file={detailsPanelFile as any}
           onClose={() => setDetailsPanelFile(null)}
           onDownload={() => handleDownload(detailsPanelFile)}
+          onUpdateProperties={async (properties: Record<string, string>) => {
+            const index = uploadedFiles.findIndex(f => f.id === detailsPanelFile.id);
+            if (index !== -1) {
+              const success = await updateCustomProperties(index, properties);
+              if (success) {
+                showToast('✅ Custom properties updated', 'success');
+                // Update the details panel file
+                const updatedFile = uploadedFiles[index];
+                setDetailsPanelFile({ ...updatedFile });
+              } else {
+                const appError = ErrorHandler.createAppError(new Error('Failed to update custom properties'));
+                showToast(appError.userMessage, 'error');
+              }
+            }
+          }}
           onShare={() => handleShare(detailsPanelFile.id)}
           onTogglePin={() => handlePinToggle(detailsPanelFile.id, detailsPanelFile)}
         />
