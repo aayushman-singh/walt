@@ -20,6 +20,7 @@ import FileDetailsPanel from '../components/FileDetailsPanel';
 import SkeletonLoader from '../components/SkeletonLoader';
 import StorageCleanupModal from '../components/StorageCleanupModal';
 import TagManager from '../components/TagManager';
+import FilePreviewHover from '../components/FilePreviewHover';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
@@ -89,6 +90,8 @@ const Dashboard: NextPage = () => {
   const [detailsPanelFile, setDetailsPanelFile] = useState<UploadedFile | null>(null);
   const [showStorageCleanup, setShowStorageCleanup] = useState(false);
   const [tagManagerFile, setTagManagerFile] = useState<UploadedFile | null>(null);
+  const [hoverPreviewFile, setHoverPreviewFile] = useState<UploadedFile | null>(null);
+  const [hoverPreviewPosition, setHoverPreviewPosition] = useState({ x: 0, y: 0 });
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     fileType: 'all' as 'all' | 'image' | 'video' | 'audio' | 'document' | 'folder' | 'other',
@@ -939,6 +942,14 @@ const Dashboard: NextPage = () => {
   const handlePreview = (file: UploadedFile) => {
     if (file.isFolder) return;
     setPreviewModalFile(file);
+    const index = uploadedFiles.findIndex(f => f.id === file.id);
+    if (index !== -1) {
+      updateLastAccessed(index);
+      
+      // Cache the file when previewed
+      const fileCache = getFileCache();
+      fileCache.set(file.id, file);
+    }
   };
 
   const handleShowDetails = (file: UploadedFile) => {
@@ -1036,8 +1047,24 @@ const Dashboard: NextPage = () => {
 
   const handleDownload = async (file: UploadedFile) => {
     try {
-      const response = await fetch(file.gatewayUrl);
-      const blob = await response.blob();
+      const fileCache = getFileCache();
+      
+      // Check cache first
+      const cached = fileCache.get(file.id);
+      let blob: Blob;
+      
+      if (cached?.content instanceof Blob) {
+        // Use cached content
+        blob = cached.content;
+      } else {
+        // Fetch from gateway
+        const response = await fetch(file.gatewayUrl);
+        blob = await response.blob();
+        
+        // Cache the file content
+        fileCache.set(file.id, file, blob);
+      }
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -2035,6 +2062,22 @@ const Dashboard: NextPage = () => {
                   className={viewMode === 'grid' ? styles.fileCard : styles.fileRow}
                   onClick={() => file.isFolder ? handleFileClick(file) : null}
                   onDoubleClick={() => !file.isFolder ? handleFileClick(file) : null}
+                  onMouseEnter={(e) => {
+                    if (!file.isFolder && file.type?.startsWith('image/')) {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setHoverPreviewPosition({
+                        x: rect.left + rect.width / 2,
+                        y: rect.top,
+                      });
+                      setHoverPreviewFile(file);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    // Small delay to allow moving to preview
+                    setTimeout(() => {
+                      setHoverPreviewFile(null);
+                    }, 100);
+                  }}
                   data-folder-id={file.isFolder ? file.id : undefined}
                   data-file-id={!file.isFolder ? file.id : undefined}
                   draggable={!file.isFolder}
@@ -2394,6 +2437,15 @@ const Dashboard: NextPage = () => {
             showToast(`✅ Deleted ${fileIds.length} file${fileIds.length !== 1 ? 's' : ''}`, 'success');
             setShowStorageCleanup(false);
           }}
+        />
+      )}
+
+      {/* Hover Preview */}
+      {hoverPreviewFile && (
+        <FilePreviewHover
+          file={hoverPreviewFile}
+          position={hoverPreviewPosition}
+          onClose={() => setHoverPreviewFile(null)}
         />
       )}
 

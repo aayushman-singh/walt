@@ -9,6 +9,7 @@ import {
   PinStatus 
 } from '../lib/pinningService';
 import { ErrorHandler, ErrorType, AppError } from '../lib/errorHandler';
+import { getFileCache } from '../lib/fileCache';
 import { checkNewFileForDuplicates, getAllDuplicates, DuplicateMatch } from '../lib/duplicateDetection';
 
 interface ShareConfig {
@@ -205,6 +206,21 @@ export const useUserFileStorage = (userUid: string | null) => {
       
       setUploadedFiles(filesWithIds);
       console.log('Successfully loaded', filesWithIds.length, 'files from IPFS');
+
+      // Cache frequently accessed files (recent and starred files)
+      const fileCache = getFileCache();
+      const recentlyAccessed = filesWithIds
+        .filter(f => !f.trashed && f.lastAccessed)
+        .sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0))
+        .slice(0, 20)
+        .map(f => f.id);
+      
+      const starred = filesWithIds
+        .filter(f => !f.trashed && f.starred)
+        .map(f => f.id);
+
+      const toCache = [...new Set([...recentlyAccessed, ...starred])];
+      fileCache.prefetch(toCache, filesWithIds);
       
       // If we had to add IDs, save the corrected data
       const hadMissingIds = filesWithIds.some((file, index) => !userFileList.files[index]?.id);
@@ -703,6 +719,13 @@ export const useUserFileStorage = (userUid: string | null) => {
 
   // Update last accessed time
   const updateLastAccessed = async (index: number) => {
+    const file = uploadedFiles[index];
+    if (!file) return;
+
+    // Cache the file when accessed
+    const fileCache = getFileCache();
+    fileCache.set(file.id, file);
+
     const updatedFiles = [...uploadedFiles];
     updatedFiles[index] = {
       ...updatedFiles[index],
