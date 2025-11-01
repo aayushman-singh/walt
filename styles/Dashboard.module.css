@@ -723,7 +723,7 @@
   gap: 8px;
 }
 
-.cleanupBtn, .gatewayBtn {
+.cleanupBtn, .gatewayBtn, .twoFactorBtn {
   padding: 6px 12px;
   background: #f8f9fa;
   border: 1px solid #dadce0;
@@ -735,19 +735,19 @@
   color: #5f6368;
 }
 
-.cleanupBtn:hover, .gatewayBtn:hover {
+.cleanupBtn:hover, .gatewayBtn:hover, .twoFactorBtn:hover {
   background: #e8f0fe;
   border-color: #1a73e8;
   color: #1a73e8;
 }
 
-.dark .cleanupBtn, .dark .gatewayBtn {
+.dark .cleanupBtn, .dark .gatewayBtn, .dark .twoFactorBtn {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
   color: #ccc;
 }
 
-.dark .cleanupBtn:hover, .dark .gatewayBtn:hover {
+.dark .cleanupBtn:hover, .dark .gatewayBtn:hover, .dark .twoFactorBtn:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: #4a9eff;
   color: #4a9eff;

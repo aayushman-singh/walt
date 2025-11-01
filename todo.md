@@ -153,7 +153,7 @@
 - [x] 42. **Duplicate Detection** - Detect and warn on duplicates ✅ (with upload warnings)
 - [x] 43. **Storage Cleanup Tools** - Find large/old files to delete ✅
 - [x] 28. **Tags/Labels System** - Custom tags, filtering, saved views ✅
-- [ ] 64. **Two-Factor Authentication** - Strengthen account security
+- [x] 64. **Two-Factor Authentication** - Strengthen account security ✅
 
 ---
 
@@ -195,7 +195,7 @@
 - [x] 63. **Keyboard Shortcuts** - Hotkeys for common actions ✅
 
 ### Security & Privacy
-- [ ] 64. **Two-Factor Authentication** - Additional security layer
+- [x] 64. **Two-Factor Authentication** - Additional security layer ✅
 - [ ] 65. **Activity Log** - View login history and file access logs
 - [ ] 66. **File Encryption** - Client-side encryption option
 - [ ] 67. **Access Revocation** - Revoke access to shared files

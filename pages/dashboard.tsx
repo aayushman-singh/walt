@@ -23,6 +23,7 @@ import TagManager from '../components/TagManager';
 import FilePreviewHover from '../components/FilePreviewHover';
 import ColumnSettings from '../components/ColumnSettings';
 import GatewaySettings from '../components/GatewaySettings';
+import TwoFactorSetup from '../components/TwoFactorSetup';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
@@ -98,6 +99,7 @@ const Dashboard: NextPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [showGatewaySettings, setShowGatewaySettings] = useState(false);
+  const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     name: true,
     size: true,
@@ -1784,6 +1786,13 @@ const Dashboard: NextPage = () => {
                   >
                     ⚡ Gateways
                   </button>
+                  <button
+                    className={styles.twoFactorBtn}
+                    onClick={() => setShowTwoFactorSetup(true)}
+                    title="Two-factor authentication"
+                  >
+                    🔒 2FA
+                  </button>
                 </div>
               </div>
               <div className={styles.statRow}>
@@ -2726,6 +2735,16 @@ const Dashboard: NextPage = () => {
       <GatewaySettings
         isOpen={showGatewaySettings}
         onClose={() => setShowGatewaySettings(false)}
+      />
+
+      {/* Two-Factor Authentication Setup */}
+      <TwoFactorSetup
+        isOpen={showTwoFactorSetup}
+        onClose={() => setShowTwoFactorSetup(false)}
+        onEnabled={() => {
+          showToast('✅ Two-factor authentication enabled!', 'success');
+          setShowTwoFactorSetup(false);
+        }}
       />
 
       {/* Upload Progress Panel */}
