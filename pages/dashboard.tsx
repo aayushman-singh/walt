@@ -24,6 +24,7 @@ import FilePreviewHover from '../components/FilePreviewHover';
 import ColumnSettings from '../components/ColumnSettings';
 import GatewaySettings from '../components/GatewaySettings';
 import TwoFactorSetup from '../components/TwoFactorSetup';
+import VersionHistory from '../components/VersionHistory';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
@@ -100,6 +101,7 @@ const Dashboard: NextPage = () => {
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [showGatewaySettings, setShowGatewaySettings] = useState(false);
   const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
+  const [versionHistoryFile, setVersionHistoryFile] = useState<UploadedFile | null>(null);
   const [visibleColumns, setVisibleColumns] = useState({
     name: true,
     size: true,
@@ -993,6 +995,70 @@ const Dashboard: NextPage = () => {
   const handleShowDetails = (file: UploadedFile) => {
     if (file.isFolder) return;
     setDetailsPanelFile(file);
+  };
+
+  const handleShowVersionHistory = (file: UploadedFile) => {
+    if (file.isFolder) return;
+    setVersionHistoryFile(file);
+  };
+
+  const handleRestoreVersion = async (version: any) => {
+    if (!versionHistoryFile || !user) return;
+
+    try {
+      const index = uploadedFiles.findIndex(f => f.id === versionHistoryFile.id);
+      if (index === -1) {
+        throw new Error('File not found');
+      }
+
+      // Restore file to the selected version
+      const updatedFiles = [...uploadedFiles];
+      updatedFiles[index] = {
+        ...updatedFiles[index],
+        ipfsUri: version.ipfsUri,
+        gatewayUrl: version.gatewayUrl,
+        modifiedDate: Date.now(),
+        size: version.size,
+      };
+
+      setUploadedFiles(updatedFiles);
+      
+      // Update the file in storage
+      const fileIndex = uploadedFiles.findIndex(f => f.id === versionHistoryFile.id);
+      if (fileIndex !== -1) {
+        await renameItem(fileIndex, versionHistoryFile.name); // This will trigger a save
+        // Manually update the file
+        const currentFiles = uploadedFiles;
+        currentFiles[fileIndex] = updatedFiles[index];
+        await addFiles([currentFiles[fileIndex]], currentFiles[fileIndex].parentFolderId || null);
+      }
+
+      // Create a new version entry for the restore action
+      const token = await user.getIdToken();
+      await fetch(`/api/versions/${versionHistoryFile.id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          version: {
+            ...version,
+            versionId: undefined, // Will be generated
+            version: undefined, // Will be calculated
+            changeDescription: `Restored from version ${version.version}`,
+            timestamp: Date.now(),
+            modifiedDate: Date.now(),
+          },
+        }),
+      });
+
+      showToast(`✅ Restored to version ${version.version}`, 'success');
+      setVersionHistoryFile(null);
+    } catch (error: any) {
+      const appError = ErrorHandler.createAppError(error);
+      showToast(appError.userMessage, 'error');
+    }
   };
 
   const handleRename = async (fileId: string) => {
@@ -2401,6 +2467,9 @@ const Dashboard: NextPage = () => {
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleManageTags(file.id); }}>
                               🏷️ Manage Tags
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShowVersionHistory(file); }}>
+                              📜 Version History
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(file.id); }}>
                               ✏️ Rename
                             </DropdownMenuItem>
@@ -2547,6 +2616,9 @@ const Dashboard: NextPage = () => {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleManageTags(file.id); }}>
                               🏷️ Manage Tags
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShowVersionHistory(file); }}>
+                              📜 Version History
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(file.id); }}>
                               ✏️ Rename
@@ -2746,6 +2818,17 @@ const Dashboard: NextPage = () => {
           setShowTwoFactorSetup(false);
         }}
       />
+
+      {/* Version History Modal */}
+      {versionHistoryFile && (
+        <VersionHistory
+          isOpen={true}
+          fileId={versionHistoryFile.id}
+          fileName={versionHistoryFile.name}
+          onClose={() => setVersionHistoryFile(null)}
+          onRestore={handleRestoreVersion}
+        />
+      )}
 
       {/* Upload Progress Panel */}
       {uploadQueue.length > 0 && (

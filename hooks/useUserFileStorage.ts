@@ -12,6 +12,7 @@ import { ErrorHandler, ErrorType, AppError } from '../lib/errorHandler';
 import { getFileCache } from '../lib/fileCache';
 import { getGatewayOptimizer } from '../lib/gatewayOptimizer';
 import { checkNewFileForDuplicates, getAllDuplicates, DuplicateMatch } from '../lib/duplicateDetection';
+import { createFileVersion, FileVersion } from '../lib/versionHistory';
 
 interface ShareConfig {
   shareId: string;
@@ -83,6 +84,7 @@ export const useUserFileStorage = (userUid: string | null) => {
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'size' | 'type'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [sortEnabled, setSortEnabled] = useState(false); // Disable real-time sorting by default
+  const [fileVersions, setFileVersions] = useState<FileVersion[]>([]); // Store file versions
   const { mutateAsync: upload } = useStorageUpload();
 
   // Initialize pinning service
@@ -420,6 +422,8 @@ export const useUserFileStorage = (userUid: string | null) => {
 
   // Add new files
   const addFiles = async (newFiles: UploadedFile[], parentFolderId: string | null = null) => {
+    if (!userUid) return;
+
     // Ensure all files have IDs and correct parent
     const filesWithIds = newFiles.map(file => ({
       ...file,
@@ -428,9 +432,105 @@ export const useUserFileStorage = (userUid: string | null) => {
       modifiedDate: file.modifiedDate || Date.now()
     }));
     
-    const updatedFiles = [...filesWithIds, ...uploadedFiles];
-    setUploadedFiles(updatedFiles);
-    await saveUserFiles(updatedFiles);
+    // Create version history entries for new/updated files
+    const newVersions: FileVersion[] = [];
+    for (const file of filesWithIds) {
+      // Check if file with same ID already exists (update scenario)
+      const existingFile = uploadedFiles.find(f => f.id === file.id);
+      
+      if (existingFile && existingFile.ipfsUri !== file.ipfsUri) {
+        // This is an update - create a version from the old file
+        const oldVersion = createFileVersion(
+          existingFile.id,
+          existingFile.ipfsUri,
+          existingFile.gatewayUrl,
+          userUid,
+          {
+            name: existingFile.name,
+            type: existingFile.type,
+            size: existingFile.size,
+            modifiedDate: existingFile.modifiedDate,
+          },
+          fileVersions,
+          'File updated'
+        );
+        newVersions.push(oldVersion);
+      }
+
+      // Create version for new/updated file
+      const newVersion = createFileVersion(
+        file.id,
+        file.ipfsUri,
+        file.gatewayUrl,
+        userUid,
+        {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          modifiedDate: file.modifiedDate,
+        },
+        fileVersions,
+        existingFile ? 'File updated' : 'Initial upload'
+      );
+      newVersions.push(newVersion);
+    }
+
+    // Save versions to Firestore (async, don't block)
+    if (newVersions.length > 0) {
+      saveVersionsToFirestore(newVersions).catch(err => {
+        console.error('Failed to save versions to Firestore:', err);
+      });
+      setFileVersions([...fileVersions, ...newVersions]);
+    }
+
+    // Update files list - merge with existing files or add new ones
+    const finalFiles: UploadedFile[] = [];
+    const processedIds = new Set<string>();
+
+    // Add/update files from filesWithIds
+    for (const newFile of filesWithIds) {
+      const existingIndex = uploadedFiles.findIndex(f => f.id === newFile.id);
+      if (existingIndex !== -1) {
+        // Update existing file
+        finalFiles.push(newFile);
+      } else {
+        // New file
+        finalFiles.push(newFile);
+      }
+      processedIds.add(newFile.id);
+    }
+
+    // Add remaining existing files that weren't updated
+    for (const existingFile of uploadedFiles) {
+      if (!processedIds.has(existingFile.id)) {
+        finalFiles.push(existingFile);
+      }
+    }
+    
+    setUploadedFiles(finalFiles);
+    await saveUserFiles(finalFiles);
+  };
+
+  // Save versions to Firestore
+  const saveVersionsToFirestore = async (versions: FileVersion[]) => {
+    if (!userUid) return;
+
+    try {
+      // Save each version via API
+      for (const version of versions) {
+        await fetch(`/api/versions/${version.fileId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ version }),
+        }).catch(err => {
+          console.error('Failed to save version:', err);
+        });
+      }
+    } catch (error) {
+      console.error('Error saving versions to Firestore:', error);
+    }
   };
 
   // Remove a file
