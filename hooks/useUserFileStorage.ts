@@ -10,6 +10,7 @@ import {
 } from '../lib/pinningService';
 import { ErrorHandler, ErrorType, AppError } from '../lib/errorHandler';
 import { getFileCache } from '../lib/fileCache';
+import { getGatewayOptimizer } from '../lib/gatewayOptimizer';
 import { checkNewFileForDuplicates, getAllDuplicates, DuplicateMatch } from '../lib/duplicateDetection';
 
 interface ShareConfig {
@@ -90,7 +91,10 @@ export const useUserFileStorage = (userUid: string | null) => {
     initPinningService(config);
   }, []);
 
-  // IPFS gateways to try (in order of preference)
+  // Gateway optimizer for CDN integration
+  const gatewayOptimizer = getGatewayOptimizer();
+
+  // IPFS gateways to try (in order of preference) - fallback list
   const IPFS_GATEWAYS = [
     'https://ipfs.io/ipfs/',
     'https://dweb.link/ipfs/',
@@ -98,31 +102,43 @@ export const useUserFileStorage = (userUid: string | null) => {
     'https://gateway.pinata.cloud/ipfs/',
   ];
 
-  // Fetch from IPFS with retry logic and multiple gateways
+  // Fetch from IPFS with retry logic and optimized gateway selection
   const fetchFromIPFS = async (ipfsUri: string, maxRetries = 2): Promise<string | null> => {
     const ipfsHash = ipfsUri.replace('ipfs://', '');
     
-    for (let gatewayIndex = 0; gatewayIndex < IPFS_GATEWAYS.length; gatewayIndex++) {
-      const gateway = IPFS_GATEWAYS[gatewayIndex];
+    // Get ranked gateways (fastest first)
+    const rankedGateways = gatewayOptimizer.getRankedGateways();
+    const gatewaysToTry = rankedGateways.length > 0 
+      ? rankedGateways.map(g => g.url)
+      : IPFS_GATEWAYS; // Fallback to default list
+    
+    for (let gatewayIndex = 0; gatewayIndex < gatewaysToTry.length; gatewayIndex++) {
+      const gateway = gatewaysToTry[gatewayIndex];
       const gatewayUrl = `${gateway}${ipfsHash}`;
       
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
-          console.log(`Fetching from gateway ${gatewayIndex + 1}/${IPFS_GATEWAYS.length} (attempt ${attempt + 1}/${maxRetries}):`, gatewayUrl);
+          console.log(`Fetching from gateway ${gatewayIndex + 1}/${gatewaysToTry.length} (attempt ${attempt + 1}/${maxRetries}):`, gatewayUrl);
           
+          const startTime = Date.now();
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
           
           const response = await fetch(gatewayUrl, { signal: controller.signal });
           clearTimeout(timeoutId);
+          const responseTime = Date.now() - startTime;
           
           if (response.ok) {
             const data = await response.text();
             console.log('✅ Successfully fetched from IPFS');
+            // Record successful fetch for gateway optimization
+            gatewayOptimizer.recordSuccess(gateway, responseTime);
             return data;
           }
           
           console.warn(`Gateway returned status ${response.status}`);
+          gatewayOptimizer.recordFailure(gateway);
+          
           // Don't retry if it's a 4xx error (won't be fixed by retry)
           if (response.status >= 400 && response.status < 500) {
             break;
@@ -130,6 +146,7 @@ export const useUserFileStorage = (userUid: string | null) => {
         } catch (error: any) {
           const errorMsg = error.message || String(error);
           console.warn(`Failed: ${errorMsg}`);
+          gatewayOptimizer.recordFailure(gateway);
           
           // Skip retries for DNS/network errors (won't be fixed by retrying)
           if (errorMsg.includes('NAME_NOT_RESOLVED') || errorMsg.includes('Failed to fetch')) {

@@ -1,0 +1,297 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+
+.modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark .modal {
+  background: #1e1e1e;
+  color: #fff;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dark .header {
+  border-bottom-color: #333;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.closeBtn:hover {
+  background: #f0f0f0;
+  color: #000;
+}
+
+.dark .closeBtn {
+  color: #aaa;
+}
+
+.dark .closeBtn:hover {
+  background: #333;
+  color: #fff;
+}
+
+.content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.section {
+  margin-bottom: 30px;
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.sectionHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.healthCheckBtn {
+  padding: 8px 16px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.healthCheckBtn:hover:not(:disabled) {
+  background: #1557b0;
+}
+
+.healthCheckBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.statsList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.statItem {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  background: #fafafa;
+  position: relative;
+}
+
+.dark .statItem {
+  border-color: #333;
+  background: #252525;
+}
+
+.statHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.statName {
+  font-weight: 600;
+  font-size: 16px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.statUrl {
+  font-size: 12px;
+  color: #666;
+  word-break: break-all;
+}
+
+.dark .statUrl {
+  color: #aaa;
+}
+
+.performanceBadge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+}
+
+.statMetrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metricLabel {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.dark .metricLabel {
+  color: #aaa;
+}
+
+.metricValue {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.removeBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 6px 12px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.removeBtn:hover {
+  background: #cc0000;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input {
+  padding: 10px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.dark .input {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #fff;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #1a73e8;
+}
+
+.addBtn {
+  padding: 10px 20px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+
+.addBtn:hover {
+  background: #1557b0;
+}
+
+.helpText {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.dark .helpText {
+  color: #aaa;
+}
+
+.infoText {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.dark .infoText {
+  color: #aaa;
+}
+
+.emptyMessage {
+  text-align: center;
+  color: #999;
+  padding: 40px;
+  font-style: italic;
+}
+
+.dark .emptyMessage {
+  color: #666;
+}
+

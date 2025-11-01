@@ -4,6 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserFileStorage } from '../hooks/useUserFileStorage';
+import { getOptimizedGatewayUrl } from '../lib/gatewayOptimizer';
 import styles from './Home.module.css';
 
 interface UploadedFile {
@@ -35,7 +36,7 @@ const FileUpload: React.FC = () => {
         const newFiles: UploadedFile[] = acceptedFiles.map((file, index) => ({
           name: file.name,
           ipfsUri: uris[index],
-          gatewayUrl: uris[index].replace('ipfs://', 'https://ipfs.io/ipfs/'),
+          gatewayUrl: getOptimizedGatewayUrl(uris[index]),
           timestamp: Date.now(),
           type: file.type || 'unknown',
           size: file.size

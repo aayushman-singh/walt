@@ -22,10 +22,12 @@ import StorageCleanupModal from '../components/StorageCleanupModal';
 import TagManager from '../components/TagManager';
 import FilePreviewHover from '../components/FilePreviewHover';
 import ColumnSettings from '../components/ColumnSettings';
+import GatewaySettings from '../components/GatewaySettings';
 import Toast from '../components/Toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 import InputModal from '../components/InputModal';
 import { calculatePinningCost } from '../lib/pinningService';
+import { getOptimizedGatewayUrl } from '../lib/gatewayOptimizer';
 import styles from '../styles/Dashboard.module.css';
 
 interface ShareConfig {
@@ -95,6 +97,7 @@ const Dashboard: NextPage = () => {
   const [hoverPreviewPosition, setHoverPreviewPosition] = useState({ x: 0, y: 0 });
   const [showFilters, setShowFilters] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [showGatewaySettings, setShowGatewaySettings] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     name: true,
     size: true,
@@ -618,7 +621,7 @@ const Dashboard: NextPage = () => {
         id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: file.name,
         ipfsUri: uris[index],
-        gatewayUrl: uris[index].replace('ipfs://', 'https://ipfs.io/ipfs/'),
+        gatewayUrl: getOptimizedGatewayUrl(uris[index]),
         timestamp: Date.now(),
         type: file.type || 'unknown',
         size: file.size,
@@ -701,7 +704,7 @@ const Dashboard: NextPage = () => {
         id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: file.name,
         ipfsUri: uris[index],
-        gatewayUrl: uris[index].replace('ipfs://', 'https://ipfs.io/ipfs/'),
+        gatewayUrl: getOptimizedGatewayUrl(uris[index]),
         timestamp: Date.now(),
         type: file.type || 'unknown',
         size: file.size,
@@ -1766,13 +1769,22 @@ const Dashboard: NextPage = () => {
             <div className={styles.storageStats}>
               <div className={styles.storageHeader}>
                 <h4 className={styles.storageTitle}>Storage Overview</h4>
-                <button
-                  className={styles.cleanupBtn}
-                  onClick={() => setShowStorageCleanup(true)}
-                  title="Storage cleanup tools"
-                >
-                  🧹 Cleanup
-                </button>
+                <div className={styles.storageActions}>
+                  <button
+                    className={styles.cleanupBtn}
+                    onClick={() => setShowStorageCleanup(true)}
+                    title="Storage cleanup tools"
+                  >
+                    🧹 Cleanup
+                  </button>
+                  <button
+                    className={styles.gatewayBtn}
+                    onClick={() => setShowGatewaySettings(true)}
+                    title="Gateway/CDN settings"
+                  >
+                    ⚡ Gateways
+                  </button>
+                </div>
               </div>
               <div className={styles.statRow}>
                 <span className={styles.statLabel}>Total Files:</span>
@@ -2708,6 +2720,12 @@ const Dashboard: NextPage = () => {
         defaultValue={inputModal.defaultValue}
         onConfirm={inputModal.onConfirm}
         onCancel={() => setInputModal({ ...inputModal, isOpen: false })}
+      />
+
+      {/* Gateway Settings Modal */}
+      <GatewaySettings
+        isOpen={showGatewaySettings}
+        onClose={() => setShowGatewaySettings(false)}
       />
 
       {/* Upload Progress Panel */}
