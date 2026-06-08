@@ -8,6 +8,12 @@
 packages:
   - 'backend'
 
+# Never run an implicit `pnpm install` before scripts (e.g. `pnpm test`).
+# On a Windows dev host the backend's native dep (better-sqlite3) cannot be
+# built, so an implicit install would fail. Install the frontend explicitly with
+# `pnpm install --filter walt --no-frozen-lockfile`.
+verifyDepsBeforeRun: false
+
 # Build scripts are opt-in under pnpm v10+. These are the only packages allowed
 # to run install/build scripts.
 onlyBuiltDependencies:
@@ -15,4 +21,5 @@ onlyBuiltDependencies:
   - '@tsparticles/engine'
   - protobufjs
   - sharp
+  - esbuild
   - better-sqlite3
