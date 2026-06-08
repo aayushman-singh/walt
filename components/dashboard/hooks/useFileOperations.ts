@@ -7,6 +7,7 @@
 import { useState, useRef } from 'react';
 import { ErrorHandler } from '../../../lib/errorHandler';
 import { getFileCache } from '../../../lib/fileCache';
+import { decryptToBlob } from '../../../lib/encryption';
 import { ActivityLog } from '../../../hooks/useUserFileStorage';
 import {
   UploadedFile,
@@ -41,6 +42,7 @@ interface UseFileOperationsParams {
   updateLastAccessed: (index: number) => Promise<void>;
   addActivityLog: (index: number, action: ActivityLog['action'], details?: string) => Promise<void>;
   duplicateFile: (index: number) => Promise<boolean>;
+  ensureDecryptionPassphrase: () => Promise<string | null>;
 }
 
 export function useFileOperations(params: UseFileOperationsParams) {
@@ -69,6 +71,7 @@ export function useFileOperations(params: UseFileOperationsParams) {
     updateLastAccessed,
     addActivityLog,
     duplicateFile,
+    ensureDecryptionPassphrase,
   } = params;
 
   // Modal-trigger state owned by file operations
@@ -358,10 +361,26 @@ export function useFileOperations(params: UseFileOperationsParams) {
         fileCache.set(file.id, file, blob);
       }
 
-      const url = window.URL.createObjectURL(blob);
+      // Encrypted files are stored/cached as ciphertext; decrypt in-browser
+      // before handing the blob to the download. Wrong passphrase / tampering
+      // throws loudly (no silent fallback) and the real error is surfaced.
+      let downloadBlob = blob;
+      let downloadName = file.name;
+      if (file.encryption) {
+        const passphrase = await ensureDecryptionPassphrase();
+        if (!passphrase) {
+          showToast('Decryption cancelled — no passphrase provided', 'error');
+          return;
+        }
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        downloadBlob = await decryptToBlob(bytes, file.encryption, passphrase);
+        downloadName = file.encryption.originalName || file.name;
+      }
+
+      const url = window.URL.createObjectURL(downloadBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name;
+      a.download = downloadName;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -374,7 +393,10 @@ export function useFileOperations(params: UseFileOperationsParams) {
     } catch (error) {
       const appError = ErrorHandler.createAppError(error);
       ErrorHandler.logError(appError, 'handleDownload');
-      showToast(appError.userMessage || 'Download failed. Please try opening the file instead.', 'error');
+      // Surface the real failure message (e.g. wrong passphrase / corruption)
+      // rather than a generic line, so the user knows why decryption failed.
+      const realMessage = error instanceof Error ? error.message : undefined;
+      showToast(realMessage || appError.userMessage || 'Download failed. Please try opening the file instead.', 'error');
     }
   };
 

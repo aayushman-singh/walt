@@ -64,6 +64,10 @@ export interface UploadedFile {
   tags?: string[];
   // Custom Properties/Metadata
   customProperties?: Record<string, string>;
+  // Client-side encryption metadata (present iff the stored bytes are an
+  // AES-GCM ciphertext produced by lib/encryption). Public — safe to store on
+  // IPFS/Firestore; useless without the user's passphrase. See lib/encryption.
+  encryption?: import('../../lib/encryption').EncryptionMeta;
 }
 
 // Helper type for cleaner code

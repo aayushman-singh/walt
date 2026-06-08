@@ -64,7 +64,11 @@ export interface InputModalState {
   message?: string;
   placeholder?: string;
   defaultValue?: string;
+  /** Render a masked input when 'password' (defaults to plain text). */
+  type?: 'text' | 'password';
   onConfirm: (value: string) => void;
+  /** Optional cancel handler; falls back to closing the modal when omitted. */
+  onCancel?: () => void;
 }
 
 export interface DuplicateFileModalState {

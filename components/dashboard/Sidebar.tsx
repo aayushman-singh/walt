@@ -48,6 +48,8 @@ interface SidebarProps {
   setCurrentFolderId: (id: string | null) => void;
   autoPinEnabled: boolean;
   setAutoPinEnabled: (enabled: boolean) => void;
+  encryptionEnabled: boolean;
+  toggleEncryption: (next: boolean) => void;
   setShowStorageCleanup: (show: boolean) => void;
   setShowGatewaySettings: (show: boolean) => void;
   storageStats: StorageStats;
@@ -71,6 +73,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   setCurrentFolderId,
   autoPinEnabled,
   setAutoPinEnabled,
+  encryptionEnabled,
+  toggleEncryption,
   setShowStorageCleanup,
   setShowGatewaySettings,
   storageStats,
@@ -200,6 +204,26 @@ const Sidebar: React.FC<SidebarProps> = ({
             Tip: Unpinned files are FREE but may be lost. Enable auto-pin for guaranteed persistence.
           </p>
         )}
+      </div>
+
+      {/* Encryption Toggle */}
+      <div className={styles.autoPinSection}>
+        <label className={styles.autoPinLabel}>
+          <input
+            type="checkbox"
+            checked={encryptionEnabled}
+            onChange={(e) => toggleEncryption(e.target.checked)}
+            className={styles.autoPinCheckbox}
+          />
+          <span className={styles.autoPinText}>
+            🔒 Encrypt uploads (end-to-end)
+          </span>
+        </label>
+        <p className={styles.autoPinHint}>
+          {encryptionEnabled
+            ? 'New uploads are encrypted in your browser before leaving this device. Keep your passphrase safe — without it, files cannot be recovered.'
+            : ''}
+        </p>
       </div>
 
       <div className={styles.storageInfo}>

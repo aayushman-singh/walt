@@ -119,6 +119,9 @@ const FileList: React.FC<FileListProps> = ({
                 {file.isFolder ? <FolderIcon /> : getFileIcon(file.type)}
               </div>
               <span className={styles.fileNameList} title={file.name}>{file.name}</span>
+              {file.encryption && (
+                <span title="End-to-end encrypted" style={{ marginLeft: '6px', fontSize: '0.85em' }}>🔒</span>
+              )}
             </div>
           )}
 

@@ -99,6 +99,64 @@ export const useDashboardController = () => {
     remainingCount: 0
   });
 
+  // --- Encryption session state (in-memory only; never persisted) -----------
+  const [encryptionEnabled, setEncryptionEnabled] = useState(false);
+  const [encryptionPassphrase, setEncryptionPassphrase] = useState<string | null>(null);
+
+  // Returns the stored passphrase if set; otherwise prompts via the input modal
+  // (masked password field) and remembers the entered value for the session.
+  // Cancel/empty resolves null — the caller must treat that as "no passphrase".
+  // Promise-wrapping mirrors useUpload.resolveDuplicates' modal pattern.
+  const ensureEncryptionPassphrase = (): Promise<string | null> => {
+    if (encryptionPassphrase) {
+      return Promise.resolve(encryptionPassphrase);
+    }
+    return new Promise<string | null>((resolve) => {
+      let resolved = false;
+      setInputModal({
+        isOpen: true,
+        title: 'Enter encryption passphrase',
+        message: 'This passphrase encrypts and decrypts your files. It is kept only in memory for this session and is never sent anywhere. If you lose it, the files cannot be recovered.',
+        placeholder: 'Passphrase',
+        defaultValue: '',
+        type: 'password',
+        onConfirm: (value: string) => {
+          if (resolved) return;
+          resolved = true;
+          setInputModal(prev => ({ ...prev, isOpen: false }));
+          const trimmed = value?.trim();
+          if (!trimmed) {
+            resolve(null);
+            return;
+          }
+          setEncryptionPassphrase(trimmed);
+          resolve(trimmed);
+        },
+        onCancel: () => {
+          if (resolved) return;
+          resolved = true;
+          setInputModal(prev => ({ ...prev, isOpen: false }));
+          resolve(null);
+        },
+      });
+    });
+  };
+
+  // Turning encryption ON requires a passphrase; if the user cancels the prompt
+  // we revert to OFF rather than enable encryption without a key.
+  const toggleEncryption = async (next: boolean) => {
+    if (!next) {
+      setEncryptionEnabled(false);
+      return;
+    }
+    if (encryptionPassphrase) {
+      setEncryptionEnabled(true);
+      return;
+    }
+    const passphrase = await ensureEncryptionPassphrase();
+    setEncryptionEnabled(!!passphrase);
+  };
+
   const router = useRouter();
   const { user, loading, logout } = useAuth();
 
@@ -210,6 +268,7 @@ export const useDashboardController = () => {
     updateLastAccessed,
     addActivityLog,
     duplicateFile,
+    ensureDecryptionPassphrase: ensureEncryptionPassphrase,
   });
 
   const versionHistory = useVersionHistory({
@@ -246,6 +305,8 @@ export const useDashboardController = () => {
     setDuplicateFileModal,
     checkBillingAccess: billing.checkBillingAccess,
     setIsDragging,
+    encryptionEnabled,
+    ensureEncryptionPassphrase,
   });
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -343,6 +404,7 @@ export const useDashboardController = () => {
     fileInputRef, isFileInputProcessingRef,
     // storage primitives used by the view
     uploadedFiles, filesLoading, pinningWarning, autoPinEnabled, setAutoPinEnabled,
+    encryptionEnabled, toggleEncryption,
     getAllTags, currentFolderId, setCurrentFolderId,
     sortBy, setSortBy, sortDirection, setSortDirection,
     permanentlyDelete, updateCustomProperties, getTrashedItems, autoCleanupTrash,

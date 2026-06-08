@@ -326,8 +326,15 @@ const DashboardModals: React.FC<DashboardModalsProps> = (props) => {
         message={inputModal.message}
         placeholder={inputModal.placeholder}
         defaultValue={inputModal.defaultValue}
+        type={inputModal.type}
         onConfirm={inputModal.onConfirm}
-        onCancel={() => setInputModal(prev => ({ ...prev, isOpen: false }))}
+        onCancel={() => {
+          if (inputModal.onCancel) {
+            inputModal.onCancel();
+          } else {
+            setInputModal(prev => ({ ...prev, isOpen: false }));
+          }
+        }}
       />
 
       {/* Duplicate File Modal */}

@@ -113,9 +113,40 @@ If you're using walt.aayushman.dev:
 ## Known Security Considerations
 
 ### 1. IPFS Content Addressing
-- Files on IPFS are **publicly accessible** if someone knows the CID
-- Don't upload sensitive data without client-side encryption
-- Unpinning removes from your node but may exist on other nodes
+- IPFS content is **public by design**: anyone who learns a file's CID can fetch
+  its bytes from the network. Content addressing provides integrity and
+  censorship-resistance, **not** confidentiality.
+- **Mitigation — client-side encryption (recommended for sensitive data).** Walt
+  can encrypt files in your browser *before* they are added to IPFS. Toggle
+  **"Encrypt uploads (end-to-end)"** in the sidebar and set a passphrase. With it
+  on, only AES-256-GCM ciphertext ever leaves your device, so the CID reveals
+  nothing without your passphrase. See [Encryption](#encryption) below and
+  [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- Unpinning removes content from your node but copies may persist on other nodes;
+  encryption is what actually protects already-published bytes.
+
+### Encryption
+
+Client-side, zero-knowledge envelope encryption (`lib/encryption.ts`):
+
+- **Cipher:** AES-256-GCM (authenticated; detects tampering) with a unique random
+  96-bit IV per file.
+- **Key derivation:** the passphrase is stretched with **Argon2id** (memory-hard,
+  64 MiB / 3 passes) over a random 16-byte salt to derive a key-encryption key.
+- **Envelope:** a random per-file data key encrypts the bytes; that data key is
+  then wrapped under the passphrase-derived key. Only ciphertext, the wrapped key,
+  and the public KDF parameters (salt, IVs, costs) are stored — on IPFS or in the
+  database. None of it is usable without the passphrase.
+- **Zero-knowledge:** the passphrase is held only in memory for the session and is
+  **never** transmitted or persisted. **If you lose your passphrase, encrypted
+  files are unrecoverable** — there is no backdoor or recovery path by design.
+- **Fail-closed:** a wrong passphrase or corrupted ciphertext fails loudly on
+  download (GCM authentication error); there is no silent fallback to returning
+  the raw ciphertext.
+- **Scope / migration:** encryption is **opt-in per upload session**. Files
+  uploaded while the toggle was off remain plaintext on IPFS; to protect an
+  existing file, re-upload it with encryption enabled. Bulk re-encryption of an
+  existing library is not yet automated.
 
 ### 2. Authentication
 - Authentication via Firebase
@@ -139,6 +170,7 @@ If you're using walt.aayushman.dev:
 
 ## Security Features
 
+✅ **End-to-end encryption**: opt-in client-side AES-256-GCM + Argon2id (zero-knowledge)  
 ✅ **Authentication**: Firebase Auth  
 ✅ **Authorization**: Token-based with backend validation  
 ✅ **Input Validation**: All endpoints validate inputs  

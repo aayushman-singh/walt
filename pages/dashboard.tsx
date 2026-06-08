@@ -49,6 +49,7 @@ const Dashboard: NextPage = () => {
     confirmationModal, setConfirmationModal, inputModal, setInputModal, duplicateFileModal,
     fileInputRef, isFileInputProcessingRef,
     uploadedFiles, filesLoading, pinningWarning, autoPinEnabled, setAutoPinEnabled,
+    encryptionEnabled, toggleEncryption,
     getAllTags, currentFolderId, setCurrentFolderId,
     sortBy, setSortBy, sortDirection, setSortDirection,
     permanentlyDelete, updateCustomProperties, getTrashedItems, autoCleanupTrash,
@@ -122,6 +123,8 @@ const Dashboard: NextPage = () => {
           setCurrentFolderId={setCurrentFolderId}
           autoPinEnabled={autoPinEnabled}
           setAutoPinEnabled={setAutoPinEnabled}
+          encryptionEnabled={encryptionEnabled}
+          toggleEncryption={toggleEncryption}
           setShowStorageCleanup={setShowStorageCleanup}
           setShowGatewaySettings={setShowGatewaySettings}
           storageStats={storageStats}
@@ -148,6 +151,8 @@ const Dashboard: NextPage = () => {
           setCurrentFolderId={setCurrentFolderId}
           autoPinEnabled={autoPinEnabled}
           setAutoPinEnabled={setAutoPinEnabled}
+          encryptionEnabled={encryptionEnabled}
+          toggleEncryption={toggleEncryption}
           setShowStorageCleanup={setShowStorageCleanup}
           setShowGatewaySettings={setShowGatewaySettings}
           storageStats={storageStats}

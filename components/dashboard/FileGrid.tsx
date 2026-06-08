@@ -290,6 +290,9 @@ const FileGrid: React.FC<FileGridProps> = ({
           <div className={styles.fileInfo}>
             <div className={styles.fileNameRow}>
             <h4 className={styles.fileName} title={file.name}>{file.name}</h4>
+              {file.encryption && (
+                <span className={styles.starredBadge} title="End-to-end encrypted">🔒</span>
+              )}
               {file.starred && (
                 <span className={styles.starredBadge} title="Starred"><StarIcon /></span>
               )}

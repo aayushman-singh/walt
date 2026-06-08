@@ -48,6 +48,8 @@ interface MobileMenuProps {
   setCurrentFolderId: (id: string | null) => void;
   autoPinEnabled: boolean;
   setAutoPinEnabled: (enabled: boolean) => void;
+  encryptionEnabled: boolean;
+  toggleEncryption: (next: boolean) => void;
   setShowStorageCleanup: (show: boolean) => void;
   setShowGatewaySettings: (show: boolean) => void;
   storageStats: StorageStats;
@@ -69,6 +71,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   setCurrentFolderId,
   autoPinEnabled,
   setAutoPinEnabled,
+  encryptionEnabled,
+  toggleEncryption,
   setShowStorageCleanup,
   setShowGatewaySettings,
   storageStats,
@@ -184,6 +188,26 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             {autoPinEnabled
               ? 'New files will be pinned automatically (guaranteed persistence)'
               : 'Unpinned files are FREE but may be lost! Turn on auto-pin for guaranteed persistence.'}
+          </p>
+        </div>
+
+        {/* Encryption Toggle */}
+        <div className={styles.autoPinSection}>
+          <label className={styles.autoPinLabel}>
+            <input
+              type="checkbox"
+              checked={encryptionEnabled}
+              onChange={(e) => toggleEncryption(e.target.checked)}
+              className={styles.autoPinCheckbox}
+            />
+            <span className={styles.autoPinText}>
+              🔒 Encrypt uploads (end-to-end)
+            </span>
+          </label>
+          <p className={styles.autoPinHint}>
+            {encryptionEnabled
+              ? 'New uploads are encrypted in your browser before leaving this device. Keep your passphrase safe.'
+              : 'Encrypt files client-side so only your passphrase can unlock them.'}
           </p>
         </div>
 

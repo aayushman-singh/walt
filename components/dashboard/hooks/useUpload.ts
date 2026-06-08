@@ -16,6 +16,7 @@ import { calculatePinningCost, DEFAULT_BILLING_CYCLE_DAYS } from '../../../lib/p
 import { getOptimizedGatewayUrl } from '../../../lib/gatewayOptimizer';
 import { BackendFileAPI } from '../../../lib/backendClient';
 import { ErrorHandler } from '../../../lib/errorHandler';
+import { encryptFile } from '../../../lib/encryption';
 import { getFriendlyPinServiceLabel, formatFileSize, billingCycleTitle } from '../utils';
 import {
   UploadedFile,
@@ -39,6 +40,8 @@ interface UseUploadParams {
   setDuplicateFileModal: React.Dispatch<React.SetStateAction<DuplicateFileModalState>>;
   checkBillingAccess: () => Promise<boolean>;
   setIsDragging: (dragging: boolean) => void;
+  encryptionEnabled: boolean;
+  ensureEncryptionPassphrase: () => Promise<string | null>;
 }
 
 const CLOSED_DUPLICATE_MODAL: DuplicateFileModalState = {
@@ -66,6 +69,8 @@ export function useUpload({
   setDuplicateFileModal,
   checkBillingAccess,
   setIsDragging,
+  encryptionEnabled,
+  ensureEncryptionPassphrase,
 }: UseUploadParams) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadQueue, setUploadQueue] = useState<UploadProgress[]>([]);
@@ -267,6 +272,19 @@ export function useUpload({
       return;
     }
 
+    // When encryption is on we MUST have a passphrase before touching the
+    // network. No silent plaintext fallback: a missing passphrase aborts the
+    // whole upload loudly.
+    let encryptionPassphrase: string | null = null;
+    if (encryptionEnabled) {
+      encryptionPassphrase = await ensureEncryptionPassphrase();
+      if (!encryptionPassphrase) {
+        showToast('Encryption is on but no passphrase was provided — upload cancelled', 'error');
+        setIsUploading(false);
+        return;
+      }
+    }
+
     setIsUploading(true);
 
     // Initialize upload queue only for files that will be uploaded
@@ -290,8 +308,24 @@ export function useUpload({
         ));
       }, 300);
 
+      // Encrypt before upload when enabled. Each entry keeps the original
+      // filename and carries the EncryptionMeta needed to decrypt on download.
+      // encryptionMetas is positionally aligned with filesToUpload/uploadResults.
+      const encryptionMetas: (import('../../../lib/encryption').EncryptionMeta | null)[] = [];
+      const filesForUpload: File[] = [];
+      for (const file of filesToUpload) {
+        if (encryptionPassphrase) {
+          const { blob, meta } = await encryptFile(file, encryptionPassphrase);
+          filesForUpload.push(new File([blob], file.name, { type: 'application/octet-stream' }));
+          encryptionMetas.push(meta);
+        } else {
+          filesForUpload.push(file);
+          encryptionMetas.push(null);
+        }
+      }
+
       // Upload files to backend
-      const uploadPromises = filesToUpload.map(file =>
+      const uploadPromises = filesForUpload.map(file =>
         BackendFileAPI.upload(file, token, {
           parentFolderId: targetFolderId || undefined,
           isPinned: autoPinEnabled
@@ -309,20 +343,25 @@ export function useUpload({
 
       // Create uploaded file objects from backend response
       const pinServiceLabel = getFriendlyPinServiceLabel();
-      const newFiles: UploadedFile[] = uploadResults.map((result) => ({
-        id: result.id,
-        name: result.filename,
-        ipfsUri: `ipfs://${result.cid}`,
-        gatewayUrl: getOptimizedGatewayUrl(`ipfs://${result.cid}`),
-        timestamp: Date.now(),
-        type: result.mimeType || 'unknown',
-        size: result.size,
-        isPinned: result.isPinned || autoPinEnabled,
-        pinService: (result.isPinned || autoPinEnabled) ? pinServiceLabel : undefined,
-        pinDate: (result.isPinned || autoPinEnabled) ? Date.now() : undefined,
-        parentFolderId: targetFolderId,
-        modifiedDate: Date.now()
-      }));
+      const newFiles: UploadedFile[] = uploadResults.map((result, idx) => {
+        const meta = encryptionMetas[idx];
+        return {
+          id: result.id,
+          name: result.filename,
+          ipfsUri: `ipfs://${result.cid}`,
+          gatewayUrl: getOptimizedGatewayUrl(`ipfs://${result.cid}`),
+          timestamp: Date.now(),
+          // For encrypted files surface the ORIGINAL type/size, not the ciphertext's.
+          type: meta ? (meta.originalType || result.mimeType || 'unknown') : (result.mimeType || 'unknown'),
+          size: meta ? (meta.originalSize ?? result.size) : result.size,
+          isPinned: result.isPinned || autoPinEnabled,
+          pinService: (result.isPinned || autoPinEnabled) ? pinServiceLabel : undefined,
+          pinDate: (result.isPinned || autoPinEnabled) ? Date.now() : undefined,
+          parentFolderId: targetFolderId,
+          modifiedDate: Date.now(),
+          ...(meta ? { encryption: meta } : {}),
+        };
+      });
 
       // Add all files (duplicates already handled)
       await addFiles(newFiles, targetFolderId);
