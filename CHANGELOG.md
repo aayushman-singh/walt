@@ -8,11 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Open source release preparation
-- Self-hosting documentation
-- Contributing guidelines
-- Security policy
-- GitHub issue templates
+- **Client-side encryption** — opt-in end-to-end AES-256-GCM with Argon2id key
+  derivation; files are encrypted in the browser before IPFS upload, decrypted on
+  download, with an "encrypt uploads" toggle and an encrypted badge (`lib/encryption.ts`).
+- Vitest test suite (backend route tests + frontend/crypto unit tests) and a
+  Playwright public-landing E2E.
+- GitHub Actions CI (lint, typecheck, test, build).
+- `docs/ARCHITECTURE.md`, `docs/PAYMENT_INTEGRATION.md`, and `RUNBOOK.md` with a
+  one-command Docker Compose self-host setup.
+- Open source release preparation, self-hosting docs, contributing guidelines,
+  security policy, GitHub issue templates.
+
+### Changed
+- Decomposed the 4726-LOC `dashboard.tsx` and 1773-LOC storage hook into focused
+  modules (every file < 500 LOC); modularized the Express backend into routers
+  with a pino logger.
+- Standardized tooling on a single pnpm workspace; removed dead dependencies and
+  the dead `lib/database.ts`.
+
+### Security
+- Replaced the "public by CID" caveat with real client-side encryption; updated
+  `SECURITY.md` with the threat model and known limitations.
 
 ## [1.0.0] - 2024-12-01
 

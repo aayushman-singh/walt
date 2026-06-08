@@ -5,10 +5,12 @@ Self-hostable IPFS storage with versioning, pinning, password-shared links, and 
 <div align="center">
 
 [![Live](https://img.shields.io/badge/Live-walt.aayushman.dev-1f6feb?style=flat)](https://walt.aayushman.dev)
+[![CI](https://github.com/aayushman-singh/walt/actions/workflows/ci.yml/badge.svg)](https://github.com/aayushman-singh/walt/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-c8693d?style=flat)](LICENSE.md)
 [![Self-Hostable](https://img.shields.io/badge/self--hostable-yes-3a8a5f?style=flat)](#self-hosting)
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat)](https://nextjs.org/)
 [![IPFS](https://img.shields.io/badge/IPFS-Enabled-blue?style=flat)](https://ipfs.tech/)
+[![Encrypted](https://img.shields.io/badge/encryption-AES--256--GCM-3a8a5f?style=flat)](SECURITY.md#encryption)
 
 </div>
 
@@ -29,6 +31,9 @@ Cloud storage is centralized, expensive, and a lock-in trap. IPFS solves the pro
 - Favorites — star important files for quick access
 
 **Advanced**
+- **Client-side encryption** — opt-in end-to-end AES-256-GCM (Argon2id key
+  derivation). Files are encrypted in your browser before they touch IPFS, so the
+  CID reveals nothing without your passphrase. See [SECURITY.md](SECURITY.md#encryption).
 - Firebase Auth — secure login
 - Billing — usage tracking + payment integration (optional)
 - Custom IPFS gateways — point Walt at your preferred edge
@@ -80,33 +85,47 @@ Setup time: 1-2 hours. Monthly cost: $10-30 depending on provider.
 
 ## Stack
 
-**Frontend** — Next.js 14 · TypeScript · Tailwind · Firebase Auth · Vercel
-**Backend** — Node.js 20 · Express · SQLite (or Postgres)
+**Frontend** — Next.js 16 · React 19 · TypeScript · Tailwind · Firebase Auth · Vercel
+**Backend** — Node.js 20 · Express · SQLite · pino
 **Storage** — IPFS (Kubo) · Cashfree (payments, optional)
 
 ## Development
+
+This is a pnpm workspace (frontend at the root, `backend/` as a member).
 
 ```bash
 git clone https://github.com/aayushman-singh/walt.git
 cd walt
 
-# Frontend
-npm install
+# Frontend deps (skips the backend's native better-sqlite3 build)
+pnpm install --filter walt
 
-# Backend
-cd backend && npm install && cp env.example .env && cd ..
-
-# IPFS node
-docker-compose up -d
-
-# Backend (terminal 1)
-cd backend && npm run dev
-
-# Frontend (terminal 2)
-npm run dev
+# Frontend dev server
+pnpm dev
 ```
 
 Open `http://localhost:3000`.
+
+**Backend + IPFS** run via Docker (the backend's native deps build cleanly on
+Linux). See [RUNBOOK.md](RUNBOOK.md) for the one-command Docker Compose setup with
+templated secrets:
+
+```bash
+cp backend/.env.example backend/.env   # then fill in Firebase + (optional) Cashfree
+docker compose up -d                   # starts Kubo (IPFS) + the backend
+```
+
+### Quality gates
+
+```bash
+pnpm lint        # ESLint 9 (flat config)
+pnpm exec tsc --noEmit
+pnpm test        # Vitest — backend route tests + frontend/crypto unit tests
+pnpm e2e         # Playwright — public landing happy path
+pnpm build
+```
+
+All of the above run in CI on every PR (`.github/workflows/ci.yml`).
 
 ### Project structure
 
@@ -144,9 +163,10 @@ Self-host = no usage limits, full control, your IPFS node, your data.
 - [x] Folder organization
 - [x] File sharing
 - [x] Billing system
+- [x] Client-side encryption (AES-256-GCM, opt-in)
 - [ ] Mobile app (React Native)
 - [ ] Team collaboration
-- [ ] Client-side encryption
+- [ ] Encrypted file metadata (names/sizes)
 - [ ] IPFS cluster support
 - [ ] S3-compatible API
 - [ ] Desktop app (Electron)

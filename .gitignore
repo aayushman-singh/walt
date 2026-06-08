@@ -8,6 +8,11 @@
 # testing
 /coverage
 
+# playwright e2e artifacts (keep e2e/ specs + playwright.config.ts tracked)
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
 # next.js
 /.next/
 /out/
