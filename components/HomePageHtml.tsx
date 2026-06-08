@@ -8,6 +8,7 @@ import Link from 'next/link';
 import HeroMesh from './HeroMesh';
 import HeroShield from './HeroShield';
 import Testimonials from './Testimonials';
+import DecentralizationVisual from './landing/DecentralizationVisual';
 import Image from 'next/image';
 import { Cover } from './ui/cover';
 import BriefcaseIcon from '@rsuite/icons/legacy/Briefcase';
@@ -621,6 +622,8 @@ const HomePageHtml: React.FC = () => {
             )}
           </div>
         </section>
+
+        <DecentralizationVisual />
 
         <section id="creator" className={styles["creator-section"]}>
           <div className={styles["creator-container"]}>
