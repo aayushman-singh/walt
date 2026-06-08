@@ -36,7 +36,8 @@
     "rsuite": "^6.0.0",
     "tailwind-merge": "^2.5.4",
     "tsparticles": "^3.9.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "hash-wasm": "^4.12.0"
   },
   "devDependencies": {
     "@types/formidable": "^3.4.5",
