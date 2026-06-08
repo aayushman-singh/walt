@@ -15,7 +15,7 @@ export interface UploadProgress {
   status: 'uploading' | 'complete' | 'error';
 }
 
-export type ActiveView = 'drive' | 'recent' | 'starred' | 'trash';
+export type ActiveView = 'drive' | 'recent' | 'starred' | 'trash' | 'shared';
 export type ViewMode = 'grid' | 'list';
 
 export interface DashboardFilters {

@@ -30,6 +30,14 @@ interface ShareConfig {
   shortUrl?: string;
 }
 
+/** A walt user resolved as an end-to-end encryption recipient. */
+export interface EncryptedRecipient {
+  id: string;
+  email: string;
+  /** Imported ECDH public key, opaque to the modal (passed back to the caller). */
+  publicKey: CryptoKey;
+}
+
 interface ShareModalProps {
   fileName: string;
   isOpen: boolean;
@@ -38,6 +46,17 @@ interface ShareModalProps {
   onDisableShare: () => Promise<boolean>;
   existingShare?: ShareConfig;
   isFolder?: boolean;
+  /**
+   * OPTIONAL end-to-end encrypted sharing. When BOTH are supplied the modal
+   * shows a "Share encrypted with a walt user" block. Omitting them leaves the
+   * existing link-sharing UI exactly as-is (so current callers/tests are unaffected).
+   *
+   * onResolveRecipient: email → recipient identity, or null if the email has no
+   *   published walt identity (the modal surfaces that loudly — no fallback).
+   * onShareEncrypted: encrypt + share the file to the resolved recipients.
+   */
+  onResolveRecipient?: (email: string) => Promise<EncryptedRecipient | null>;
+  onShareEncrypted?: (recipients: EncryptedRecipient[]) => Promise<void>;
 }
 
 const ShareModal: React.FC<ShareModalProps> = ({
@@ -47,7 +66,9 @@ const ShareModal: React.FC<ShareModalProps> = ({
   onShare,
   onDisableShare,
   existingShare,
-  isFolder = false
+  isFolder = false,
+  onResolveRecipient,
+  onShareEncrypted,
 }) => {
   const [permission, setPermission] = useState<'viewer' | 'editor'>('viewer');
   const [expiryEnabled, setExpiryEnabled] = useState(false);
@@ -59,6 +80,63 @@ const ShareModal: React.FC<ShareModalProps> = ({
   const [isSharing, setIsSharing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shortCopied, setShortCopied] = useState(false);
+
+  // --- End-to-end encrypted recipient sharing (optional block) --------------
+  const encryptedSharingEnabled = !!onResolveRecipient && !!onShareEncrypted;
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipients, setRecipients] = useState<EncryptedRecipient[]>([]);
+  const [isResolving, setIsResolving] = useState(false);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+  const [isSharingEncrypted, setIsSharingEncrypted] = useState(false);
+  const [encryptedShareDone, setEncryptedShareDone] = useState(false);
+
+  const handleAddRecipient = async () => {
+    if (!onResolveRecipient) return;
+    const email = recipientEmail.trim();
+    setResolveError(null);
+    if (!email) {
+      setResolveError('Enter an email address');
+      return;
+    }
+    if (recipients.some((r) => r.email.toLowerCase() === email.toLowerCase())) {
+      setResolveError('That recipient is already added');
+      return;
+    }
+    setIsResolving(true);
+    try {
+      const resolved = await onResolveRecipient(email);
+      if (!resolved) {
+        // Loud, no fallback: we never share to an unverified/substituted key.
+        setResolveError(`No walt identity found for "${email}"`);
+        return;
+      }
+      setRecipients((prev) => [...prev, resolved]);
+      setRecipientEmail('');
+    } catch (error) {
+      setResolveError(error instanceof Error ? error.message : 'Could not look up that recipient');
+    } finally {
+      setIsResolving(false);
+    }
+  };
+
+  const handleRemoveRecipient = (id: string) => {
+    setRecipients((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const handleShareEncrypted = async () => {
+    if (!onShareEncrypted || recipients.length === 0) return;
+    setIsSharingEncrypted(true);
+    setResolveError(null);
+    try {
+      await onShareEncrypted(recipients);
+      setEncryptedShareDone(true);
+      setRecipients([]);
+    } catch (error) {
+      setResolveError(error instanceof Error ? error.message : 'Encrypted share failed');
+    } finally {
+      setIsSharingEncrypted(false);
+    }
+  };
 
   useEffect(() => {
     // Populate form with existing share settings if file is already shared
@@ -339,6 +417,117 @@ const ShareModal: React.FC<ShareModalProps> = ({
                 )}
               </button>
             </>
+          )}
+
+          {/* End-to-end encrypted sharing with a walt user (optional block). */}
+          {encryptedSharingEnabled && (
+            <div className={styles.section} data-testid="encrypted-share-section">
+              <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '1.25rem 0' }} />
+              <label className={`${styles.label} ${styles.labelWithIcon}`}>
+                <LockRoundIcon className={styles.inlineIcon} />
+                Share end-to-end encrypted with a walt user
+              </label>
+              <p className={styles.hint}>
+                The {isFolder ? 'folder' : 'file'} is encrypted to each recipient&apos;s key. Only they can
+                decrypt it — the server never sees the contents.
+              </p>
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <input
+                  type="email"
+                  placeholder="recipient@email.com"
+                  value={recipientEmail}
+                  onChange={(e) => {
+                    setRecipientEmail(e.target.value);
+                    setResolveError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddRecipient();
+                    }
+                  }}
+                  className={styles.textInput}
+                  style={{ flex: 1 }}
+                  aria-label="Recipient email"
+                />
+                <button
+                  type="button"
+                  className={styles.copyBtn}
+                  onClick={handleAddRecipient}
+                  disabled={isResolving}
+                >
+                  {isResolving ? 'Checking…' : 'Add recipient'}
+                </button>
+              </div>
+
+              {resolveError && (
+                <div className={styles.warning} role="alert" style={{ marginTop: '0.75rem' }}>
+                  <WarningRoundIcon className={styles.inlineIcon} />
+                  <span>{resolveError}</span>
+                </div>
+              )}
+
+              {recipients.length > 0 && (
+                <ul
+                  style={{ listStyle: 'none', padding: 0, margin: '0.75rem 0 0', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}
+                  data-testid="recipient-chips"
+                >
+                  {recipients.map((r) => (
+                    <li
+                      key={r.id}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        background: '#eef2ff',
+                        color: '#3730a3',
+                        borderRadius: '999px',
+                        padding: '0.25rem 0.6rem',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span aria-hidden>✓</span>
+                      <span>{r.email}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRecipient(r.id)}
+                        aria-label={`Remove ${r.email}`}
+                        style={{ background: 'none', border: 0, cursor: 'pointer', color: 'inherit', display: 'inline-flex' }}
+                      >
+                        <CloseIcon />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {encryptedShareDone && (
+                <p className={styles.hint} role="status" style={{ color: '#16a34a', marginTop: '0.75rem' }}>
+                  Shared encrypted. Recipients will see it under &quot;Shared with you&quot;.
+                </p>
+              )}
+
+              <button
+                type="button"
+                className={styles.shareBtn}
+                onClick={handleShareEncrypted}
+                disabled={isSharingEncrypted || recipients.length === 0}
+                style={{ marginTop: '0.75rem' }}
+              >
+                {isSharingEncrypted ? (
+                  <>
+                    <WaitIcon className={styles.buttonIcon} />
+                    Encrypting…
+                  </>
+                ) : (
+                  <>
+                    <LockRoundIcon className={styles.buttonIcon} />
+                    Share encrypted
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </div>
       </div>

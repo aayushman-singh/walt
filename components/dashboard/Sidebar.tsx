@@ -172,6 +172,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           <span>Starred</span>
         </div>
         <div
+          className={`${styles.navItem} ${activeView === 'shared' ? styles.active : ''}`}
+          onClick={() => handleViewChange('shared')}
+        >
+          <span className={styles.navIcon} aria-hidden>🔐</span>
+          <span>Shared with you</span>
+        </div>
+        <div
           className={`${styles.navItem} ${activeView === 'trash' ? styles.active : ''}`}
           onClick={() => handleViewChange('trash')}
         >

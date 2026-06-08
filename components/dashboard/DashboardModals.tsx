@@ -40,6 +40,8 @@ interface DashboardModalsProps {
   setShareModalFile: (file: UploadedFile | null) => void;
   handleCreateShare: (permission: 'viewer' | 'editor', expiryDate?: number, password?: string) => Promise<string | null>;
   handleDisableShare: () => Promise<boolean>;
+  handleResolveRecipient: (email: string) => Promise<import('../ShareModal').EncryptedRecipient | null>;
+  handleShareEncrypted: (recipients: import('../ShareModal').EncryptedRecipient[]) => Promise<void>;
   previewModalFile: UploadedFile | null;
   setPreviewModalFile: (file: UploadedFile | null) => void;
   showColumnSettings: boolean;
@@ -95,6 +97,8 @@ const DashboardModals: React.FC<DashboardModalsProps> = (props) => {
     setShareModalFile,
     handleCreateShare,
     handleDisableShare,
+    handleResolveRecipient,
+    handleShareEncrypted,
     previewModalFile,
     setPreviewModalFile,
     showColumnSettings,
@@ -156,6 +160,8 @@ const DashboardModals: React.FC<DashboardModalsProps> = (props) => {
           onDisableShare={handleDisableShare}
           existingShare={shareModalFile.shareConfig}
           isFolder={shareModalFile.isFolder}
+          onResolveRecipient={handleResolveRecipient}
+          onShareEncrypted={handleShareEncrypted}
         />
       )}
 

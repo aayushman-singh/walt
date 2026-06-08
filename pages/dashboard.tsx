@@ -32,6 +32,7 @@ import EmptyState from '../components/dashboard/EmptyState';
 import FileGrid from '../components/dashboard/FileGrid';
 import FileList from '../components/dashboard/FileList';
 import ProgressPanels from '../components/dashboard/ProgressPanels';
+import SharedWithYou from '../components/dashboard/SharedWithYou';
 import DashboardModals from '../components/dashboard/DashboardModals';
 import { useDashboardController } from '../components/dashboard/hooks/useDashboardController';
 
@@ -216,7 +217,15 @@ const Dashboard: NextPage = () => {
           )}
 
           {/* Files Display */}
-          {filesLoading ? (
+          {activeView === 'shared' ? (
+            <SharedWithYou
+              records={shareTags.sharedWithMe}
+              loading={shareTags.sharedWithMeLoading}
+              load={shareTags.loadSharedWithMe}
+              onDownload={shareTags.handleDownloadShared}
+              formatFileSize={formatFileSize}
+            />
+          ) : filesLoading ? (
             viewMode === 'grid' ? (
               <div className={styles.fileGrid}>
                 <SkeletonLoader type="file-card" count={8} />
@@ -289,6 +298,8 @@ const Dashboard: NextPage = () => {
         setShareModalFile={shareTags.setShareModalFile}
         handleCreateShare={shareTags.handleCreateShare}
         handleDisableShare={shareTags.handleDisableShare}
+        handleResolveRecipient={shareTags.handleResolveRecipient}
+        handleShareEncrypted={shareTags.handleShareEncrypted}
         previewModalFile={fileOps.previewModalFile}
         setPreviewModalFile={fileOps.setPreviewModalFile}
         showColumnSettings={showColumnSettings}

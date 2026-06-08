@@ -38,6 +38,27 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create, update, delete: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Encrypted-share inbox. A sender writes one record into the RECIPIENT's
+    // inbox (sharedWithMe/{recipientUid}/items/{shareId}); the recipient reads
+    // their own inbox. The payload is an ECIES envelope — confidentiality comes
+    // from the crypto, not the rules, so a sender writing here learns nothing.
+    //
+    //   - read   : only the inbox owner (the recipient).
+    //   - create : any authenticated user (a sender depositing into an inbox),
+    //              constrained to a well-formed record that names the sender as
+    //              itself (no spoofing `from`) and carries the share envelope.
+    //   - delete : only the inbox owner (recipient can dismiss an item).
+    //   - update : forbidden — records are immutable once deposited.
+    match /sharedWithMe/{userId}/items/{shareId} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.cid is string
+        && request.resource.data.meta is map
+        && request.resource.data.context is string;
+      allow update: if false;
+    }
   }
 }
 
