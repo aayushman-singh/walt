@@ -129,6 +129,13 @@ export const useDashboardController = () => {
             resolve(null);
             return;
           }
+          // Reject weak passphrases: the salt + wrapped key are public, so a
+          // short passphrase is brute-forceable offline despite Argon2id.
+          if (trimmed.length < 8) {
+            showToast('Passphrase must be at least 8 characters', 'error');
+            resolve(null);
+            return;
+          }
           setEncryptionPassphrase(trimmed);
           resolve(trimmed);
         },
@@ -147,6 +154,9 @@ export const useDashboardController = () => {
   const toggleEncryption = async (next: boolean) => {
     if (!next) {
       setEncryptionEnabled(false);
+      // Drop the in-memory passphrase when encryption is turned off, so it is
+      // not retained for the rest of the session.
+      setEncryptionPassphrase(null);
       return;
     }
     if (encryptionPassphrase) {
@@ -166,6 +176,9 @@ export const useDashboardController = () => {
 
   const handleLogout = async () => {
     try {
+      // Clear the encryption passphrase from memory before leaving the session.
+      setEncryptionPassphrase(null);
+      setEncryptionEnabled(false);
       await logout();
       router.push('/');
     } catch (error) {

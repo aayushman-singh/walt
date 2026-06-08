@@ -76,6 +76,25 @@ describe('lib/encryption — AES-256-GCM + Argon2id envelope', () => {
     );
   }, TIMEOUT);
 
+  it('binds metadata into the GCM tag (tampering the header fails decryption)', async () => {
+    const { ciphertext, meta } = await encryptBytes(enc.encode('bind me'), 'pw', {
+      name: 'invoice.pdf',
+      type: 'application/pdf',
+      size: 7,
+    });
+    // A hostile store rewrites the advertised filename. AAD binding must reject it.
+    const tamperedHeader = { ...meta, originalName: 'innocent.txt' };
+    await expect(decryptBytes(ciphertext, tamperedHeader, 'pw')).rejects.toThrow(
+      /tampered|incorrect passphrase/i
+    );
+  }, TIMEOUT);
+
+  it('refuses sub-minimum Argon2 cost params (downgrade guard)', async () => {
+    const { ciphertext, meta } = await encryptBytes(enc.encode('x'), 'pw');
+    const weakened = { ...meta, argonMemoryCost: 1024, argonTimeCost: 1 };
+    await expect(decryptBytes(ciphertext, weakened, 'pw')).rejects.toThrow(/sub-minimum argon2/i);
+  }, TIMEOUT);
+
   it('rejects an unknown format version', async () => {
     const { ciphertext, meta } = await encryptBytes(enc.encode('x'), 'pw');
     const badMeta = { ...meta, v: 999 };

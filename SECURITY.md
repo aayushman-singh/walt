@@ -135,14 +135,47 @@ Client-side, zero-knowledge envelope encryption (`lib/encryption.ts`):
   64 MiB / 3 passes) over a random 16-byte salt to derive a key-encryption key.
 - **Envelope:** a random per-file data key encrypts the bytes; that data key is
   then wrapped under the passphrase-derived key. Only ciphertext, the wrapped key,
-  and the public KDF parameters (salt, IVs, costs) are stored — on IPFS or in the
-  database. None of it is usable without the passphrase.
-- **Zero-knowledge:** the passphrase is held only in memory for the session and is
-  **never** transmitted or persisted. **If you lose your passphrase, encrypted
-  files are unrecoverable** — there is no backdoor or recovery path by design.
-- **Fail-closed:** a wrong passphrase or corrupted ciphertext fails loudly on
-  download (GCM authentication error); there is no silent fallback to returning
-  the raw ciphertext.
+  and the public KDF parameters (salt, IVs, costs) are needed to store an object.
+  None of it is usable without the passphrase.
+- **Tamper-binding (AAD):** the format version, cipher, KDF parameters, and the
+  display-metadata header are bound into the GCM authentication tag as Additional
+  Authenticated Data. A hostile store cannot alter those fields, or swap whole
+  envelopes between records, without decryption failing.
+- **Passphrase secrecy:** the passphrase is held only in memory for the session,
+  is **never** transmitted or persisted, and is cleared on logout or when
+  encryption is toggled off. A minimum length is enforced (the salt + wrapped key
+  are public, so a weak passphrase is brute-forceable offline). **If you lose your
+  passphrase, encrypted files are unrecoverable** — no backdoor by design.
+- **Fail-closed:** a wrong passphrase, tampered header, or corrupted ciphertext
+  fails loudly on download (GCM authentication error); there is no silent fallback
+  to returning the raw ciphertext, and uploads abort rather than silently sending
+  plaintext if encryption is on without a passphrase.
+
+#### What encryption does and does NOT hide
+
+| Protected (confidential + integrity-checked) | NOT hidden (visible metadata) |
+| --- | --- |
+| File **contents** (the bytes) | File **name**, **MIME type**, **size** |
+| | The fact that a file exists, its CID, timestamps, folder |
+
+File contents are fully protected. File **names, types, and sizes are stored as
+metadata in cleartext** so the UI can list files without prompting for the
+passphrase on every page load. If those are themselves sensitive, encrypt them
+into the filename before upload (e.g. upload as a random name). Encrypting the
+display metadata end-to-end is a planned enhancement.
+
+#### Known limitations (roadmap)
+
+- **Metadata confidentiality** — names/types/sizes are not yet encrypted (above).
+- **Downgrade handling** — a record with no encryption metadata is treated as
+  plaintext. A malicious store that *stripped* the metadata from an encrypted
+  record would cause the client to download undecryptable ciphertext (a denial of
+  service / UX failure, not a plaintext disclosure). A signed per-record format
+  version is planned to make this fail explicitly.
+- **Upload atomicity** — ciphertext upload and metadata persistence are not a
+  single transaction; if the bytes upload but the metadata save fails, the object
+  is unrecoverable. Transactional persistence is planned.
+
 - **Scope / migration:** encryption is **opt-in per upload session**. Files
   uploaded while the toggle was off remain plaintext on IPFS; to protect an
   existing file, re-upload it with encryption enabled. Bulk re-encryption of an

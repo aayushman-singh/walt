@@ -29,6 +29,15 @@ const ARGON_TIME_COST = 3;
 const ARGON_MEMORY_COST_KIB = 64 * 1024; // 64 MiB
 const ARGON_PARALLELISM = 1;
 
+/**
+ * Minimum acceptable KDF cost on DECRYPT. A hostile party that controls the
+ * stored metadata could otherwise set trivial Argon2 params and try to weaken a
+ * future re-derivation; we refuse to derive a key with cost below these floors.
+ */
+const ARGON_MIN_TIME_COST = 2;
+const ARGON_MIN_MEMORY_COST_KIB = 16 * 1024; // 16 MiB
+const ARGON_MIN_PARALLELISM = 1;
+
 const SALT_BYTES = 16;
 const IV_BYTES = 12; // 96-bit nonce, recommended for AES-GCM
 const DEK_BYTES = 32; // AES-256
@@ -87,18 +96,41 @@ export function fromBase64(b64: string): Uint8Array {
   return new Uint8Array(Buffer.from(b64, 'base64'));
 }
 
+interface ArgonParams {
+  timeCost: number;
+  memoryCost: number; // KiB
+  parallelism: number;
+}
+
 /** Derive the key-encryption key from a passphrase via Argon2id. */
-async function deriveKEK(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveKEK(passphrase: string, salt: Uint8Array, params: ArgonParams): Promise<CryptoKey> {
   const raw = await argon2id({
     password: passphrase,
     salt,
-    iterations: ARGON_TIME_COST,
-    memorySize: ARGON_MEMORY_COST_KIB,
-    parallelism: ARGON_PARALLELISM,
+    iterations: params.timeCost,
+    memorySize: params.memoryCost,
+    parallelism: params.parallelism,
     hashLength: DEK_BYTES,
     outputType: 'binary',
   });
   return getSubtle().importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+
+/**
+ * Additional Authenticated Data for the AES-GCM operations. Binding the format
+ * version, cipher, KDF params and display metadata into the GCM tag means a
+ * hostile store cannot tamper with any of those fields (or swap whole envelopes
+ * between records) without the authentication check failing on decrypt.
+ */
+function buildAAD(meta: Pick<EncryptionMeta,
+  'v' | 'alg' | 'kdf' | 'salt' | 'argonTimeCost' | 'argonMemoryCost' | 'argonParallelism'
+  | 'originalName' | 'originalType' | 'originalSize'>): Uint8Array {
+  const canonical = JSON.stringify([
+    meta.v, meta.alg, meta.kdf, meta.salt,
+    meta.argonTimeCost, meta.argonMemoryCost, meta.argonParallelism,
+    meta.originalName ?? null, meta.originalType ?? null, meta.originalSize ?? null,
+  ]);
+  return new TextEncoder().encode(canonical);
 }
 
 /**
@@ -114,36 +146,48 @@ export async function encryptBytes(
   const subtle = getSubtle();
 
   const salt = randomBytes(SALT_BYTES);
-  const kek = await deriveKEK(passphrase, salt);
+  const kek = await deriveKEK(passphrase, salt, {
+    timeCost: ARGON_TIME_COST,
+    memoryCost: ARGON_MEMORY_COST_KIB,
+    parallelism: ARGON_PARALLELISM,
+  });
 
-  // Random per-file DEK encrypts the actual content.
-  const dek = await subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
-  const iv = randomBytes(IV_BYTES);
-  const ciphertext = new Uint8Array(
-    await subtle.encrypt({ name: 'AES-GCM', iv }, dek, data as unknown as BufferSource)
-  );
-
-  // Wrap (encrypt) the DEK under the passphrase-derived KEK.
-  const rawDek = new Uint8Array(await subtle.exportKey('raw', dek));
-  const wrapIv = randomBytes(IV_BYTES);
-  const wrappedKey = new Uint8Array(
-    await subtle.encrypt({ name: 'AES-GCM', iv: wrapIv }, kek, rawDek as unknown as BufferSource)
-  );
-
-  const meta: EncryptionMeta = {
+  // The authenticated (but unencrypted) header. Computed before encryption so it
+  // can be bound into both GCM tags as AAD.
+  const header = {
     v: ENCRYPTION_VERSION,
-    alg: 'AES-GCM',
-    kdf: 'argon2id',
+    alg: 'AES-GCM' as const,
+    kdf: 'argon2id' as const,
     salt: toBase64(salt),
     argonTimeCost: ARGON_TIME_COST,
     argonMemoryCost: ARGON_MEMORY_COST_KIB,
     argonParallelism: ARGON_PARALLELISM,
-    iv: toBase64(iv),
-    wrapIv: toBase64(wrapIv),
-    wrappedKey: toBase64(wrappedKey),
     originalName: fileInfo?.name,
     originalType: fileInfo?.type,
     originalSize: fileInfo?.size,
+  };
+  const aad = buildAAD(header);
+
+  // Random per-file DEK encrypts the actual content (content bound to the header).
+  const dek = await subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  const iv = randomBytes(IV_BYTES);
+  const ciphertext = new Uint8Array(
+    await subtle.encrypt({ name: 'AES-GCM', iv, additionalData: aad as unknown as BufferSource }, dek, data as unknown as BufferSource)
+  );
+
+  // Wrap (encrypt) the DEK under the passphrase-derived KEK (also header-bound).
+  const rawDek = new Uint8Array(await subtle.exportKey('raw', dek));
+  const wrapIv = randomBytes(IV_BYTES);
+  const wrappedKey = new Uint8Array(
+    await subtle.encrypt({ name: 'AES-GCM', iv: wrapIv, additionalData: aad as unknown as BufferSource }, kek, rawDek as unknown as BufferSource)
+  );
+  rawDek.fill(0); // best-effort: don't leave the raw DEK lingering
+
+  const meta: EncryptionMeta = {
+    ...header,
+    iv: toBase64(iv),
+    wrapIv: toBase64(wrapIv),
+    wrappedKey: toBase64(wrappedKey),
   };
 
   return { ciphertext, meta };
@@ -162,19 +206,36 @@ export async function decryptBytes(
   if (meta.v !== ENCRYPTION_VERSION) {
     throw new Error(`Unsupported encryption format version: ${meta.v}`);
   }
+  if (meta.alg !== 'AES-GCM' || meta.kdf !== 'argon2id') {
+    throw new Error(`Unsupported cipher/KDF: ${meta.alg}/${meta.kdf}`);
+  }
+  // Refuse cost params below the floor (tamper / downgrade guard).
+  if (
+    !(meta.argonTimeCost >= ARGON_MIN_TIME_COST) ||
+    !(meta.argonMemoryCost >= ARGON_MIN_MEMORY_COST_KIB) ||
+    !(meta.argonParallelism >= ARGON_MIN_PARALLELISM)
+  ) {
+    throw new Error('Refusing to derive a key with sub-minimum Argon2 parameters');
+  }
+
   const subtle = getSubtle();
-  const kek = await deriveKEK(passphrase, fromBase64(meta.salt));
+  const kek = await deriveKEK(passphrase, fromBase64(meta.salt), {
+    timeCost: meta.argonTimeCost,
+    memoryCost: meta.argonMemoryCost,
+    parallelism: meta.argonParallelism,
+  });
+  const aad = buildAAD(meta);
 
   let rawDek: ArrayBuffer;
   try {
     rawDek = await subtle.decrypt(
-      { name: 'AES-GCM', iv: fromBase64(meta.wrapIv) },
+      { name: 'AES-GCM', iv: fromBase64(meta.wrapIv), additionalData: aad as unknown as BufferSource },
       kek,
       fromBase64(meta.wrappedKey) as unknown as BufferSource
     );
-  } catch {
-    // GCM auth tag mismatch on the wrapped key == wrong passphrase.
-    throw new Error('Incorrect passphrase (could not unwrap the file key)');
+  } catch (cause) {
+    // GCM auth failure here == wrong passphrase OR a tampered header (AAD mismatch).
+    throw new Error('Incorrect passphrase or tampered metadata (could not unwrap the file key)', { cause });
   }
 
   const dek = await subtle.importKey('raw', rawDek, { name: 'AES-GCM' }, false, ['decrypt']);
@@ -182,12 +243,12 @@ export async function decryptBytes(
   let plain: ArrayBuffer;
   try {
     plain = await subtle.decrypt(
-      { name: 'AES-GCM', iv: fromBase64(meta.iv) },
+      { name: 'AES-GCM', iv: fromBase64(meta.iv), additionalData: aad as unknown as BufferSource },
       dek,
       ciphertext as unknown as BufferSource
     );
-  } catch {
-    throw new Error('Decryption failed — the ciphertext is corrupted or truncated');
+  } catch (cause) {
+    throw new Error('Decryption failed — the ciphertext is corrupted, truncated, or tampered', { cause });
   }
 
   return new Uint8Array(plain);

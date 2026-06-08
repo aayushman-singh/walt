@@ -38,6 +38,9 @@ storage.rules
 google-services.json
 /dist
 backend/walt-b9f64-firebase-adminsdk-fbsvc-bb845e35c5.json
+# any Firebase service-account key, anywhere
+*firebase-adminsdk*.json
+**/serviceAccountKey.json
 /setup
 /backend/node_modules
 .env
