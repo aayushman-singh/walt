@@ -32,9 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved billing calculations for sustainability
 
 ### Documentation
-- Added `PRICING_MIGRATION_SUMMARY.md`
-- Updated `PAYMENT_INTEGRATION.md` with new pricing
-- Updated `BILLING_MODAL_REQUIREMENTS.md`
+- Documented the GB-based pricing migration (from fictional Pinata costs to
+  real self-hosted pricing) inline in this changelog
+- Documented billing integration and the billing-modal behaviour in
+  [`docs/PAYMENT_INTEGRATION.md`](docs/PAYMENT_INTEGRATION.md)
 
 ## [0.9.0] - Earlier
 

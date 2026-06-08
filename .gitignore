@@ -42,3 +42,11 @@ backend/walt-b9f64-firebase-adminsdk-fbsvc-bb845e35c5.json
 /backend/node_modules
 .env
 backend/.env
+
+# orchestration / session artifacts (local-only, not product)
+HANDOFF.md
+STATE.md
+DECISIONS.md
+SESSION_SUMMARY.md
+orchestrator.log
+/codex/

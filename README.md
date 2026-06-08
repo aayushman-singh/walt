@@ -5,7 +5,7 @@ Self-hostable IPFS storage with versioning, pinning, password-shared links, and 
 <div align="center">
 
 [![Live](https://img.shields.io/badge/Live-walt.aayushman.dev-1f6feb?style=flat)](https://walt.aayushman.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-c8693d?style=flat)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-c8693d?style=flat)](LICENSE.md)
 [![Self-Hostable](https://img.shields.io/badge/self--hostable-yes-3a8a5f?style=flat)](#self-hosting)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat)](https://nextjs.org/)
 [![IPFS](https://img.shields.io/badge/IPFS-Enabled-blue?style=flat)](https://ipfs.tech/)
@@ -156,7 +156,9 @@ Self-host = no usage limits, full control, your IPFS node, your data.
 - [Self-Hosting Guide](SELF_HOSTING.md)
 - [Contributing Guide](CONTRIBUTING.md)
 - [Security Policy](SECURITY.md)
-- [Billing Integration](PAYMENT_INTEGRATION.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Billing Integration](docs/PAYMENT_INTEGRATION.md)
+- [Self-Hosting Runbook](RUNBOOK.md)
 
 ## Contributing
 

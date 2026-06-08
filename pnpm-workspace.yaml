@@ -1,0 +1,18 @@
+# pnpm workspace.
+# Frontend lives at the repo root; the Express backend is a separate deployable
+# member. One tool (pnpm), one lockfile (pnpm-lock.yaml) covers both packages.
+#
+# Note: the backend's native dep (better-sqlite3) is built only where it is
+# deployed (Linux/Docker — see RUNBOOK.md). On a Windows dev host, install the
+# frontend with `pnpm install --filter walt` to skip the native backend build.
+packages:
+  - 'backend'
+
+# Build scripts are opt-in under pnpm v10+. These are the only packages allowed
+# to run install/build scripts.
+onlyBuiltDependencies:
+  - '@firebase/util'
+  - '@tsparticles/engine'
+  - protobufjs
+  - sharp
+  - better-sqlite3
