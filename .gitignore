@@ -57,6 +57,5 @@ backend/.env
 /STATE.md
 /DECISIONS.md
 /SESSION_SUMMARY.md
-/orchestrator.log
-/orchestrator_resume.log
+/orchestrator*.log
 /codex/
