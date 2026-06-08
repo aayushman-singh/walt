@@ -55,9 +55,11 @@ backend/.env
 # anchored to repo root so they never shadow real docs deeper in the tree
 /HANDOFF.md
 /HANDOFF_V2.md
+/HANDOFF_V3.md
 /STATE.md
 /DECISIONS.md
 /SESSION_SUMMARY.md
 /SESSION_SUMMARY_V2.md
+/SESSION_SUMMARY_V3.md
 /orchestrator*.log
 /codex/
