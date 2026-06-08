@@ -1,0 +1,12 @@
+# Keep the build context small and never bake secrets/state into the image.
+node_modules
+.env
+.env.*
+data
+*.db
+*.db-wal
+*.db-shm
+# Never copy a Firebase service-account JSON into the image.
+*firebase-adminsdk*.json
+walt-backend.service
+test-billing.js

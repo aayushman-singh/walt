@@ -1,0 +1,106 @@
+# Walt self-hosting: one-command backend + IPFS node.
+#
+#   docker compose up -d
+#
+# This brings up the Express backend and a Kubo IPFS node. The Next.js FRONTEND is
+# already hosted on Vercel (walt.aayushman.dev) and is NOT part of this stack — only
+# the backend needs self-hosting. See RUNBOOK.md for the full operator guide.
+#
+# Before first run:
+#   1. cp backend/.env.example backend/.env   and fill in real values
+#   2. provide Firebase Admin credentials (see RUNBOOK.md "Templated secrets")
+# NO real secrets live in this file. All sensitive values come from backend/.env.
+
+services:
+  # ---- Kubo IPFS node ----
+  # Holds the actual content + pinset. The backend reaches it by the service name
+  # "ipfs" over the Docker network (see IPFS_API_URL in backend/.env.example).
+  ipfs:
+    image: ipfs/kubo:latest
+    container_name: walt-ipfs
+    restart: unless-stopped
+    environment:
+      # "server" profile disables local-network peer discovery — correct for a
+      # cloud/VPS host so it does not spam private address ranges.
+      - IPFS_PROFILE=server
+    ports:
+      # SECURITY: the API port (5001) is full admin control of the node. It is
+      # intentionally NOT published to the host — only the backend on the internal
+      # Docker network can reach it. Do NOT add "5001:5001" here; that would expose
+      # node admin to anything that can reach the host. See RUNBOOK.md security notes.
+      #
+      # Gateway (read-only HTTP retrieval of content). Bound to loopback so it is
+      # not world-exposed; front it with your reverse proxy / TLS if you serve it.
+      - "127.0.0.1:8080:8080"
+      # Swarm (p2p). Must be reachable by peers for content to propagate, so it is
+      # published on all interfaces.
+      - "4001:4001"
+      - "4001:4001/udp"
+    volumes:
+      # Named volume = the Kubo repo. Pins and blocks PERSIST across restarts here.
+      - ipfs_data:/data/ipfs
+    healthcheck:
+      # Node is healthy once its API answers. Used by backend depends_on below.
+      test: ["CMD", "ipfs", "id"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  # ---- Walt backend (Express, Node 20) ----
+  backend:
+    build:
+      # Build context is the backend dir so the Dockerfile sees package.json + source.
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: walt-backend
+    restart: unless-stopped
+    depends_on:
+      ipfs:
+        condition: service_healthy
+    # All runtime config (Firebase creds, Cashfree, URLs, etc.) comes from here.
+    # required: false so `docker compose config`/`up` does not error before you have
+    # created the file. If it is missing the app still starts but fails LOUD on the
+    # first authenticated request (503) because Firebase creds are absent — by design.
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      # Override IPFS target so it points at the compose service, not 127.0.0.1.
+      # Set here (not only in .env) so the wiring is correct even if .env omits it.
+      - IPFS_API_URL=http://ipfs:5001
+      # DATABASE_URL is read with the "sqlite://" prefix stripped (see backend/db.js).
+      # Force it onto the mounted volume so the SQLite file persists. (sqlite:// + an
+      # absolute /data/... path => the app opens /data/ipfs-drive.db.)
+      - DATABASE_URL=sqlite:///data/ipfs-drive.db
+      - PORT=3001
+      - NODE_ENV=production
+    ports:
+      # Backend HTTP API. Bound to loopback by default — put your TLS reverse proxy
+      # (nginx/Caddy) in front and point it here. To expose directly (not advised
+      # without TLS), change to "3001:3001".
+      - "127.0.0.1:3001:3001"
+    volumes:
+      # Persistent SQLite storage. db.js opens /data/ipfs-drive.db (per DATABASE_URL
+      # above); WAL mode also writes .db-wal and .db-shm into this same dir.
+      - backend_data:/data
+      # OPTIONAL Firebase service-account JSON, mounted read-only.
+      # NOTE: backend/middleware/auth.js does NOT load a credential FILE. It reads
+      # either FIREBASE_SERVICE_ACCOUNT (inline JSON) or the
+      # FIREBASE_PROJECT_ID/CLIENT_EMAIL/PRIVATE_KEY trio — both from env (.env).
+      # This mount is therefore commented out by default. Only useful if YOU populate
+      # FIREBASE_SERVICE_ACCOUNT from the file contents yourself. See RUNBOOK.md.
+      # - ./backend/firebase-service-account.json:/run/secrets/firebase.json:ro
+    healthcheck:
+      # Real health endpoint from server.js: GET /health -> {"status":"ok",...}
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  # Kubo repo (content + pinset). Back this up to preserve pinned data.
+  ipfs_data:
+  # SQLite database dir (users, files, folders, billing, shares). Back this up.
+  backend_data:
