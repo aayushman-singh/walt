@@ -3,6 +3,7 @@ import { Cashfree, CFEnvironment } from "cashfree-pg";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import logger from "./logger.js";
 
 // Ensure .env in backend/ is loaded before we read credentials (server imports this
 // module before calling dotenv.config in server.js)
@@ -40,10 +41,15 @@ const masked = (v) => {
   if (v.length <= 8) return `${v[0]}***${v.slice(-1)}`;
   return `${v.slice(0, 4)}***${v.slice(-4)}`;
 };
-console.log("[Cashfree] Environment:", environment === CFEnvironment.PRODUCTION ? "PRODUCTION" : "SANDBOX");
-console.log("[Cashfree] Using test creds:", useTestCreds);
-console.log("[Cashfree] X_CLIENT_ID:", masked(xClientId));
-console.log("[Cashfree] X_CLIENT_SECRET:", masked(xClientSecret));
+logger.info(
+  {
+    environment: environment === CFEnvironment.PRODUCTION ? "PRODUCTION" : "SANDBOX",
+    useTestCreds,
+    xClientId: masked(xClientId),
+    xClientSecret: masked(xClientSecret),
+  },
+  "[Cashfree] credentials loaded"
+);
 
 // Get API version (use current date in YYYY-MM-DD format)
 // Use a stable, supported API version (per Cashfree PG docs)
@@ -103,7 +109,7 @@ export async function createOrder(userId, orderAmount, orderCurrency = "INR", cu
         customer_phone: maskPhone(request.customer_details.customer_phone)
       }
     };
-    console.log("[Cashfree] createOrder request:", JSON.stringify(maskedRequest));
+    logger.info({ request: maskedRequest }, "[Cashfree] createOrder request");
 
     const response = await cashfree.PGCreateOrder(request);
     
@@ -117,10 +123,7 @@ export async function createOrder(userId, orderAmount, orderCurrency = "INR", cu
     };
   } catch (error) {
     const respData = error.response?.data;
-    console.error('Cashfree create order error:', error.message || error);
-    if (respData) {
-      console.error('Cashfree response data:', JSON.stringify(respData, null, 2));
-    }
+    logger.error({ err: error, responseData: respData }, 'Cashfree create order error');
     return {
       success: false,
       error: error.response?.data?.message || error.message || 'Failed to create order'
@@ -140,7 +143,7 @@ export async function fetchOrder(orderId) {
       data: response.data
     };
   } catch (error) {
-    console.error('Cashfree fetch order error:', error);
+    logger.error({ err: error }, 'Cashfree fetch order error');
     return {
       success: false,
       error: error.response?.data?.message || error.message || 'Failed to fetch order'
@@ -156,7 +159,7 @@ export function verifyWebhookSignature(signature, rawBody, timestamp) {
     cashfree.PGVerifyWebhookSignature(signature, rawBody, timestamp);
     return { success: true };
   } catch (error) {
-    console.error('Webhook verification error:', error);
+    logger.error({ err: error }, 'Webhook verification error');
     return {
       success: false,
       error: error.message || 'Webhook verification failed'
