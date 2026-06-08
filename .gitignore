@@ -54,8 +54,10 @@ backend/.env
 # orchestration / session artifacts (local-only, not product)
 # anchored to repo root so they never shadow real docs deeper in the tree
 /HANDOFF.md
+/HANDOFF_V2.md
 /STATE.md
 /DECISIONS.md
 /SESSION_SUMMARY.md
+/SESSION_SUMMARY_V2.md
 /orchestrator*.log
 /codex/
