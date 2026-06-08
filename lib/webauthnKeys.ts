@@ -159,7 +159,7 @@ export async function registerPasskey({ userId, userName, displayName, rpName = 
         { type: 'public-key', alg: -7 }, // ES256
         { type: 'public-key', alg: -257 }, // RS256
       ],
-      authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },
+      authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' },
       timeout: 60_000,
       extensions: { prf: { eval: { first: PRF_SALT } } } as AuthenticationExtensionsClientInputs,
     },
@@ -184,13 +184,18 @@ export async function derivePasskeyKey(credentialId: string): Promise<CryptoKey>
     publicKey: {
       challenge: randomBytes(32),
       allowCredentials: [{ type: 'public-key', id: fromBase64Url(credentialId) }],
-      userVerification: 'preferred',
+      userVerification: 'required',
       timeout: 60_000,
       extensions: { prf: { eval: { first: PRF_SALT } } } as AuthenticationExtensionsClientInputs,
     },
   })) as PublicKeyCredential | null;
 
   if (!assertion) throw new Error('Passkey authentication was cancelled');
+  // Security-critical: confirm the authenticator answered with the credential we
+  // asked for before trusting its PRF output to derive a key.
+  if (toBase64Url(new Uint8Array(assertion.rawId)) !== credentialId) {
+    throw new Error('Passkey assertion returned an unexpected credential');
+  }
   const ext = assertion.getClientExtensionResults() as any;
   const prfFirst: ArrayBuffer | undefined = ext?.prf?.results?.first;
   if (!prfFirst) {

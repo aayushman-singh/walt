@@ -33,10 +33,16 @@ service cloud.firestore {
 
     // Public-key directory for cryptographic sharing. Any signed-in user may READ
     // another user's published ECDH public identity (it is public by design), but
-    // only the owner may write their own entry. Contains no secret material.
+    // only the owner may write their own entry. CRITICAL: the email→key binding is
+    // the root of trust for "share by email", so `emailLower` may only be set to
+    // the writer's OWN authenticated token email — otherwise an attacker could
+    // claim a victim's email and have shares encrypted to the attacker's key.
     match /publicKeys/{userId} {
       allow read: if request.auth != null;
-      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.emailLower == request.auth.token.email;
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
     // Encrypted-share inbox. A sender writes one record into the RECIPIENT's
@@ -54,6 +60,9 @@ service cloud.firestore {
       allow read, delete: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null
         && request.resource.data.from == request.auth.uid
+        // Bind the displayed sender email to the authenticated identity so a
+        // malicious sender cannot forge `fromEmail` to look like a trusted user.
+        && request.resource.data.fromEmail == request.auth.token.email
         && request.resource.data.cid is string
         && request.resource.data.meta is map
         && request.resource.data.context is string;
