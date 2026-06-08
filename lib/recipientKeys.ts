@@ -90,7 +90,12 @@ export async function importPrivateKeyEncrypted(
     throw new Error(`Unsupported encrypted private key: v${stored.v}/${stored.alg}`);
   }
   const pkcs8 = await decryptBytes(fromBase64(stored.ciphertext), stored.meta, passphrase);
-  return getSubtle().importKey('pkcs8', pkcs8, EC_PARAMS, true, ['deriveBits']);
+  // Import NON-extractable: the unlocked long-term private key is only ever used
+  // for ECDH deriveBits, never re-exported, so a later XSS/extension cannot pull
+  // it back out of the CryptoKey.
+  const key = await getSubtle().importKey('pkcs8', pkcs8, EC_PARAMS, false, ['deriveBits']);
+  pkcs8.fill(0);
+  return key;
 }
 
 /** Convenience: a fresh identity ready to publish + store. */

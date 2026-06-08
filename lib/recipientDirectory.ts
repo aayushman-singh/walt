@@ -2,28 +2,35 @@
  * Recipient directory — the public-key registry that makes cryptographic sharing
  * usable across users.
  *
- * Each user's ECDH PUBLIC identity (safe to expose) is published to their
- * Firestore user document under `publicIdentity`, keyed by email for lookup. The
- * encrypted PRIVATE key (passphrase-protected; see lib/recipientKeys) lives under
- * `encryptedIdentityKey` on the same doc — the server stores only ciphertext.
+ * Three distinct trust zones, deliberately separated (Firestore rules are
+ * document-level, so confidentiality must be enforced by WHERE data lives):
+ *   - `publicKeys/{uid}`            — PUBLIC: {emailLower, publicIdentity}.
+ *                                     Readable by any authenticated user (the
+ *                                     directory). Contains nothing secret.
+ *   - `users/{uid}`                 — OWNER-ONLY: file-list pointer, prefs, etc.
+ *                                     Never exposed to other users.
+ *   - `users/{uid}/secrets/identityKey` — OWNER-ONLY: the passphrase-encrypted
+ *                                     private key. Kept out of the directory so a
+ *                                     peer's lookup can never hand them an
+ *                                     offline cracking target.
  *
  * No fallbacks: a lookup miss returns null and the caller must decide; we never
  * silently substitute a different key (that would be a confused-deputy hole).
+ *
+ * TRUST NOTE: this directory is trust-on-first-use. It binds an email→public-key
+ * mapping that the server (Firestore) asserts; a malicious directory could serve
+ * an attacker's key (see DECISIONS #11). Out-of-band fingerprint verification is
+ * the planned mitigation; until then the guarantee is "no PASSIVE server read",
+ * not "defeats an actively malicious directory".
  */
-import {
-  doc,
-  getDoc,
-  setDoc,
-  collection,
-  query,
-  where,
-  limit,
-  getDocs,
-} from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import type { PublicIdentity, EncryptedPrivateKey } from './recipientKeys';
 
-/** Publish the current user's identity (public id + encrypted private key) to their doc. */
+const publicKeyDoc = (uid: string) => doc(db, 'publicKeys', uid);
+const secretKeyDoc = (uid: string) => doc(db, 'users', uid, 'secrets', 'identityKey');
+
+/** Publish the user's PUBLIC identity to the directory + store their encrypted private key owner-only. */
 export async function publishIdentity(
   uid: string,
   email: string,
@@ -32,15 +39,11 @@ export async function publishIdentity(
 ): Promise<void> {
   if (!uid) throw new Error('uid is required to publish an identity');
   await setDoc(
-    doc(db, 'users', uid),
-    {
-      // lower-cased for case-insensitive lookup by email
-      emailLower: (email || '').toLowerCase() || null,
-      publicIdentity,
-      encryptedIdentityKey,
-    },
+    publicKeyDoc(uid),
+    { uid, emailLower: (email || '').trim().toLowerCase() || null, publicIdentity },
     { merge: true }
   );
+  await setDoc(secretKeyDoc(uid), { encryptedIdentityKey }, { merge: true });
 }
 
 /** Load the current user's stored identity material, if any. */
@@ -49,18 +52,18 @@ export async function loadOwnIdentity(uid: string): Promise<{
   encryptedIdentityKey: EncryptedPrivateKey | null;
 }> {
   if (!uid) throw new Error('uid is required');
-  const snap = await getDoc(doc(db, 'users', uid));
-  const data = snap.exists() ? snap.data() : null;
+  const [pubSnap, secretSnap] = await Promise.all([getDoc(publicKeyDoc(uid)), getDoc(secretKeyDoc(uid))]);
   return {
-    publicIdentity: (data?.publicIdentity as PublicIdentity) ?? null,
-    encryptedIdentityKey: (data?.encryptedIdentityKey as EncryptedPrivateKey) ?? null,
+    publicIdentity: (pubSnap.exists() ? (pubSnap.data()?.publicIdentity as PublicIdentity) : null) ?? null,
+    encryptedIdentityKey:
+      (secretSnap.exists() ? (secretSnap.data()?.encryptedIdentityKey as EncryptedPrivateKey) : null) ?? null,
   };
 }
 
 /** Look up another user's PUBLIC identity by uid. Returns null if they have none. */
 export async function lookupPublicIdentityByUid(uid: string): Promise<PublicIdentity | null> {
   if (!uid) throw new Error('uid is required');
-  const snap = await getDoc(doc(db, 'users', uid));
+  const snap = await getDoc(publicKeyDoc(uid));
   return (snap.exists() ? (snap.data()?.publicIdentity as PublicIdentity) : null) ?? null;
 }
 
@@ -69,10 +72,12 @@ export async function lookupPublicIdentityByUid(uid: string): Promise<PublicIden
  * that email has published an identity (the caller must surface that — there is
  * no fallback to an unverified key).
  */
-export async function lookupPublicIdentityByEmail(email: string): Promise<{ uid: string; publicIdentity: PublicIdentity } | null> {
+export async function lookupPublicIdentityByEmail(
+  email: string
+): Promise<{ uid: string; publicIdentity: PublicIdentity } | null> {
   const emailLower = (email || '').trim().toLowerCase();
   if (!emailLower) throw new Error('email is required');
-  const q = query(collection(db, 'users'), where('emailLower', '==', emailLower), limit(1));
+  const q = query(collection(db, 'publicKeys'), where('emailLower', '==', emailLower), limit(1));
   const results = await getDocs(q);
   if (results.empty) return null;
   const docSnap = results.docs[0];

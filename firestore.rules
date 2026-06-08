@@ -22,6 +22,21 @@ service cloud.firestore {
       match /fileVersions/{versionId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Owner-only secrets (e.g. the passphrase-encrypted identity private key).
+      // Never readable by other users — kept out of the public directory so a
+      // peer lookup cannot obtain an offline passphrase-cracking target.
+      match /secrets/{secretId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Public-key directory for cryptographic sharing. Any signed-in user may READ
+    // another user's published ECDH public identity (it is public by design), but
+    // only the owner may write their own entry. Contains no secret material.
+    match /publicKeys/{userId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

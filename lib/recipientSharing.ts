@@ -62,9 +62,25 @@ function randomBytes(n: number): Uint8Array {
   return c.getRandomValues(new Uint8Array(n));
 }
 
-/** AAD binding the wrap's public parameters so epk/salt cannot be swapped. */
-function wrapAAD(recipientId: string, epk: string, salt: string): Uint8Array {
-  return new TextEncoder().encode(JSON.stringify([SHARE_VERSION, 'ECDH-P256+HKDF-SHA256', recipientId, epk, salt]));
+/**
+ * AAD binding the wrap's public parameters so epk/salt/recipientId can't be
+ * swapped, plus a caller-supplied `context` (e.g. the file id / record id) so a
+ * valid wrap for recipient R cannot be replayed onto a DIFFERENT record for R.
+ */
+function wrapAAD(recipientId: string, epk: string, salt: string, context: string): Uint8Array {
+  return new TextEncoder().encode(
+    JSON.stringify([SHARE_VERSION, 'ECDH-P256+HKDF-SHA256', recipientId, epk, salt, context])
+  );
+}
+
+/** Content AAD: stable header + context, but NOT the recipient list. */
+function contentAAD(
+  m: Pick<SharedEncryptionMeta, 'v' | 'alg' | 'recipientAlg' | 'fileIv' | 'originalName' | 'originalType' | 'originalSize'>,
+  context: string
+): Uint8Array {
+  return new TextEncoder().encode(
+    JSON.stringify([m.v, m.alg, m.recipientAlg, m.fileIv, m.originalName ?? null, m.originalType ?? null, m.originalSize ?? null, context])
+  );
 }
 
 /** Derive the one-shot AES-GCM key for a wrap from an ECDH shared secret. */
@@ -81,7 +97,11 @@ async function deriveWrapKey(secret: ArrayBuffer, salt: Uint8Array, usage: KeyUs
 }
 
 /** Wrap a raw DEK to a single recipient public key (ECIES). */
-export async function wrapKeyForRecipient(rawDek: Uint8Array, recipient: RecipientPublicKey): Promise<RecipientWrap> {
+export async function wrapKeyForRecipient(
+  rawDek: Uint8Array,
+  recipient: RecipientPublicKey,
+  context = ''
+): Promise<RecipientWrap> {
   const subtle = getSubtle();
   const ephemeral = await subtle.generateKey(EC_PARAMS, true, ['deriveBits']);
   const secret = await subtle.deriveBits({ name: 'ECDH', public: recipient.publicKey }, ephemeral.privateKey, 256);
@@ -91,7 +111,7 @@ export async function wrapKeyForRecipient(rawDek: Uint8Array, recipient: Recipie
   const epk = toBase64(epkRaw);
   const saltB64 = toBase64(salt);
   const key = await deriveWrapKey(secret, salt, 'encrypt');
-  const aad = wrapAAD(recipient.id, epk, saltB64);
+  const aad = wrapAAD(recipient.id, epk, saltB64, context);
   const wrapped = new Uint8Array(
     await subtle.encrypt({ name: 'AES-GCM', iv, additionalData: aad as unknown as BufferSource }, key, rawDek as unknown as BufferSource)
   );
@@ -99,12 +119,16 @@ export async function wrapKeyForRecipient(rawDek: Uint8Array, recipient: Recipie
 }
 
 /** Unwrap a DEK as the holder of the recipient private key. */
-export async function unwrapKeyForRecipient(wrap: RecipientWrap, recipientPrivateKey: CryptoKey): Promise<Uint8Array> {
+export async function unwrapKeyForRecipient(
+  wrap: RecipientWrap,
+  recipientPrivateKey: CryptoKey,
+  context = ''
+): Promise<Uint8Array> {
   const subtle = getSubtle();
   const epk = await subtle.importKey('raw', fromBase64(wrap.epk), EC_PARAMS, true, []);
   const secret = await subtle.deriveBits({ name: 'ECDH', public: epk }, recipientPrivateKey, 256);
   const key = await deriveWrapKey(secret, fromBase64(wrap.salt), 'decrypt');
-  const aad = wrapAAD(wrap.recipientId, wrap.epk, wrap.salt);
+  const aad = wrapAAD(wrap.recipientId, wrap.epk, wrap.salt, context);
   try {
     const raw = await subtle.decrypt(
       { name: 'AES-GCM', iv: fromBase64(wrap.iv), additionalData: aad as unknown as BufferSource },
@@ -121,7 +145,8 @@ export async function unwrapKeyForRecipient(wrap: RecipientWrap, recipientPrivat
 export async function encryptForRecipients(
   data: Uint8Array,
   recipients: RecipientPublicKey[],
-  fileInfo?: { name?: string; type?: string; size?: number }
+  fileInfo?: { name?: string; type?: string; size?: number },
+  context = ''
 ): Promise<{ ciphertext: Uint8Array; meta: SharedEncryptionMeta }> {
   if (recipients.length === 0) throw new Error('At least one recipient is required');
   const subtle = getSubtle();
@@ -137,47 +162,46 @@ export async function encryptForRecipients(
     originalType: fileInfo?.type,
     originalSize: fileInfo?.size,
   };
-  // Content AAD binds the stable header but NOT the recipient list, so adding or
-  // removing a recipient never invalidates the ciphertext.
-  const contentAAD = new TextEncoder().encode(
-    JSON.stringify([header.v, header.alg, header.recipientAlg, header.fileIv, header.originalName ?? null, header.originalType ?? null, header.originalSize ?? null])
-  );
+  // Content AAD binds the stable header + caller context, but NOT the recipient
+  // list, so adding or removing a recipient never invalidates the ciphertext.
+  const aad = contentAAD(header, context);
   const ciphertext = new Uint8Array(
-    await subtle.encrypt({ name: 'AES-GCM', iv: fileIv, additionalData: contentAAD as unknown as BufferSource }, dek, data as unknown as BufferSource)
+    await subtle.encrypt({ name: 'AES-GCM', iv: fileIv, additionalData: aad as unknown as BufferSource }, dek, data as unknown as BufferSource)
   );
 
   const rawDek = new Uint8Array(await subtle.exportKey('raw', dek));
   const wraps: RecipientWrap[] = [];
-  for (const r of recipients) wraps.push(await wrapKeyForRecipient(rawDek, r));
-  rawDek.fill(0);
+  try {
+    for (const r of recipients) wraps.push(await wrapKeyForRecipient(rawDek, r, context));
+  } finally {
+    rawDek.fill(0);
+  }
 
   return { ciphertext, meta: { ...header, recipients: wraps } };
 }
 
-function contentAADFromMeta(meta: SharedEncryptionMeta): Uint8Array {
-  return new TextEncoder().encode(
-    JSON.stringify([meta.v, meta.alg, meta.recipientAlg, meta.fileIv, meta.originalName ?? null, meta.originalType ?? null, meta.originalSize ?? null])
-  );
-}
-
-/** Decrypt a shared file as a given recipient. */
+/** Decrypt a shared file as a given recipient. `context` MUST match encryption. */
 export async function decryptForRecipient(
   ciphertext: Uint8Array,
   meta: SharedEncryptionMeta,
   recipientId: string,
-  recipientPrivateKey: CryptoKey
+  recipientPrivateKey: CryptoKey,
+  context = ''
 ): Promise<Uint8Array> {
   if (meta.v !== SHARE_VERSION) throw new Error(`Unsupported share format version: ${meta.v}`);
+  if (meta.alg !== 'AES-GCM' || meta.recipientAlg !== 'ECDH-P256+HKDF-SHA256') {
+    throw new Error(`Unsupported share cipher/KDF: ${meta.alg}/${meta.recipientAlg}`);
+  }
   const wrap = meta.recipients.find((w) => w.recipientId === recipientId);
   if (!wrap) throw new Error('You are not a recipient of this file');
 
   const subtle = getSubtle();
-  const rawDek = await unwrapKeyForRecipient(wrap, recipientPrivateKey);
+  const rawDek = await unwrapKeyForRecipient(wrap, recipientPrivateKey, context);
   const dek = await subtle.importKey('raw', rawDek, { name: 'AES-GCM' }, false, ['decrypt']);
   rawDek.fill(0);
   try {
     const plain = await subtle.decrypt(
-      { name: 'AES-GCM', iv: fromBase64(meta.fileIv), additionalData: contentAADFromMeta(meta) as unknown as BufferSource },
+      { name: 'AES-GCM', iv: fromBase64(meta.fileIv), additionalData: contentAAD(meta, context) as unknown as BufferSource },
       dek,
       ciphertext as unknown as BufferSource
     );
@@ -195,15 +219,19 @@ export async function addRecipient(
   meta: SharedEncryptionMeta,
   asRecipientId: string,
   asRecipientPrivateKey: CryptoKey,
-  newRecipient: RecipientPublicKey
+  newRecipient: RecipientPublicKey,
+  context = ''
 ): Promise<SharedEncryptionMeta> {
   const mine = meta.recipients.find((w) => w.recipientId === asRecipientId);
   if (!mine) throw new Error('Only an existing recipient can add another recipient');
   if (meta.recipients.some((w) => w.recipientId === newRecipient.id)) return meta; // already shared
-  const rawDek = await unwrapKeyForRecipient(mine, asRecipientPrivateKey);
-  const wrap = await wrapKeyForRecipient(rawDek, newRecipient);
-  rawDek.fill(0);
-  return { ...meta, recipients: [...meta.recipients, wrap] };
+  const rawDek = await unwrapKeyForRecipient(mine, asRecipientPrivateKey, context);
+  try {
+    const wrap = await wrapKeyForRecipient(rawDek, newRecipient, context);
+    return { ...meta, recipients: [...meta.recipients, wrap] };
+  } finally {
+    rawDek.fill(0);
+  }
 }
 
 /**

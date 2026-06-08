@@ -181,6 +181,38 @@ display metadata end-to-end is a planned enhancement.
   existing file, re-upload it with encryption enabled. Bulk re-encryption of an
   existing library is not yet automated.
 
+#### Multi-recipient sharing (cryptographic)
+
+Files can be shared to other walt users *cryptographically* rather than via a
+server-trusted permission (`lib/recipientSharing.ts`, `lib/recipientKeys.ts`):
+
+- Each user holds an **ECDH P-256 identity**. The public key is published to a
+  directory (`publicKeys/{uid}`); the private key is encrypted at rest under the
+  user's passphrase and stored owner-only (`users/{uid}/secrets/identityKey`) —
+  the server never holds it in cleartext.
+- A shared file is encrypted once with a random data key (DEK); the DEK is wrapped
+  **per recipient** via ephemeral-static ECDH → HKDF-SHA256 → AES-256-GCM (ECIES).
+  The server stores only ciphertext + the per-recipient wrapped keys.
+- Each wrap and the content are AES-GCM **authenticated**, with AAD binding the
+  format, `recipientId`, ephemeral key, salt, and a **file-context id** (prevents
+  replaying a wrap/envelope onto another record). Wrong recipient / wrong key /
+  tampering fails closed.
+- Imported private keys are **non-extractable**.
+
+**Trust model & limitations (disclosed, not hidden):**
+
+- **Directory is trust-on-first-use.** The email→public-key mapping is asserted by
+  the directory; an *actively malicious* directory could serve an attacker's key.
+  The guarantee is "no **passive** server read of your files", not "defeats an
+  active key-substitution attacker." **Mitigation (roadmap): out-of-band public-key
+  fingerprint verification / signed identities.**
+- **No recipient forward secrecy** — static-key ECIES means if a recipient's
+  long-term key later leaks, files previously shared to them are recoverable.
+- **Recipient-list integrity is not cryptographic** (so add/remove never
+  re-encrypts the content). Revoking a recipient drops their wrap, but true
+  revocation against someone who already read the file requires rotating the DEK
+  on the next write.
+
 ### 2. Authentication
 - Authentication via Firebase
 - Backend validates all Firebase tokens
