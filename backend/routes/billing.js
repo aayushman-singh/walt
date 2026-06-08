@@ -207,21 +207,19 @@ router.get('/api/billing/check-access', verifyAuth, (req, res) => {
 
 router.post('/api/billing/test-billing', verifyAuth, async (req, res) => {
   try {
-    // Only in dev/sandbox to avoid accidental charges
-    if (process.env.CASHFREE_ENVIRONMENT === 'PRODUCTION' && process.env.NODE_ENV === 'production') {
+    // Fail-closed: this endpoint can create a real Cashfree order, so disable it
+    // whenever EITHER the runtime OR the payment provider is in production. (The
+    // previous AND guard left it live if only one var was set.)
+    if (process.env.NODE_ENV === 'production' || process.env.CASHFREE_ENVIRONMENT === 'PRODUCTION') {
       return res.status(403).json({ error: 'Test endpoint not available in production' });
     }
 
-    const { userId, simulateDate } = req.body;
+    const { simulateDate } = req.body;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
-    }
-
-    const user = rowToObject(db.prepare('SELECT * FROM users WHERE id = ?').get(userId));
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+    // Always operate on the AUTHENTICATED caller's own account. Previously the
+    // target was taken from req.body.userId, letting any signed-in user create a
+    // billing order against an arbitrary account.
+    const user = getOrCreateUser(req.user.uid, req.user.email, req.user.name);
 
     // Get user's pinned files total size
     const pinnedFiles = db.prepare(`
