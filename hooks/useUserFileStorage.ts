@@ -83,7 +83,12 @@ export const useUserFileStorage = (userUid: string | null, getAuthToken?: () => 
   });
 
   // Wire the loader's auto-pin callback now that pinning exists (see ref above).
-  setAutoPinEnabledRef.current = pinning.setAutoPinEnabledState;
+  // Done in an effect (not during render) so the ref is mutated as a side effect;
+  // this effect is defined before the mount-load effect below, so the callback is
+  // in place before loadUserFiles first runs.
+  useEffect(() => {
+    setAutoPinEnabledRef.current = pinning.setAutoPinEnabledState;
+  });
 
   // Folder navigation + structural operations (owns currentFolderId).
   const folders = useFolders({
