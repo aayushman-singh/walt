@@ -112,7 +112,7 @@ const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
     <aside className={styles.panel}>
       <div className={styles.header}>
         <div className={styles.title} title={file.name}>{file.name}</div>
-        <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={16} /></button>
+        <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><WIcon name="close" size={16} /></button>
       </div>
 
       <div className={styles.actions}>
@@ -189,6 +189,7 @@ const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
                 className={styles.saveBtn}
                 onClick={handleAddProperty}
                 disabled={!propertyKey.trim() || !propertyValue.trim()}
+                aria-label="Add property"
               >
                 <WIcon name="check" size={14} sw={2.4} />
               </button>

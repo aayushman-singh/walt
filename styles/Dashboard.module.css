@@ -24,6 +24,32 @@
   color: var(--tx);
 }
 
+/* Local theme scoping. The dashboard toggles only its own root class
+   (styles[theme]); setTheme never writes documentElement[data-theme]. Redefine
+   the SOVEREIGN tokens on the root so the in-dashboard light/dark toggle flips
+   the whole subtree (header, sidebar, file area, inline modals) — no logic
+   change, mirrors the values in styles/globals.css. */
+.dashboard.dark {
+  --bg: #080a0e; --bg2: #0b0e14; --surface: #0e1219; --surface2: #11161f; --surface3: #141a25;
+  --line: #1d242f; --line2: #283040;
+  --tx: #e8edf5; --txdim: #aab3c2; --mut: #8a93a3; --faint: #5a6373;
+  --accent: #4d9fff; --accent-h: #74b4ff; --accent-soft: rgba(77, 159, 255, .10); --accent-bd: rgba(77, 159, 255, .38); --accent-ink: #04122b;
+  --green: #3ddc97; --green-soft: rgba(61, 220, 151, .12);
+  --amber: #f5b544; --amber-soft: rgba(245, 181, 68, .12);
+  --danger: #ff5d6c; --danger-soft: rgba(255, 93, 108, .12);
+  --shadow: 0 24px 60px -28px rgba(0, 0, 0, .75); --shadow-sm: 0 10px 26px -16px rgba(0, 0, 0, .7);
+}
+.dashboard.light {
+  --bg: #eef1f7; --bg2: #f7f9fc; --surface: #ffffff; --surface2: #f1f4fa; --surface3: #e9eef6;
+  --line: #e0e5ef; --line2: #cfd6e4;
+  --tx: #0d1422; --txdim: #3c4658; --mut: #646e80; --faint: #9aa2b3;
+  --accent: #2f6fe0; --accent-h: #2259c2; --accent-soft: rgba(47, 111, 224, .08); --accent-bd: rgba(47, 111, 224, .30); --accent-ink: #ffffff;
+  --green: #16a34a; --green-soft: rgba(22, 163, 74, .10);
+  --amber: #c47f12; --amber-soft: rgba(196, 127, 18, .12);
+  --danger: #dc2626; --danger-soft: rgba(220, 38, 38, .10);
+  --shadow: 0 24px 60px -30px rgba(20, 30, 60, .28); --shadow-sm: 0 12px 30px -20px rgba(20, 30, 60, .30);
+}
+
 /* Dragging active state */
 .dashboard.draggingActive .fileArea > *:not(.breadcrumb):not(.fileGrid):not(.fileList),
 .dashboard.draggingActive .sidebar,

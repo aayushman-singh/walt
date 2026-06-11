@@ -63,7 +63,7 @@ const TagManager: React.FC<TagManagerProps> = ({
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h3><WIcon name="tag" size={16} /> Manage Tags</h3>
-          <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={16} /></button>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><WIcon name="close" size={16} /></button>
         </div>
 
         <div className={styles.content}>

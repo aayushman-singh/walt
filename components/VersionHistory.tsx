@@ -103,7 +103,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({
             <h2>Version History</h2>
             <p className={styles.fileName}>{fileName}</p>
           </div>
-          <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={18} /></button>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><WIcon name="close" size={18} /></button>
         </div>
 
         <div className={styles.content}>

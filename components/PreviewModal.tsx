@@ -56,7 +56,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, fileName, fileType,
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <span className={styles.title} title={fileName}>{fileName}</span>
-          <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={16} /></button>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><WIcon name="close" size={16} /></button>
         </div>
         <div className={styles.content}>
           {renderContent()}

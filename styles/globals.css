@@ -40,7 +40,7 @@
     --secondary-foreground:218 33% 93%;
     --muted:217 28% 9%;
     --muted-foreground:215 11% 59%; /* #8a93a3 */
-    --accent:218 27% 11%;           /* #141a25 (hover surface) */
+    --ui-accent:218 27% 11%;        /* #141a25 (shadcn hover surface — distinct from brand --accent) */
     --accent-foreground:218 33% 93%;
     --destructive:354 100% 68%;     /* #ff5d6c */
     --destructive-foreground:0 0% 100%;
@@ -80,7 +80,7 @@
     --secondary-foreground:220 45% 9%;
     --muted:220 38% 96%;
     --muted-foreground:220 13% 45%; /* #646e80 */
-    --accent:220 38% 94%;           /* #e9eef6 */
+    --ui-accent:220 38% 94%;        /* #e9eef6 (shadcn hover surface) */
     --accent-foreground:220 45% 9%;
     --destructive:0 72% 51%;        /* #dc2626 */
     --destructive-foreground:0 0% 100%;

@@ -24,7 +24,7 @@ const ColumnSettings: React.FC<ColumnSettingsProps> = ({ visibleColumns, onToggl
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h3><WIcon name="sliders" size={16} /> Column Settings</h3>
-          <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={16} /></button>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><WIcon name="close" size={16} /></button>
         </div>
 
         <div className={styles.content}>

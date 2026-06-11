@@ -95,7 +95,7 @@ const GatewaySettings: React.FC<GatewaySettingsProps> = ({ isOpen, onClose }) =>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2>Gateway Settings</h2>
-          <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={18} /></button>
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><WIcon name="close" size={18} /></button>
         </div>
 
         <div className={styles.content}>

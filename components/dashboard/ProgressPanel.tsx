@@ -21,7 +21,7 @@ const ProgressPanel: React.FC<ProgressPanelProps> = ({ styles, queue, heading, o
     <div className={styles.uploadPanel}>
       <div className={styles.uploadHeader}>
         <h4>{heading}</h4>
-        <button onClick={onClose} className={styles.closeUploadPanel}><WIcon name="close" size={16} /></button>
+        <button onClick={onClose} className={styles.closeUploadPanel} aria-label="Dismiss"><WIcon name="close" size={16} /></button>
       </div>
       <div className={styles.uploadList}>
         {queue.map((item, index) => (
