@@ -5,8 +5,9 @@
  * plaintext and the entire ciphertext are held in memory at once. For a 100 MB+
  * file that is hundreds of MB of resident memory and a single monolithic crypto
  * call. This module encrypts the SAME envelope shape but in bounded-size CHUNKS,
- * so peak memory is ~one chunk regardless of file size, and a file can be read
- * from / written to a stream rather than a buffer.
+ * so the implementation does not intentionally accumulate the whole plaintext or
+ * ciphertext and a file can be read from / written to a stream rather than a
+ * buffer.
  *
  * Scheme (per chunk):
  *   - One random 256-bit DEK encrypts the whole file (all chunks share it).
@@ -29,9 +30,12 @@
  * the stream into `chunkSize + TAG_BYTES` blocks (the last being the remainder)
  * and knows a chunk is final iff no bytes follow it.
  *
- * Bounded-memory guarantee holds when the SOURCE yields bounded chunks (a real
- * `File.stream()` yields ~64 KiB reads). A whole-buffer convenience wrapper is
- * provided for tests / small files; that one is necessarily buffer-sized on input.
+ * Bounded input/output accumulation holds when the SOURCE yields bounded chunks
+ * (a real `File.stream()` yields ~64 KiB reads). Runtime/WebCrypto memory can
+ * still retain transient backing stores, so measured peaks are verified by the
+ * BENCH harness rather than promised as exactly one chunk. A whole-buffer
+ * convenience wrapper is provided for tests / small files; that one is
+ * necessarily buffer-sized on input.
  *
  * Failure is loud (project policy): wrong passphrase, sub-floor KDF params, a
  * corrupted/truncated/reordered stream — every one throws. No silent fallback.
@@ -58,7 +62,7 @@ const COUNTER_BYTES = 4; // 32-bit big-endian per-chunk counter
 const IV_BYTES = FILE_NONCE_BYTES + COUNTER_BYTES; // 12-byte (96-bit) AES-GCM IV
 const WRAP_IV_BYTES = 12;
 
-/** Default plaintext chunk size: 4 MiB. Bounds peak memory at ~one chunk. */
+/** Default plaintext chunk size: 4 MiB. Bounds the algorithm's plaintext block size. */
 export const DEFAULT_CHUNK_SIZE = 4 * 1024 * 1024;
 
 /** Max chunks addressable by a 32-bit counter; guards against IV-counter overflow. */

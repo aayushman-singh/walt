@@ -10,12 +10,14 @@
  *     plaintext AND whole ciphertext at once.
  *
  * Read dispatches on the stored meta's shape, so existing v1 files keep decrypting
- * forever and new chunked files decrypt streaming. No fallback: an unrecognised
- * meta throws loudly rather than guessing.
+ * forever. `decryptFileBlobToBlob` streams chunked v2 downloads from Blob.stream();
+ * whole-buffer helpers remain whole-buffer by contract. No fallback: an
+ * unrecognised meta throws loudly rather than guessing.
  */
 import { encryptFile, decryptBytes, type EncryptionMeta } from './encryption';
 import {
   encryptStream,
+  decryptStream,
   decryptBytesChunked,
   isChunkedEncrypted,
   DEFAULT_CHUNK_SIZE,
@@ -39,6 +41,12 @@ interface StreamableBlob {
   stream(): ReadableStream<Uint8Array>;
 }
 
+/** Blob-like ciphertext input for decrypting downloaded files. */
+interface ReadableBlob {
+  arrayBuffer(): Promise<ArrayBuffer>;
+  stream(): ReadableStream<Uint8Array>;
+}
+
 async function* readableToAsyncIterable(stream: ReadableStream<Uint8Array>): AsyncGenerator<Uint8Array> {
   const reader = stream.getReader();
   try {
@@ -50,6 +58,12 @@ async function* readableToAsyncIterable(stream: ReadableStream<Uint8Array>): Asy
   } finally {
     reader.releaseLock();
   }
+}
+
+async function iterableToBlob(source: AsyncIterable<Uint8Array>, type: string): Promise<Blob> {
+  const parts: BlobPart[] = [];
+  for await (const chunk of source) parts.push(chunk.slice());
+  return new Blob(parts, { type });
 }
 
 /**
@@ -96,4 +110,22 @@ export async function decryptFileToBlob(
 ): Promise<Blob> {
   const plain = await decryptFileBytes(ciphertext, meta, passphrase);
   return new Blob([plain.slice()], { type: meta.originalType || 'application/octet-stream' });
+}
+
+/**
+ * Decrypt a downloaded ciphertext Blob into a plaintext Blob. Chunked v2 files
+ * are decrypted from `Blob.stream()` so the ciphertext is not first coerced into
+ * one contiguous ArrayBuffer. Whole-file v1 still uses its whole-buffer decryptor
+ * because that envelope is a single AES-GCM operation by design.
+ */
+export async function decryptFileBlobToBlob(
+  ciphertext: ReadableBlob,
+  meta: FileEncryptionMeta,
+  passphrase: string
+): Promise<Blob> {
+  if (isChunkedEncrypted(meta)) {
+    const plain = await decryptStream(readableToAsyncIterable(ciphertext.stream()), meta, passphrase);
+    return iterableToBlob(plain, meta.originalType || 'application/octet-stream');
+  }
+  return decryptFileToBlob(new Uint8Array(await ciphertext.arrayBuffer()), meta, passphrase);
 }

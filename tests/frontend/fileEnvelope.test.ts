@@ -4,6 +4,7 @@ import {
   encryptFileForUpload,
   decryptFileBytes,
   decryptFileToBlob,
+  decryptFileBlobToBlob,
   STREAMING_THRESHOLD_BYTES,
   type FileEncryptionMeta,
 } from '../../lib/fileEnvelope';
@@ -91,6 +92,21 @@ describe('lib/fileEnvelope — envelope dispatch', () => {
     expect(meta.alg).toBe(STREAM_ALG);
     const out = await decryptFileToBlob(new Uint8Array(await blob.arrayBuffer()), meta, PW);
     expect(out.type).toBe('image/png');
+    expect(eq(new Uint8Array(await out.arrayBuffer()), plain)).toBe(true);
+  });
+
+  it('decryptFileBlobToBlob streams CHUNKED ciphertext without calling arrayBuffer', async () => {
+    const plain = bytes(250_000, 11);
+    const { ciphertext, meta } = await encryptBytesChunked(plain, PW, { type: 'application/octet-stream' }, 64 * 1024);
+    const blob = new NodeBlob([ciphertext]);
+    const streamingOnly = {
+      stream: () => blob.stream() as unknown as ReadableStream<Uint8Array>,
+      async arrayBuffer(): Promise<ArrayBuffer> {
+        throw new Error('arrayBuffer must not be called for chunked Blob decrypt');
+      },
+    };
+
+    const out = await decryptFileBlobToBlob(streamingOnly, meta, PW);
     expect(eq(new Uint8Array(await out.arrayBuffer()), plain)).toBe(true);
   });
 

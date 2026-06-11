@@ -8,8 +8,9 @@
 hold the whole plaintext **and** the whole ciphertext in memory at once. For a 100 MB
 file that is a multi-hundred-MB transient spike; for a 1 GB file it OOMs a browser tab.
 
-The chunked envelope encrypts the same data in bounded-size blocks, so peak memory is
-~one chunk regardless of file size.
+The chunked envelope encrypts the same data in bounded-size blocks, so the
+implementation avoids full-file plaintext/ciphertext accumulation and reduces the
+measured peak memory for large uploads.
 
 ## Scheme
 
@@ -49,12 +50,13 @@ final, shorter chunk). Default `chunkSize` = 4 MiB.
 - **Write** — `encryptFileForUpload` streams files ≥ `STREAMING_THRESHOLD_BYTES`
   (8 MiB) chunk-by-chunk straight into the upload Blob; smaller files take the
   lower-overhead whole-file path.
-- **Read** — `decryptFileBytes` / `decryptFileToBlob` dispatch on the stored meta
-  shape (`isChunkedEncrypted`), so existing v1 files keep decrypting forever and new
-  chunked files decrypt streaming. No fallback: an unrecognised meta throws.
+- **Read** — `decryptFileBlobToBlob` dispatches on the stored meta shape
+  (`isChunkedEncrypted`). Existing v1 files keep using the whole-file decryptor;
+  chunked v2 downloads read from `Blob.stream()` and decrypt chunk-by-chunk into
+  plaintext Blob parts. No fallback: an unrecognised meta throws.
 
-Wired into the real upload (`useUpload`), download (`useFileOperations`) and re-share
-(`encryptedShareOrchestration`) paths.
+Wired into the real upload (`useUpload`) and dashboard download (`useFileOperations`)
+paths.
 
 ## Measured (100 MB, `tests/bench/cryptoPerf.bench.test.ts`, `BENCH=1`)
 
@@ -63,26 +65,38 @@ the **live working set**, not transient garbage. One process, common-mode overhe
 
 | | wall time | peak arrayBuffers | peak RSS |
 |---|---|---|---|
-| whole-file (v1) | ~200 ms | **100 MiB** | **420 MiB** |
-| streaming (v2)  | ~250 ms | **24 MiB** | **189 MiB** |
+| whole-file (v1) | 164 ms | **100.1 MiB** | **391.1 MiB** |
+| streaming (v2)  | 211 ms | **72.2 MiB** | **261.0 MiB** |
 
-Streaming caps peak TypedArray backing-store memory ~**4×** lower and peak RSS ~**2.2×**
-lower (saves ~230 MiB on a 100 MB file), at ~**+25%** wall time. The memory ceiling is
-flat in file size: a 1 GB file streams at the same ~24 MiB working set where the
-whole-file path would need >2 GB and crash the tab. The wall-time cost is the
-deliberate trade for not OOMing.
+For the encryption benchmark, streaming caps peak TypedArray backing-store memory
+~**1.4×** lower and peak RSS ~**1.5×** lower (saves ~130.1 MiB RSS on a 100 MB
+file), at ~**+29%** wall time. The algorithmic input/output accumulation is
+bounded by source run size plus chunk size instead of by total file size, while
+runtime/WebCrypto backing-store retention can still move measured peaks. The
+wall-time cost is the deliberate trade for avoiding full-file upload encryption.
 
 Run it:
 
-```
-BENCH=1 NODE_OPTIONS=--expose-gc npx vitest run tests/bench/cryptoPerf.bench.test.ts --pool=forks
+```bash
+BENCH=1 node --expose-gc ./node_modules/vitest/vitest.mjs run tests/bench/cryptoPerf.bench.test.ts --pool=forks
 ```
 
 ## Bounded-memory caveat
 
-The guarantee holds when the **source yields bounded runs** — a real `File.stream()`
-yields ~64 KiB reads. The whole-buffer convenience wrappers (`encryptBytesChunked` /
-`decryptBytesChunked`, for tests/small files) are necessarily buffer-sized on input.
-The upload Blob aggregates ciphertext (the upload API takes a `File`), but plaintext
-and ciphertext are never both fully resident, and the per-chunk re-chunker avoids the
-O(file) buffer-growth churn a naïve concat-per-read would cause.
+The bounded-accumulation property holds when the **source yields bounded runs** — a
+real `File.stream()` yields ~64 KiB reads. The whole-buffer convenience wrappers
+(`encryptBytesChunked` / `decryptBytesChunked`, for tests/small files) are
+necessarily buffer-sized on input. Runtime/WebCrypto may retain transient backing
+stores beyond one chunk; the benchmark guards measured memory reduction rather than
+an exact one-chunk peak. The upload/download Blob APIs still materialize the final
+Blob object because the browser upload/download surfaces require one.
+`decryptFileBlobToBlob` avoids a single contiguous ciphertext buffer and a single
+contiguous plaintext buffer for chunked downloads, but it still retains plaintext
+Blob parts until the browser download is triggered. It is not a true constant-memory
+streaming sink.
+
+Re-share is deliberately not claimed as bounded-memory yet. `encryptedShareOrchestration`
+still encrypts one plaintext buffer into the share envelope, so re-sharing an
+encrypted large file materializes that plaintext before wrapping it to recipients.
+A bounded-memory re-share requires a streaming share envelope, not just the at-rest
+file envelope.

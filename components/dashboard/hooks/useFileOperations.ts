@@ -7,7 +7,7 @@
 import { useState, useRef } from 'react';
 import { ErrorHandler } from '../../../lib/errorHandler';
 import { getFileCache } from '../../../lib/fileCache';
-import { decryptFileToBlob } from '../../../lib/fileEnvelope';
+import { decryptFileBlobToBlob } from '../../../lib/fileEnvelope';
 import { ActivityLog } from '../../../hooks/useUserFileStorage';
 import {
   UploadedFile,
@@ -372,9 +372,9 @@ export function useFileOperations(params: UseFileOperationsParams) {
           showToast('Decryption cancelled — no passphrase provided', 'error');
           return;
         }
-        const bytes = new Uint8Array(await blob.arrayBuffer());
         // Dispatch on the stored envelope shape (whole-file v1 or chunked v2).
-        downloadBlob = await decryptFileToBlob(bytes, file.encryption, passphrase);
+        // Chunked v2 reads from Blob.stream(); v1 remains a whole-file decrypt.
+        downloadBlob = await decryptFileBlobToBlob(blob, file.encryption, passphrase);
         downloadName = file.encryption.originalName || file.name;
       }
 
