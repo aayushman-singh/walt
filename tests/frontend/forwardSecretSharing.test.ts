@@ -114,6 +114,18 @@ describe('lib/forwardSecretSharing — V2 two-DH envelope', () => {
     );
   });
 
+  it('the PREKEY DH term genuinely contributes: correct identity key + WRONG live prekey fails', async () => {
+    // This is the test that makes the forward-secrecy claim meaningful: if the KDF
+    // silently ignored ECDH(EK,PK), a holder of the identity key + any prekey would
+    // decrypt. Wrap to bob's pk-new, then attempt unwrap with bob's identity priv
+    // but a DIFFERENT, still-live prekey private (carol's). Must fail in the GCM tag.
+    const { ciphertext, meta } = await encryptForRecipientsFS(enc.encode('needs both DH'), [pubFor(bob, 'pk-new')]);
+    const wrongPrekeyResolver: PrekeyResolver = async () => carol.prekeys.get('pk-c1')!.priv; // live, but wrong key
+    await expect(
+      decryptForRecipientFS(ciphertext, meta, 'bob', bob.identityPriv, wrongPrekeyResolver)
+    ).rejects.toThrow(/could not unwrap|wrong identity/i);
+  });
+
   it('identity binding: a swapped/forged prekey cannot unwrap without the identity key', async () => {
     // Mallory substitutes HER prekey but uses bob's id (directory-substitution attack).
     const forgedRecipient: FSRecipientPublicKey = {

@@ -23,7 +23,7 @@
  * the planned mitigation; until then the guarantee is "no PASSIVE server read",
  * not "defeats an actively malicious directory".
  */
-import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, writeBatch, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import type { PublicIdentity, EncryptedPrivateKey } from './recipientKeys';
 import type { PrekeyBundle, EncryptedPrekeyRing } from './recipientPrekeys';
@@ -76,12 +76,17 @@ export async function publishPrekeys(
   encryptedRing: EncryptedPrekeyRing
 ): Promise<void> {
   if (!uid) throw new Error('uid is required to publish prekeys');
-  await setDoc(
+  // Atomic: the PUBLIC bundle and the owner-only PRIVATE ring commit together, so a
+  // partial failure can never publish a public prekey whose private half is missing
+  // (or evict a private half while the stale public key remains live).
+  const batch = writeBatch(db);
+  batch.set(
     publicKeyDoc(uid),
     { uid, emailLower: (email || '').trim().toLowerCase() || null, prekeyBundle: bundle },
     { merge: true }
   );
-  await setDoc(prekeyRingDoc(uid), { encryptedPrekeyRing: encryptedRing }, { merge: true });
+  batch.set(prekeyRingDoc(uid), { encryptedPrekeyRing: encryptedRing }, { merge: true });
+  await batch.commit();
 }
 
 /** Load the current user's owner-only encrypted prekey ring, if any. */

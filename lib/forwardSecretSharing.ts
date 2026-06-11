@@ -81,6 +81,31 @@ function randomBytes(n: number): Uint8Array {
   return c.getRandomValues(new Uint8Array(n));
 }
 
+const P256_RAW_POINT_BYTES = 65; // uncompressed: 0x04 ‖ X(32) ‖ Y(32)
+
+/**
+ * Validate an untrusted raw P-256 public point before importing it. WebCrypto's
+ * importKey already rejects off-curve points, but an explicit length/prefix check
+ * turns malformed directory/wire data into a clear error instead of an opaque
+ * DOMException, and rejects anything that isn't an uncompressed point outright.
+ */
+function requireUncompressedP256(raw: Uint8Array, label: string): Uint8Array {
+  if (raw.length !== P256_RAW_POINT_BYTES || raw[0] !== 0x04) {
+    throw new Error(`Malformed ${label}: expected a 65-byte uncompressed P-256 point`);
+  }
+  return raw;
+}
+
+/** Validate an untrusted FSRecipientWrap pulled from Firestore before using it. */
+function requireWellFormedWrap(w: FSRecipientWrap): FSRecipientWrap {
+  for (const k of ['recipientId', 'prekeyId', 'epk', 'salt', 'iv', 'wrappedKey'] as const) {
+    if (typeof w[k] !== 'string' || w[k].length === 0) {
+      throw new Error(`Malformed forward-secret wrap: field "${k}" is missing or not a string`);
+    }
+  }
+  return w;
+}
+
 /**
  * AAD binding the wrap's public parameters (so recipientId/prekeyId/epk/salt cannot
  * be swapped) plus a caller `context` (the file id) so a valid wrap cannot be
@@ -167,8 +192,9 @@ export async function unwrapKeyForRecipientFS(
   prekeyPrivateKey: CryptoKey,
   context = ''
 ): Promise<Uint8Array> {
+  requireWellFormedWrap(wrap);
   const subtle = getSubtle();
-  const epk = await subtle.importKey('raw', fromBase64(wrap.epk), EC_PARAMS, true, []);
+  const epk = await subtle.importKey('raw', requireUncompressedP256(fromBase64(wrap.epk), 'ephemeral public key') as unknown as BufferSource, EC_PARAMS, true, []);
   const dhIdentity = new Uint8Array(await subtle.deriveBits({ name: 'ECDH', public: epk }, identityPrivateKey, 256));
   const dhPrekey = new Uint8Array(await subtle.deriveBits({ name: 'ECDH', public: epk }, prekeyPrivateKey, 256));
   const ikm = concatBytes(dhIdentity, dhPrekey);

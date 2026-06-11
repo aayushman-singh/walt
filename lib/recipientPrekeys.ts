@@ -142,12 +142,40 @@ export async function rotatePrekeyRing(
   };
 }
 
+const P256_RAW_POINT_BYTES = 65; // uncompressed: 0x04 ‖ X(32) ‖ Y(32)
+
+/** Validate one untrusted PublicPrekey pulled from the directory. */
+function requireWellFormedPrekey(p: unknown): PublicPrekey {
+  if (!p || typeof p !== 'object') throw new Error('Malformed prekey: not an object');
+  const pk = p as Partial<PublicPrekey>;
+  if (typeof pk.id !== 'string' || !pk.id) throw new Error('Malformed prekey: missing id');
+  if (pk.alg !== 'ECDH-P256') throw new Error(`Malformed prekey ${pk.id}: unsupported alg ${pk.alg}`);
+  if (typeof pk.seq !== 'number' || !Number.isInteger(pk.seq) || pk.seq < 0) {
+    throw new Error(`Malformed prekey ${pk.id}: seq must be a non-negative integer`);
+  }
+  if (typeof pk.publicKey !== 'string' || !pk.publicKey) throw new Error(`Malformed prekey ${pk.id}: missing publicKey`);
+  const raw = fromBase64(pk.publicKey);
+  if (raw.length !== P256_RAW_POINT_BYTES || raw[0] !== 0x04) {
+    throw new Error(`Malformed prekey ${pk.id}: not a 65-byte uncompressed P-256 point`);
+  }
+  return pk as PublicPrekey;
+}
+
 /** Pick the newest published prekey to wrap to, imported as a CryptoKey. */
 export async function pickPrekeyForWrap(bundle: PrekeyBundle): Promise<{ id: string; key: CryptoKey }> {
+  if (!bundle || typeof bundle !== 'object') throw new Error('Malformed prekey bundle');
   if (bundle.v !== PREKEY_VERSION) throw new Error(`Unsupported prekey bundle version: v${bundle.v}`);
-  if (!bundle.prekeys.length) throw new Error('Recipient has published no session prekeys; cannot share forward-secretly');
-  const newest = bundle.prekeys.reduce((a, b) => (b.seq > a.seq ? b : a));
-  const key = await getSubtle().importKey('raw', fromBase64(newest.publicKey), EC_PARAMS, true, []);
+  if (!Array.isArray(bundle.prekeys) || !bundle.prekeys.length) {
+    throw new Error('Recipient has published no session prekeys; cannot share forward-secretly');
+  }
+  const valid = bundle.prekeys.map(requireWellFormedPrekey);
+  const seen = new Set<string>();
+  for (const p of valid) {
+    if (seen.has(p.id)) throw new Error(`Malformed prekey bundle: duplicate prekey id ${p.id}`);
+    seen.add(p.id);
+  }
+  const newest = valid.reduce((a, b) => (b.seq > a.seq ? b : a));
+  const key = await getSubtle().importKey('raw', fromBase64(newest.publicKey) as unknown as BufferSource, EC_PARAMS, true, []);
   return { id: newest.id, key };
 }
 

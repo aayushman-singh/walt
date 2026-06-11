@@ -53,6 +53,25 @@ The honest one-liner: **V4 gives per-session forward secrecy against later compr
 of the recipient's long-term identity key. It is not a double ratchet and provides no
 post-compromise security.**
 
+### The unavoidable trade-off: FS window = re-download window
+
+Forward secrecy and an indefinitely re-downloadable drive share are in **fundamental
+tension**. If server ciphertext `C` can be decrypted at any future time `T` using only
+keys the recipient holds at `T`, then compromising the recipient at `T` breaks `C`'s
+confidentiality. Forward secrecy *requires* that the key for `C` be destroyed before the
+compromise — so the forward-secrecy window and the re-download window are the **same
+interval**. Concretely: once a session prekey is evicted, the shares bound to it become
+unreadable by **everyone, including the recipient**. That is the *expiry* of the share,
+not silent data loss — but it MUST be surfaced to the user as expiry. Wiring automatic
+rotation and an expiry UI is follow-up work (see Rollout below); the crypto and the
+proof are what this wave ships.
+
+### Sender authentication is NOT provided
+
+v2 proves "this was encrypted *to me*", not "this was sent *by sender X*". The displayed
+`fromEmail` is bound only by Firestore rules, so a malicious server/admin could rewrite
+provenance. Cryptographic sender authentication (signing the envelope) is future work.
+
 ## Prekey lifecycle
 
 The recipient keeps a **bounded ring** of session prekeys (default 5):
@@ -66,6 +85,31 @@ The recipient keeps a **bounded ring** of session prekeys (default 5):
    anyone, including the recipient, unless it was downloaded while the prekey was live.
    (Inbox items are meant to be pulled promptly; this is the documented trade-off of
    per-session FS without server-coordinated one-time prekeys.)
+
+## Rollout (feature flag, default OFF)
+
+New shares emit v2 only when `NEXT_PUBLIC_FS_SHARING === 'on'`. Reading both v1 and v2
+is always on. The flag defaults **off** because emitting v2 safely requires, for every
+participant:
+
+1. A **published prekey ring** (`ensureIdentity` now provisions one on next call, but
+   existing v1-only users have none until then), and
+2. A **rotation driver** — something that calls `rotatePrekeys` on a cadence (e.g. per
+   login/session). Without it, `pickPrekeyForWrap` keeps choosing the same newest
+   prekey forever and the "forward-secret" key never actually rotates or evicts, which
+   degrades v2 to a second long-lived ECDH key.
+
+Until both are wired into onboarding/login, the live site keeps emitting v1 so sharing
+never breaks. Turning the flag on before that wiring exists will fail loudly for users
+without a prekey ring (no silent fallback).
+
+### Untrusted-input validation
+
+Prekey bundles and wraps come from Firestore (untrusted). Before use, the code validates
+them explicitly (`lib/recipientPrekeys.requireWellFormedPrekey`,
+`lib/forwardSecretSharing.requireWellFormedWrap` / `requireUncompressedP256`): version,
+algorithm, integer non-negative `seq`, unique ids, and 65-byte uncompressed P-256 points
+— so malformed directory data raises a clear error instead of an opaque crypto failure.
 
 ### Why not true one-time prekeys?
 

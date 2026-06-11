@@ -56,6 +56,21 @@ describe('lib/recipientPrekeys — lifecycle', () => {
     expect(await resolvePrekeyPrivate(rot.encryptedRing, oldestId, PASS)).toBeNull();
   });
 
+  it('rejects malformed/untrusted prekey bundles from the directory', async () => {
+    const { bundle } = await createPrekeyRing(PASS, 2);
+    await expect(pickPrekeyForWrap({ v: 1, prekeys: [] })).rejects.toThrow(/no session prekeys/i);
+    await expect(pickPrekeyForWrap({ v: 99, prekeys: bundle.prekeys } as any)).rejects.toThrow(/version/i);
+    // duplicate ids
+    const dup = { v: 1, prekeys: [bundle.prekeys[0], { ...bundle.prekeys[1], id: bundle.prekeys[0].id }] };
+    await expect(pickPrekeyForWrap(dup as any)).rejects.toThrow(/duplicate/i);
+    // bad point
+    const badPoint = { v: 1, prekeys: [{ ...bundle.prekeys[0], publicKey: 'AAAA' }] };
+    await expect(pickPrekeyForWrap(badPoint as any)).rejects.toThrow(/uncompressed P-256/i);
+    // non-integer seq
+    const badSeq = { v: 1, prekeys: [{ ...bundle.prekeys[0], seq: 1.5 }] };
+    await expect(pickPrekeyForWrap(badSeq as any)).rejects.toThrow(/integer/i);
+  });
+
   it('END-TO-END forward secrecy through the real lifecycle', async () => {
     // recipient identity
     const idPair = await generateIdentityKeyPair();

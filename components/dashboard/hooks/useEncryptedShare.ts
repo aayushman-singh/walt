@@ -43,9 +43,12 @@ export function useEncryptedShare() {
     rotatePrekeys,
   } = useRecipientIdentity();
 
-  // Forward-secret (v2) envelopes for NEW shares. Reading v1+v2 is always on.
-  // Defaults ON; set NEXT_PUBLIC_FS_SHARING=off to emit legacy v1 envelopes.
-  const forwardSecret = process.env.NEXT_PUBLIC_FS_SHARING !== 'off';
+  // Forward-secret (v2) envelopes for NEW shares. Reading v1+v2 is ALWAYS on.
+  // Defaults OFF: emitting v2 requires every participant to have a published prekey
+  // ring AND a rotation driver in place (see docs/crypto-forward-secrecy.md, "Rollout").
+  // Until that wiring ships, the live site keeps emitting v1 so sharing never breaks.
+  // Set NEXT_PUBLIC_FS_SHARING=on to opt a build into emitting forward-secret shares.
+  const forwardSecret = process.env.NEXT_PUBLIC_FS_SHARING === 'on';
 
   /** Build the dependency bundle for the current session. Throws if signed out. */
   const buildDeps = useCallback(async (): Promise<EncryptedShareDeps> => {

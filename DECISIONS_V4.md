@@ -40,13 +40,37 @@ Prekey private keys are PKCS#8 → `encryptBytes` (Argon2id+AES-GCM) under the u
 existing passphrase, stored owner-only at `users/{uid}/secrets/prekeys`. One secret,
 zero new trust — same posture as the identity key.
 
-## D5 — Deploy-safe: feature flag
-New shares emit v2 only when `NEXT_PUBLIC_FS_SHARING` is enabled (defaults ON in this
-branch). Reading v1 + v2 is always enabled. main stays green; the live wrap format
-does not change until the flag ships.
+## D5 — Deploy-safe: feature flag defaults OFF
+New shares emit v2 only when `NEXT_PUBLIC_FS_SHARING === 'on'`. Reading v1 + v2 is
+ALWAYS enabled. Default is OFF (corrected after codex review): turning v2 on requires
+every participant to already have a published prekey ring AND a rotation driver, which
+this wave does not yet wire into onboarding/login. Shipping v2-on by default would
+break sharing for existing v1-only users. main stays green on v1 until that wiring
+lands. The live wrap format does not change.
 
 ## D6 — No fallbacks
-A missing prekey bundle, exhausted ring, wrong passphrase, or tampered wrap throws
-loudly with context. The only documented alternative behaviour is the identity-bound
-last-resort prekey when the one-time ring is empty, and it is logged at the moment it
-is used (see docs/crypto-forward-secrecy.md).
+A missing prekey bundle, malformed/duplicate prekey, wrong passphrase, evicted prekey,
+or tampered wrap throws loudly with context (an evicted prekey resolves to null and
+the caller raises an explicit "forward-secret / expired" error). There is NO silent
+fallback. (An earlier draft of this file described an "identity-bound last-resort
+prekey" fallback — that was never implemented and would violate the no-fallback rule;
+it is removed.)
+
+## D7 — Honest scope (added after codex review)
+- **Forward-secrecy window = re-download window.** A re-downloadable drive share and
+  forward secrecy are in fundamental tension: any key that can still decrypt server
+  ciphertext is a key whose compromise breaks confidentiality. So per-session eviction
+  means an evicted share is unreadable by EVERYONE, including the recipient. This is
+  the *expiry* mechanism, documented as such — not silent data loss. The crypto + test
+  deliver the proven FS property; making rotation automatic and surfacing expiry in the
+  UI is follow-up.
+- **Sender authentication is out of scope.** v2 proves "encrypted to me", not "from
+  sender X". `fromEmail` is Firestore-rule-bound only. Signing the envelope is future
+  work.
+- **Directory trust is still TOFU.** v2's identity-DH term makes *prekey-only*
+  substitution a DoS, not disclosure; full identity+prekey substitution by a malicious
+  directory is still disclosure. Out-of-band fingerprint verification remains the
+  planned mitigation (DECISIONS #11).
+- **"Eviction" ≠ cryptographic erasure** if Firestore history/backups retain old
+  encrypted rings and the passphrase is later compromised. Erasure strength depends on
+  the backup threat model.
