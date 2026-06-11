@@ -259,9 +259,15 @@ export async function encryptForRecipientsFS(
   );
 
   const rawDek = new Uint8Array(await subtle.exportKey('raw', dek));
-  const wraps: FSRecipientWrap[] = [];
+  // Wrap to every recipient CONCURRENTLY. Each wrap is an independent ECDH +
+  // HKDF + AES-GCM over the same read-only rawDek; there is no shared mutable
+  // state, so a parallel fan-out is correct and cuts wall-time on multi-recipient
+  // shares from sum(perWrap) to max(perWrap). `Promise.all` preserves input order,
+  // so meta.recipients still mirrors `recipients`. rawDek is zeroed only after ALL
+  // wraps resolve (the finally), never mid-flight.
+  let wraps: FSRecipientWrap[];
   try {
-    for (const r of recipients) wraps.push(await wrapKeyForRecipientFS(rawDek, r, context));
+    wraps = await Promise.all(recipients.map((r) => wrapKeyForRecipientFS(rawDek, r, context)));
   } finally {
     rawDek.fill(0);
   }

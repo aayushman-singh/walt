@@ -170,9 +170,12 @@ export async function encryptForRecipients(
   );
 
   const rawDek = new Uint8Array(await subtle.exportKey('raw', dek));
-  const wraps: RecipientWrap[] = [];
+  // Wrap to every recipient CONCURRENTLY (independent ECDH+HKDF+AES-GCM over the
+  // same read-only rawDek). Promise.all preserves order, so meta.recipients still
+  // mirrors `recipients`; rawDek is zeroed only after every wrap resolves.
+  let wraps: RecipientWrap[];
   try {
-    for (const r of recipients) wraps.push(await wrapKeyForRecipient(rawDek, r, context));
+    wraps = await Promise.all(recipients.map((r) => wrapKeyForRecipient(rawDek, r, context)));
   } finally {
     rawDek.fill(0);
   }
