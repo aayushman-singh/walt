@@ -34,7 +34,18 @@ export type { SharedRecord } from '../../../lib/encryptedShareOrchestration';
 
 export function useEncryptedShare() {
   const { user } = useAuth();
-  const { resolveRecipientByEmail, getMyPrivateKey, ensureIdentity } = useRecipientIdentity();
+  const {
+    resolveRecipientByEmail,
+    getMyPrivateKey,
+    ensureIdentity,
+    getRecipientFS,
+    getMyPrekeyResolver,
+    rotatePrekeys,
+  } = useRecipientIdentity();
+
+  // Forward-secret (v2) envelopes for NEW shares. Reading v1+v2 is always on.
+  // Defaults ON; set NEXT_PUBLIC_FS_SHARING=off to emit legacy v1 envelopes.
+  const forwardSecret = process.env.NEXT_PUBLIC_FS_SHARING !== 'off';
 
   /** Build the dependency bundle for the current session. Throws if signed out. */
   const buildDeps = useCallback(async (): Promise<EncryptedShareDeps> => {
@@ -46,6 +57,9 @@ export function useEncryptedShare() {
       self,
       resolveRecipientByEmail,
       getMyPrivateKey,
+      forwardSecret,
+      getRecipientFS,
+      getMyPrekeyResolver,
       getMyPublicKey: async () => {
         // The sender's own public key, resolved from the directory by email.
         const me = self.email ? await resolveRecipientByEmail(self.email) : null;
@@ -88,7 +102,7 @@ export function useEncryptedShare() {
         document.body.removeChild(a);
       },
     };
-  }, [user, resolveRecipientByEmail, getMyPrivateKey]);
+  }, [user, resolveRecipientByEmail, getMyPrivateKey, forwardSecret, getRecipientFS, getMyPrekeyResolver]);
 
   const shareWithRecipients = useCallback(
     async (file: ShareableFile, recipients: RecipientPublicKey[]) => {
@@ -115,8 +129,10 @@ export function useEncryptedShare() {
     myUid: user?.uid ?? null,
     /** Resolve an email to a recipient identity (null when they have none). */
     resolveRecipientByEmail,
-    /** Lazily create + publish the current user's sharing identity. */
+    /** Lazily create + publish the current user's sharing identity + prekey ring. */
     ensureIdentity,
+    /** Rotate the user's session prekeys (evicts the oldest → strengthens forward secrecy). */
+    rotatePrekeys,
     shareWithRecipients,
     listSharedWithMe,
     downloadShared,

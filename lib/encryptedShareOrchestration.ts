@@ -23,7 +23,18 @@ import {
   type RecipientPublicKey,
   type SharedEncryptionMeta,
 } from './recipientSharing';
+import {
+  encryptForRecipientsFS,
+  decryptForRecipientFS,
+  isForwardSecretShare,
+  type FSRecipientPublicKey,
+  type FSSharedEncryptionMeta,
+  type PrekeyResolver,
+} from './forwardSecretSharing';
 import { decryptBytes, type EncryptionMeta } from './encryption';
+
+/** Either share-envelope version. Decryption dispatches on `meta.v`. */
+export type AnyShareMeta = SharedEncryptionMeta | FSSharedEncryptionMeta;
 
 /** The minimal file shape the orchestration needs (subset of UploadedFile). */
 export interface ShareableFile {
@@ -45,7 +56,7 @@ export interface SharedRecord {
   type: string;
   size: number;
   cid: string;
-  meta: SharedEncryptionMeta;
+  meta: AnyShareMeta;
   /**
    * The AES-GCM context (the original file id) the envelope was encrypted under.
    * It MUST be replayed verbatim into decryptForRecipient — the meta does not
@@ -73,6 +84,19 @@ export interface EncryptedShareDeps {
   getMyPublicKey: () => Promise<RecipientPublicKey>;
   /** Decrypt this user's private key with their passphrase (to read inbox items). */
   getMyPrivateKey: (passphrase: string) => Promise<CryptoKey>;
+
+  // ── Forward-secret (v2) collaborators. Required only when `forwardSecret` is on
+  //    for sending, and whenever a v2 record must be read. ────────────────────
+  /** Emit forward-secret (v2) envelopes for NEW shares. Reading v1+v2 is always on. */
+  forwardSecret?: boolean;
+  /**
+   * Upgrade an already-resolved recipient (id + identity key) to forward-secret
+   * material by fetching their published prekey bundle and binding the newest
+   * prekey. Used for BOTH the sender (self) and every recipient.
+   */
+  getRecipientFS?: (recipient: RecipientPublicKey) => Promise<FSRecipientPublicKey>;
+  /** Build a prekey resolver from this user's encrypted ring + passphrase (to read v2 inbox items). */
+  getMyPrekeyResolver?: (passphrase: string) => Promise<PrekeyResolver>;
   /** Fetch raw bytes for a URL (gateway) — used to read the file to be shared. */
   fetchBytes: (url: string) => Promise<Uint8Array>;
   /** Fetch ciphertext bytes by content id (authed backend download). */
@@ -138,14 +162,22 @@ export async function shareWithRecipients(
   }
 
   const bytes = await getPlaintextBytes(file, deps);
+  const fileInfo = { name: file.name, type: file.type, size: file.size };
 
   // context = file id binds each wrap/content to THIS file (replay protection).
-  const { ciphertext, meta } = await encryptForRecipients(
-    bytes,
-    all,
-    { name: file.name, type: file.type, size: file.size },
-    file.id
-  );
+  // Version dispatch: forward-secret (v2) when enabled, else legacy ECIES (v1).
+  let ciphertext: Uint8Array;
+  let meta: AnyShareMeta;
+  if (deps.forwardSecret) {
+    if (!deps.getRecipientFS) {
+      throw new Error('Forward-secret sharing is enabled but no prekey resolver was supplied');
+    }
+    const fsRecipients: FSRecipientPublicKey[] = [];
+    for (const r of all) fsRecipients.push(await deps.getRecipientFS(r));
+    ({ ciphertext, meta } = await encryptForRecipientsFS(bytes, fsRecipients, fileInfo, file.id));
+  } else {
+    ({ ciphertext, meta } = await encryptForRecipients(bytes, all, fileInfo, file.id));
+  }
 
   const ctFile = new File([ciphertext.slice()], `${file.name}.enc`, { type: 'application/octet-stream' });
   const { cid } = await deps.uploadCiphertext(ctFile);
@@ -190,12 +222,16 @@ export async function downloadShared(
   const privateKey = await deps.getMyPrivateKey(passphrase);
   // context MUST match encryption verbatim — it was the original file id, bound
   // into every wrap and the content AAD. We persisted it on the record.
-  const bytes = await decryptForRecipient(
-    ciphertext,
-    record.meta,
-    deps.self.uid,
-    privateKey,
-    record.context
-  );
+  // Version dispatch: read both v1 (legacy ECIES) and v2 (forward-secret) records.
+  let bytes: Uint8Array;
+  if (isForwardSecretShare(record.meta)) {
+    if (!deps.getMyPrekeyResolver) {
+      throw new Error('This is a forward-secret (v2) share but no prekey resolver is available to read it');
+    }
+    const resolvePrekey = await deps.getMyPrekeyResolver(passphrase);
+    bytes = await decryptForRecipientFS(ciphertext, record.meta, deps.self.uid, privateKey, resolvePrekey, record.context);
+  } else {
+    bytes = await decryptForRecipient(ciphertext, record.meta, deps.self.uid, privateKey, record.context);
+  }
   deps.triggerDownload(bytes, record.meta.originalName || record.name, record.meta.originalType || record.type);
 }

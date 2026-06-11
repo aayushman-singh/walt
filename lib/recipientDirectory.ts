@@ -26,9 +26,11 @@
 import { doc, getDoc, setDoc, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import type { PublicIdentity, EncryptedPrivateKey } from './recipientKeys';
+import type { PrekeyBundle, EncryptedPrekeyRing } from './recipientPrekeys';
 
 const publicKeyDoc = (uid: string) => doc(db, 'publicKeys', uid);
 const secretKeyDoc = (uid: string) => doc(db, 'users', uid, 'secrets', 'identityKey');
+const prekeyRingDoc = (uid: string) => doc(db, 'users', uid, 'secrets', 'prekeys');
 
 /** Publish the user's PUBLIC identity to the directory + store their encrypted private key owner-only. */
 export async function publishIdentity(
@@ -58,6 +60,42 @@ export async function loadOwnIdentity(uid: string): Promise<{
     encryptedIdentityKey:
       (secretSnap.exists() ? (secretSnap.data()?.encryptedIdentityKey as EncryptedPrivateKey) : null) ?? null,
   };
+}
+
+/**
+ * Publish the user's PUBLIC session-prekey bundle (forward-secret sharing) and
+ * store their owner-only encrypted prekey ring. The bundle lives ON the public
+ * directory doc (it is public by design); the ring's private halves stay in the
+ * owner-only secrets subcollection. `email` is re-asserted so the directory write
+ * rule (emailLower == token email) still holds on merge.
+ */
+export async function publishPrekeys(
+  uid: string,
+  email: string,
+  bundle: PrekeyBundle,
+  encryptedRing: EncryptedPrekeyRing
+): Promise<void> {
+  if (!uid) throw new Error('uid is required to publish prekeys');
+  await setDoc(
+    publicKeyDoc(uid),
+    { uid, emailLower: (email || '').trim().toLowerCase() || null, prekeyBundle: bundle },
+    { merge: true }
+  );
+  await setDoc(prekeyRingDoc(uid), { encryptedPrekeyRing: encryptedRing }, { merge: true });
+}
+
+/** Load the current user's owner-only encrypted prekey ring, if any. */
+export async function loadOwnPrekeyRing(uid: string): Promise<EncryptedPrekeyRing | null> {
+  if (!uid) throw new Error('uid is required');
+  const snap = await getDoc(prekeyRingDoc(uid));
+  return (snap.exists() ? (snap.data()?.encryptedPrekeyRing as EncryptedPrekeyRing) : null) ?? null;
+}
+
+/** Look up another user's PUBLIC prekey bundle by uid. Returns null if they have none. */
+export async function lookupPrekeyBundleByUid(uid: string): Promise<PrekeyBundle | null> {
+  if (!uid) throw new Error('uid is required');
+  const snap = await getDoc(publicKeyDoc(uid));
+  return (snap.exists() ? (snap.data()?.prekeyBundle as PrekeyBundle) : null) ?? null;
 }
 
 /** Look up another user's PUBLIC identity by uid. Returns null if they have none. */
