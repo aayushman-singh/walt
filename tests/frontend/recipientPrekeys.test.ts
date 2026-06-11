@@ -5,6 +5,7 @@ import {
   pickPrekeyForWrap,
   resolvePrekeyPrivate,
   prekeyResolver,
+  verifyRingPassphrase,
   DEFAULT_RING_SIZE,
 } from '../../lib/recipientPrekeys';
 import { encryptForRecipientsFS, decryptForRecipientFS } from '../../lib/forwardSecretSharing';
@@ -69,6 +70,83 @@ describe('lib/recipientPrekeys — lifecycle', () => {
     // non-integer seq
     const badSeq = { v: 1, prekeys: [{ ...bundle.prekeys[0], seq: 1.5 }] };
     await expect(pickPrekeyForWrap(badSeq as any)).rejects.toThrow(/integer/i);
+  });
+
+  // ── REGRESSION: undecryptable-prekey guards (codex v4 merge-gate BLOCK) ──────
+  it('verifyRingPassphrase accepts the correct passphrase and rejects a wrong one', async () => {
+    const { encryptedRing } = await createPrekeyRing(PASS, 2);
+    await expect(verifyRingPassphrase(encryptedRing, PASS)).resolves.toBeUndefined();
+    await expect(verifyRingPassphrase(encryptedRing, 'WRONG-passphrase')).rejects.toThrow();
+  });
+
+  it('rotation under a WRONG passphrase throws — never publishes a mixed-passphrase ring', async () => {
+    const { bundle, encryptedRing } = await createPrekeyRing(PASS, 3);
+    // A typo at rotation must abort, not strand future v2 shares under a divergent key.
+    await expect(rotatePrekeyRing(bundle, encryptedRing, 'typo-passphrase', 3)).rejects.toThrow(
+      /passphrase|unwrap|incorrect/i
+    );
+  });
+
+  it('rotation rejects a drifted bundle/ring (public prekey with no matching private)', async () => {
+    const { bundle, encryptedRing } = await createPrekeyRing(PASS, 3);
+    // Drop one private entry → 3 public vs 2 private. Rotating this must fail loudly,
+    // not publish a newest public prekey whose private half is missing.
+    const drifted = { ...encryptedRing, entries: encryptedRing.entries.slice(1) };
+    await expect(rotatePrekeyRing(bundle, drifted, PASS, 3)).rejects.toThrow(/drift|parity|matching/i);
+  });
+
+  it('rotation rejects a non-positive ringSize', async () => {
+    const { bundle, encryptedRing } = await createPrekeyRing(PASS, 2);
+    await expect(rotatePrekeyRing(bundle, encryptedRing, PASS, 0)).rejects.toThrow(/ringSize|positive/i);
+  });
+
+  it('rotation keeps the published bundle and private ring in perfect parity', async () => {
+    let { bundle, encryptedRing } = await createPrekeyRing(PASS, 3);
+    for (let i = 0; i < 4; i++) {
+      const rot = await rotatePrekeyRing(bundle, encryptedRing, PASS, 3);
+      bundle = rot.bundle;
+      encryptedRing = rot.encryptedRing;
+      const pubIds = bundle.prekeys.map((p) => p.id).sort();
+      const privIds = encryptedRing.entries.map((e) => e.id).sort();
+      expect(pubIds).toEqual(privIds); // every public has its private half, and vice versa
+      // the NEWEST published prekey (the one senders wrap to) is always resolvable
+      const newest = bundle.prekeys.reduce((a, b) => (b.seq > a.seq ? b : a));
+      expect(await resolvePrekeyPrivate(encryptedRing, newest.id, PASS)).not.toBeNull();
+    }
+  }, 20000);
+
+  it('PROVISION → ROTATE → WRAP → UNWRAP: a wrap to the current newest prekey stays decryptable across rotation', async () => {
+    // The mission invariant: a recipient must NEVER receive a share whose DEK they
+    // cannot unwrap. Provision, rotate, THEN wrap to the live newest prekey, then rotate
+    // again — the share must still decrypt while its prekey is within the ring window.
+    const idPair = await generateIdentityKeyPair();
+    const identityPub = await importPublicIdentity(await exportPublicIdentity(idPair.publicKey));
+    const identityPriv = idPair.privateKey;
+
+    let { bundle, encryptedRing } = await createPrekeyRing(PASS, DEFAULT_RING_SIZE);
+    // rotate once before wrapping (simulates an already-rotated live user)
+    let rot = await rotatePrekeyRing(bundle, encryptedRing, PASS, DEFAULT_RING_SIZE);
+    bundle = rot.bundle;
+    encryptedRing = rot.encryptedRing;
+
+    // sender wraps to the CURRENT newest published prekey
+    const pk = await pickPrekeyForWrap(bundle);
+    const share = await encryptForRecipientsFS(enc.encode('LIVE-SECRET'), [
+      { id: 'rcpt', identityKey: identityPub, prekey: pk },
+    ]);
+
+    // recipient can decrypt immediately
+    expect(
+      dec.decode(await decryptForRecipientFS(share.ciphertext, share.meta, 'rcpt', identityPriv, prekeyResolver(encryptedRing, PASS)))
+    ).toBe('LIVE-SECRET');
+
+    // one more rotation: the wrapped prekey is still inside the ring window → still decryptable
+    rot = await rotatePrekeyRing(bundle, encryptedRing, PASS, DEFAULT_RING_SIZE);
+    encryptedRing = rot.encryptedRing;
+    expect(await resolvePrekeyPrivate(encryptedRing, pk.id, PASS)).not.toBeNull();
+    expect(
+      dec.decode(await decryptForRecipientFS(share.ciphertext, share.meta, 'rcpt', identityPriv, prekeyResolver(encryptedRing, PASS)))
+    ).toBe('LIVE-SECRET');
   });
 
   it('END-TO-END forward secrecy through the real lifecycle', async () => {

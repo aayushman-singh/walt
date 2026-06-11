@@ -110,9 +110,58 @@ export async function createPrekeyRing(
 }
 
 /**
+ * Decrypt the newest ring entry to PROVE `passphrase` matches the ring's existing
+ * private halves. This is the guard against publishing undecryptable prekeys: a
+ * fresh prekey added under a passphrase that differs from the rest of the ring would
+ * publish a public point whose private half no single passphrase can unlock. Senders
+ * wrap to the newest published prekey, so that one typo strands every future v2 share.
+ * Throws loudly (the underlying AES-GCM auth fails) on a wrong passphrase.
+ */
+export async function verifyRingPassphrase(encryptedRing: EncryptedPrekeyRing, passphrase: string): Promise<void> {
+  if (encryptedRing.v !== PREKEY_VERSION) throw new Error(`Unsupported prekey ring version: v${encryptedRing.v}`);
+  if (!Array.isArray(encryptedRing.entries) || encryptedRing.entries.length === 0) {
+    throw new Error('Prekey ring is empty; there is no private half to verify the passphrase against');
+  }
+  const newest = encryptedRing.entries.reduce((a, b) => (b.seq > a.seq ? b : a));
+  // decryptBytes throws "Incorrect passphrase ..." on a mismatch — surfaced as-is.
+  const pkcs8 = await decryptBytes(fromBase64(newest.ciphertext), newest.meta, passphrase);
+  pkcs8.fill(0);
+}
+
+/**
+ * Assert the public bundle and the private ring describe the SAME set of prekeys —
+ * same ids, same seqs, one-to-one. Drift (a public prekey with no matching private,
+ * or vice versa) would publish a wrap target nobody can decrypt. Untrusted Firestore
+ * data can drift, so this runs before AND after a rotation.
+ */
+function assertBundleRingParity(bundle: PrekeyBundle, ring: EncryptedPrekeyRing): void {
+  if (!Array.isArray(bundle.prekeys) || !Array.isArray(ring.entries)) {
+    throw new Error('Malformed prekey bundle/ring: prekeys and entries must be arrays');
+  }
+  if (bundle.prekeys.length !== ring.entries.length) {
+    throw new Error(
+      `Prekey bundle/ring drift: ${bundle.prekeys.length} public prekeys vs ${ring.entries.length} private entries`
+    );
+  }
+  const ringById = new Map(ring.entries.map((e) => [e.id, e]));
+  for (const p of bundle.prekeys) {
+    const e = ringById.get(p.id);
+    if (!e) throw new Error(`Prekey bundle/ring drift: public prekey ${p.id} has no matching private entry`);
+    if (e.seq !== p.seq) {
+      throw new Error(`Prekey bundle/ring drift: prekey ${p.id} seq ${p.seq} (public) != ${e.seq} (private)`);
+    }
+  }
+}
+
+/**
  * Rotate the ring: add ONE fresh prekey and evict the oldest so the ring stays at
  * most `ringSize`. Evicting the oldest private makes any share bound to it
  * forward-secret. Returns the new public bundle + encrypted ring; persist BOTH.
+ *
+ * Before rotating it (a) rejects a drifted bundle/ring and (b) proves `passphrase`
+ * against the existing ring, so the fresh prekey is encrypted under the SAME passphrase
+ * as the rest — never publishing an undecryptable wrap target. The kept private set is
+ * derived from the kept PUBLIC set (not sliced independently) so the two cannot diverge.
  */
 export async function rotatePrekeyRing(
   bundle: PrekeyBundle,
@@ -124,6 +173,13 @@ export async function rotatePrekeyRing(
   if (encryptedRing.v !== PREKEY_VERSION || bundle.v !== PREKEY_VERSION) {
     throw new Error(`Unsupported prekey version: bundle v${bundle.v} / ring v${encryptedRing.v}`);
   }
+  if (!Number.isInteger(ringSize) || ringSize < 1) throw new Error('ringSize must be a positive integer');
+  // Reject drifted directory data, then prove the passphrase matches the ring BEFORE
+  // we encrypt a new prekey under it. Either failure aborts loudly — no mixed-passphrase
+  // ring, no public-without-private prekey ever gets published.
+  assertBundleRingParity(bundle, encryptedRing);
+  await verifyRingPassphrase(encryptedRing, passphrase);
+
   const seq = encryptedRing.nextSeq;
   const id = newId();
   const pair = await generatePrekeyPair();
@@ -131,15 +187,20 @@ export async function rotatePrekeyRing(
   const newEntry = await encryptPrekeyPrivate(id, seq, pair.privateKey, passphrase);
 
   const byNewestPublic = [...bundle.prekeys, newPublic].sort((a, b) => b.seq - a.seq).slice(0, ringSize);
-  const byNewestEntries = [...encryptedRing.entries, newEntry].sort((a, b) => b.seq - a.seq).slice(0, ringSize);
-  const kept = new Set(byNewestEntries.map((e) => e.id));
-  const evicted = [...encryptedRing.entries, newEntry].filter((e) => !kept.has(e.id)).map((e) => e.id);
+  const keptIds = new Set(byNewestPublic.map((p) => p.id));
+  // Derive the kept PRIVATE set from the kept PUBLIC set so the two are identical by
+  // construction — never sliced on two separately-sorted lists that could disagree.
+  const byNewestEntries = [...encryptedRing.entries, newEntry]
+    .filter((e) => keptIds.has(e.id))
+    .sort((a, b) => b.seq - a.seq);
+  const evicted = [...encryptedRing.entries, newEntry].filter((e) => !keptIds.has(e.id)).map((e) => e.id);
 
-  return {
-    bundle: { v: PREKEY_VERSION, prekeys: byNewestPublic },
-    encryptedRing: { v: PREKEY_VERSION, nextSeq: seq + 1, entries: byNewestEntries },
-    evicted,
-  };
+  const rotatedBundle: PrekeyBundle = { v: PREKEY_VERSION, prekeys: byNewestPublic };
+  const rotatedRing: EncryptedPrekeyRing = { v: PREKEY_VERSION, nextSeq: seq + 1, entries: byNewestEntries };
+  // Belt-and-suspenders: what we are about to publish MUST be in parity.
+  assertBundleRingParity(rotatedBundle, rotatedRing);
+
+  return { bundle: rotatedBundle, encryptedRing: rotatedRing, evicted };
 }
 
 const P256_RAW_POINT_BYTES = 65; // uncompressed: 0x04 ‖ X(32) ‖ Y(32)

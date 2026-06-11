@@ -92,8 +92,9 @@ New shares emit v2 only when `NEXT_PUBLIC_FS_SHARING === 'on'`. Reading both v1 
 is always on. The flag defaults **off** because emitting v2 safely requires, for every
 participant:
 
-1. A **published prekey ring** (`ensureIdentity` now provisions one on next call, but
-   existing v1-only users have none until then), and
+1. A **published prekey ring** (`ensureIdentity` provisions one only when the FS flag is
+   on, so an FS-off build's v1 setup never breaks on prekey generation; existing v1-only
+   users have none until then), and
 2. A **rotation driver** — something that calls `rotatePrekeys` on a cadence (e.g. per
    login/session). Without it, `pickPrekeyForWrap` keeps choosing the same newest
    prekey forever and the "forward-secret" key never actually rotates or evicts, which
@@ -108,8 +109,15 @@ without a prekey ring (no silent fallback).
 Prekey bundles and wraps come from Firestore (untrusted). Before use, the code validates
 them explicitly (`lib/recipientPrekeys.requireWellFormedPrekey`,
 `lib/forwardSecretSharing.requireWellFormedWrap` / `requireUncompressedP256`): version,
-algorithm, integer non-negative `seq`, unique ids, and 65-byte uncompressed P-256 points
-— so malformed directory data raises a clear error instead of an opaque crypto failure.
+algorithm, integer non-negative `seq`, unique ids, 65-byte uncompressed P-256 points, and
+exact wrap byte shapes (salt = 16 bytes, IV = 12 bytes, non-empty wrapped key) — so
+malformed directory data raises a clear error instead of an opaque crypto failure.
+
+Rotation additionally rejects a **drifted** bundle/ring (`assertBundleRingParity`: equal
+length, one-to-one ids, matching seqs) and **proves the passphrase** against the existing
+ring (`verifyRingPassphrase`) before encrypting a fresh prekey under it. Together those
+guarantee a rotation can never publish a public prekey whose private half is missing or
+encrypted under a divergent passphrase — i.e. a wrap target nobody can decrypt.
 
 ### Why not true one-time prekeys?
 

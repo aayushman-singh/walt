@@ -38,6 +38,12 @@ import {
 import type { RecipientPublicKey } from '../lib/recipientSharing';
 import type { FSRecipientPublicKey, PrekeyResolver } from '../lib/forwardSecretSharing';
 
+// Forward-secret (v2) prekeys are only needed by a build that EMITS v2 shares. Gate
+// provisioning behind the same flag useEncryptedShare uses, so an FS-off build's v1
+// identity setup can never break on prekey generation / Firestore writes. Reading v2
+// is always on; this only gates whether we CREATE prekey material.
+const FS_SHARING_ON = process.env.NEXT_PUBLIC_FS_SHARING === 'on';
+
 export function useRecipientIdentity() {
   const { user } = useAuth();
 
@@ -50,13 +56,22 @@ export function useRecipientIdentity() {
       if (!existing.publicIdentity || !existing.encryptedIdentityKey) {
         const { publicIdentity, encryptedPrivateKey } = await createStoredIdentity(passphrase);
         await publishIdentity(user.uid, user.email || '', publicIdentity, encryptedPrivateKey);
+      } else {
+        // Identity already exists: PROVE the passphrase unlocks it before we encrypt any
+        // new prekey material under it. A typo'd passphrase would otherwise publish a
+        // prekey ring no single passphrase can decrypt → undecryptable v2 shares. This
+        // binds the ring's passphrase to the identity passphrase the recipient unlocks
+        // with at decrypt time. Throws loudly on a mismatch.
+        await importPrivateKeyEncrypted(existing.encryptedIdentityKey, passphrase);
       }
-      // Forward-secret sharing also needs a published session-prekey ring. Create
-      // one on first use; idempotent thereafter.
-      const ring = await loadOwnPrekeyRing(user.uid);
-      if (!ring) {
-        const fresh = await createPrekeyRing(passphrase);
-        await publishPrekeys(user.uid, user.email || '', fresh.bundle, fresh.encryptedRing);
+      // Forward-secret sharing also needs a published session-prekey ring. Only provision
+      // when this build emits v2 (FS flag on); create on first use, idempotent thereafter.
+      if (FS_SHARING_ON) {
+        const ring = await loadOwnPrekeyRing(user.uid);
+        if (!ring) {
+          const fresh = await createPrekeyRing(passphrase);
+          await publishPrekeys(user.uid, user.email || '', fresh.bundle, fresh.encryptedRing);
+        }
       }
       return user.uid;
     },
@@ -67,6 +82,12 @@ export function useRecipientIdentity() {
   const rotatePrekeys = useCallback(
     async (passphrase: string): Promise<string[]> => {
       if (!user) throw new Error('Sign in first');
+      // Prove the passphrase against the existing identity first, so rotation can never
+      // encrypt a fresh prekey under a passphrase that diverges from the one the recipient
+      // unlocks with (rotatePrekeyRing also re-checks against the ring itself).
+      const { encryptedIdentityKey } = await loadOwnIdentity(user.uid);
+      if (!encryptedIdentityKey) throw new Error('No sharing identity found — enable encrypted sharing first');
+      await importPrivateKeyEncrypted(encryptedIdentityKey, passphrase);
       const ring = await loadOwnPrekeyRing(user.uid);
       if (!ring) throw new Error('No prekey ring found — enable encrypted sharing first');
       // The bundle (public halves) lives on the directory doc; rebuild it from the

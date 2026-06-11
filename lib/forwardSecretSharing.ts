@@ -96,12 +96,28 @@ function requireUncompressedP256(raw: Uint8Array, label: string): Uint8Array {
   return raw;
 }
 
-/** Validate an untrusted FSRecipientWrap pulled from Firestore before using it. */
+/**
+ * Validate an untrusted FSRecipientWrap pulled from Firestore before using it. Checks
+ * every field is a non-empty string AND that the base64 byte shapes are exactly what
+ * the cipher expects (65-byte uncompressed epk, SALT_BYTES salt, IV_BYTES iv, non-empty
+ * wrappedKey) — so malformed directory data fails with a clear message here instead of
+ * an opaque DOMException deep inside ECDH/AES-GCM.
+ */
 function requireWellFormedWrap(w: FSRecipientWrap): FSRecipientWrap {
   for (const k of ['recipientId', 'prekeyId', 'epk', 'salt', 'iv', 'wrappedKey'] as const) {
     if (typeof w[k] !== 'string' || w[k].length === 0) {
       throw new Error(`Malformed forward-secret wrap: field "${k}" is missing or not a string`);
     }
+  }
+  requireUncompressedP256(fromBase64(w.epk), 'wrap ephemeral public key (epk)');
+  if (fromBase64(w.salt).length !== SALT_BYTES) {
+    throw new Error(`Malformed forward-secret wrap: salt must decode to ${SALT_BYTES} bytes`);
+  }
+  if (fromBase64(w.iv).length !== IV_BYTES) {
+    throw new Error(`Malformed forward-secret wrap: iv must decode to ${IV_BYTES} bytes`);
+  }
+  if (fromBase64(w.wrappedKey).length === 0) {
+    throw new Error('Malformed forward-secret wrap: wrappedKey decodes to empty');
   }
   return w;
 }

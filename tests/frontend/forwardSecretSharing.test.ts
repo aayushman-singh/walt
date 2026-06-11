@@ -180,6 +180,26 @@ describe('lib/forwardSecretSharing — V2 two-DH envelope', () => {
     await expect(encryptForRecipientsFS(enc.encode('x'), [])).rejects.toThrow(/at least one recipient/i);
   });
 
+  it('rejects a wrap with a malformed salt/iv/epk byte shape (untrusted Firestore data)', async () => {
+    const { ciphertext, meta } = await encryptForRecipientsFS(enc.encode('z'), [pubFor(bob, 'pk-new')]);
+    const tamper = (patch: Partial<(typeof meta.recipients)[0]>) => ({
+      ...meta,
+      recipients: [{ ...meta.recipients[0], ...patch }],
+    });
+    // salt that decodes to the wrong length
+    await expect(
+      decryptForRecipientFS(ciphertext, tamper({ salt: 'AAAA' }), 'bob', bob.identityPriv, resolverFor(bob))
+    ).rejects.toThrow(/salt must decode/i);
+    // iv that decodes to the wrong length
+    await expect(
+      decryptForRecipientFS(ciphertext, tamper({ iv: 'AAAA' }), 'bob', bob.identityPriv, resolverFor(bob))
+    ).rejects.toThrow(/iv must decode/i);
+    // epk that is not a 65-byte uncompressed point
+    await expect(
+      decryptForRecipientFS(ciphertext, tamper({ epk: 'AAAA' }), 'bob', bob.identityPriv, resolverFor(bob))
+    ).rejects.toThrow(/uncompressed P-256/i);
+  });
+
   it('is binary-lossless', async () => {
     const bytes = new Uint8Array(4096);
     for (let i = 0; i < bytes.length; i++) bytes[i] = (i * 97) % 256;
