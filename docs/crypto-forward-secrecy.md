@@ -46,7 +46,7 @@ wrapKey    = AES-256-GCM key from wrapSecret
 | Fresh ephemeral per share on the **sender** side | ✅ |
 | Forward secrecy granularity | **per session prekey** — the FS window equals the rotation/eviction interval, not literally per-message |
 | Double ratchet / per-message chain keys | ❌ not implemented |
-| Post-compromise security (healing after a *device* compromise that leaks live prekey privates) | ❌ not implemented |
+| Post-compromise security (healing after a compromise that leaks live prekey privates) | ⤴ **V5**: single-step healing ratchet against private-key-material compromise — see `crypto-post-compromise.md` (not against passphrase compromise) |
 | Defeats an *actively malicious* directory (wrong identity key served on first use) | ❌ — still trust-on-first-use; out-of-band fingerprint check is the mitigation (see DECISIONS #11) |
 
 The honest one-liner: **V4 gives per-session forward secrecy against later compromise
