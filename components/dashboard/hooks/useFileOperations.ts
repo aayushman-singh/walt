@@ -7,7 +7,7 @@
 import { useState, useRef } from 'react';
 import { ErrorHandler } from '../../../lib/errorHandler';
 import { getFileCache } from '../../../lib/fileCache';
-import { decryptToBlob } from '../../../lib/encryption';
+import { decryptFileToBlob } from '../../../lib/fileEnvelope';
 import { ActivityLog } from '../../../hooks/useUserFileStorage';
 import {
   UploadedFile,
@@ -373,7 +373,8 @@ export function useFileOperations(params: UseFileOperationsParams) {
           return;
         }
         const bytes = new Uint8Array(await blob.arrayBuffer());
-        downloadBlob = await decryptToBlob(bytes, file.encryption, passphrase);
+        // Dispatch on the stored envelope shape (whole-file v1 or chunked v2).
+        downloadBlob = await decryptFileToBlob(bytes, file.encryption, passphrase);
         downloadName = file.encryption.originalName || file.name;
       }
 

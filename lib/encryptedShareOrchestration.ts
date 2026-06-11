@@ -31,7 +31,7 @@ import {
   type FSSharedEncryptionMeta,
   type PrekeyResolver,
 } from './forwardSecretSharing';
-import { decryptBytes, type EncryptionMeta } from './encryption';
+import { decryptFileBytes, type FileEncryptionMeta } from './fileEnvelope';
 
 /** Either share-envelope version. Decryption dispatches on `meta.v`. */
 export type AnyShareMeta = SharedEncryptionMeta | FSSharedEncryptionMeta;
@@ -43,8 +43,8 @@ export interface ShareableFile {
   type: string;
   size?: number;
   gatewayUrl: string;
-  /** Present iff the stored bytes are a V1 (passphrase) ciphertext. */
-  encryption?: EncryptionMeta;
+  /** Present iff the stored bytes are a passphrase ciphertext (whole-file or chunked). */
+  encryption?: FileEncryptionMeta;
 }
 
 /** One inbox record written to sharedWithMe/{recipientUid}/items/{shareId}. */
@@ -139,7 +139,8 @@ export async function getPlaintextBytes(
   if (!passphrase) {
     throw new Error('Sharing cancelled — no passphrase provided to decrypt the source file');
   }
-  return decryptBytes(raw, file.encryption, passphrase);
+  // Dispatch on the stored envelope shape (whole-file or chunked) to recover plaintext.
+  return decryptFileBytes(raw, file.encryption, passphrase);
 }
 
 /**
