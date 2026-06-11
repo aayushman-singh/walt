@@ -61,5 +61,9 @@ backend/.env
 /SESSION_SUMMARY.md
 /SESSION_SUMMARY_V2.md
 /SESSION_SUMMARY_V3.md
+/HANDOFF_V4.md
+/STATE_V4.md
+/DECISIONS_V4.md
+/SESSION_SUMMARY_V4.md
 /orchestrator*.log
 /codex/
