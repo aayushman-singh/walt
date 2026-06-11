@@ -14,7 +14,7 @@ import {
 } from '../../lib/encryptedShareOrchestration';
 import { encryptForRecipients, type RecipientPublicKey } from '../../lib/recipientSharing';
 import { generateIdentityKeyPair, exportPublicIdentity, importPublicIdentity } from '../../lib/recipientKeys';
-import { createPrekeyRing, pickPrekeyForWrap, prekeyResolver } from '../../lib/recipientPrekeys';
+import { createRatchet, ratchetForward, ratchetResolver, toRatchetRecipient } from '../../lib/postCompromiseRatchet';
 import type { FSRecipientPublicKey } from '../../lib/forwardSecretSharing';
 
 const PASS = 'pw';
@@ -23,8 +23,8 @@ const file: ShareableFile = { id: 'file-1', name: 'm.txt', type: 'text/plain', s
 async function realIdentity(uid: string) {
   const pair = await generateIdentityKeyPair();
   const pub = await importPublicIdentity(await exportPublicIdentity(pair.publicKey));
-  const ring = await createPrekeyRing(PASS, 3);
-  return { uid, pub, priv: pair.privateKey, bundle: ring.bundle, encryptedRing: ring.encryptedRing };
+  const ratchet = await createRatchet(PASS);
+  return { uid, pub, priv: pair.privateKey, published: ratchet.published, state: ratchet.state };
 }
 
 describe('encryptedShareOrchestration — forward-secret (v2) wiring', () => {
@@ -37,7 +37,7 @@ describe('encryptedShareOrchestration — forward-secret (v2) wiring', () => {
 
     const getRecipientFS = async (r: RecipientPublicKey): Promise<FSRecipientPublicKey> => {
       const who = r.id === me.uid ? me : bob;
-      return { id: r.id, identityKey: r.publicKey, prekey: await pickPrekeyForWrap(who.bundle) };
+      return toRatchetRecipient(r.id, r.publicKey, who.published);
     };
 
     const deps: EncryptedShareDeps = {
@@ -47,7 +47,7 @@ describe('encryptedShareOrchestration — forward-secret (v2) wiring', () => {
       getMyPrivateKey: async () => me.priv,
       forwardSecret: true,
       getRecipientFS,
-      getMyPrekeyResolver: async (pass: string) => prekeyResolver(me.encryptedRing, pass),
+      getMyPrekeyResolver: async (pass: string) => ratchetResolver(me.state, pass),
       fetchBytes: async () => new TextEncoder().encode('hey'),
       fetchByCid: vi.fn(),
       uploadCiphertext: vi.fn(async () => ({ cid: 'cid-1' })),
@@ -67,6 +67,7 @@ describe('encryptedShareOrchestration — forward-secret (v2) wiring', () => {
     expect(records).toHaveLength(2);
     expect(records[0].meta.v).toBe(2);
     expect((records[0].meta as any).recipientAlg).toBe('ECDH-P256-2DH+HKDF-SHA256');
+    expect((records[0].meta as any).keyLifecycle).toBe('ratchet-v1');
     const ciphertext = (deps.uploadCiphertext as any).mock.calls[0][0] as File;
     const ctBytes = await new Promise<Uint8Array>((resolve, reject) => {
       const fr = new FileReader();
@@ -81,12 +82,60 @@ describe('encryptedShareOrchestration — forward-secret (v2) wiring', () => {
       ...deps,
       self: { uid: bob.uid, email: 'bob@walt.dev' },
       getMyPrivateKey: async () => bob.priv,
-      getMyPrekeyResolver: async (pass: string) => prekeyResolver(bob.encryptedRing, pass),
+      getMyPrekeyResolver: async (pass: string) => ratchetResolver(bob.state, pass),
       fetchByCid: async () => ctBytes,
       triggerDownload: (bytes) => triggered.push(bytes),
     };
     await downloadShared(stored[bob.uid], PASS, bobDeps);
     expect(new TextDecoder().decode(triggered[0])).toBe('hey');
+  });
+
+  it('ratchet-backed v2 inbox records expire after the recipient advances one epoch', async () => {
+    const me = await realIdentity('me-uid');
+    const bob = await realIdentity('bob-uid');
+
+    const stored: Record<string, SharedRecord> = {};
+    const getRecipientFS = async (r: RecipientPublicKey): Promise<FSRecipientPublicKey> => {
+      const who = r.id === me.uid ? me : bob;
+      return toRatchetRecipient(r.id, r.publicKey, who.published);
+    };
+    const deps: EncryptedShareDeps = {
+      self: { uid: me.uid, email: 'me@walt.dev' },
+      resolveRecipientByEmail: vi.fn(),
+      getMyPublicKey: async () => ({ id: me.uid, publicKey: me.pub }),
+      getMyPrivateKey: async () => me.priv,
+      forwardSecret: true,
+      getRecipientFS,
+      getMyPrekeyResolver: async (pass: string) => ratchetResolver(me.state, pass),
+      fetchBytes: async () => new TextEncoder().encode('expires'),
+      fetchByCid: vi.fn(),
+      uploadCiphertext: vi.fn(async () => ({ cid: 'cid-1' })),
+      writeSharedRecord: async (uid, rec) => {
+        stored[uid] = rec;
+      },
+      readSharedWithMe: async () => [],
+      triggerDownload: vi.fn(),
+    };
+
+    await shareWithRecipients(file, [{ id: bob.uid, publicKey: bob.pub }], deps);
+    const ciphertext = (deps.uploadCiphertext as any).mock.calls[0][0] as File;
+    const ctBytes = await new Promise<Uint8Array>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(new Uint8Array(fr.result as ArrayBuffer));
+      fr.onerror = () => reject(fr.error);
+      fr.readAsArrayBuffer(ciphertext);
+    });
+    const { state: bobNext } = await ratchetForward(bob.state, PASS);
+
+    await expect(
+      downloadShared(stored[bob.uid], PASS, {
+        ...deps,
+        self: { uid: bob.uid, email: 'bob@walt.dev' },
+        getMyPrivateKey: async () => bob.priv,
+        getMyPrekeyResolver: async (pass: string) => ratchetResolver(bobNext, pass),
+        fetchByCid: async () => ctBytes,
+      })
+    ).rejects.toThrow(/rotated out|forward-secret|ratcheted out|expired/i);
   });
 
   it('back-compat: a v1 record still downloads via the legacy path', async () => {

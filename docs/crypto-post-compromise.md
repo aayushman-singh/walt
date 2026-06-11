@@ -44,9 +44,11 @@ Because `R_{n+1}.priv` is independent fresh randomness and `R_n.priv` is destroy
 | **Heals (PCS)** | new private is entropy the attacker never saw | a share wrapped to epoch *n+1* is unreadable to an attacker holding the epoch-*n* ratchet private + the long-term identity private |
 | **Expires (FS)** | old private is destroyed | epoch-*n* shares become unreadable the instant epoch *n+1* is adopted |
 
-The confidentiality and identity-binding crypto are **unchanged** — a directory-
-substituted prekey is still denial-of-service, never disclosure (the attacker lacks
-`IK_identity_priv`). The ratchet is a **key-lifecycle** change, not a new cipher.
+The confidentiality and identity-binding crypto are **unchanged**. A directory-
+substituted prekey is denial-of-service unless the attacker also has
+`IK_identity_priv`; with both a malicious directory and the identity private, the
+attacker can make future wraps decryptable to themselves. The ratchet is a
+**key-lifecycle** change, not a new cipher.
 
 ### Proof
 
@@ -70,6 +72,11 @@ substituted prekey is still denial-of-service, never disclosure (the attacker la
   Healing a passphrase compromise is fundamentally impossible against a party who
   continues to read passphrase-locked storage — it needs a second factor/device and
   is out of scope.
+- **PCS does not defeat active directory substitution plus identity-key compromise.**
+  If the directory serves an attacker-owned ratchet prekey while the attacker also
+  has the recipient identity private key, the two-DH wrap is decryptable to the
+  attacker. Out-of-band identity/prekey verification is the mitigation, not this
+  ratchet.
 - **Single-step heal, single-step expiry are the same step.** Per the FS ↔ re-download
   tension (see `crypto-forward-secrecy.md`), once you ratchet, prior-epoch shares are
   gone for **everyone**, including the recipient. Surfacing that as *expiry* in the UI
@@ -87,8 +94,14 @@ prekey and owner-only state are new, prekey-agnostic structures
 (`PublishedRatchetPrekey`, `EncryptedRatchetState`); moving to server-claimed
 one-time prekeys later remains a storage change, not a crypto change.
 
-## Rollout
+## Live wiring
 
-Like V4, this is library + proof. Turning it on requires onboarding to provision a
-ratchet (`createRatchet`) and a driver to call `ratchetForward` on a cadence, plus an
-expiry UI for prior-epoch shares. Until wired, the live site is unchanged.
+When `NEXT_PUBLIC_FS_SHARING=on`, `useRecipientIdentity.ensureIdentity` provisions
+and publishes the current ratchet prekey, and `useEncryptedShare` resolves recipients
+through that current prekey for new v2 shares. `rotatePrekeys` now advances the
+ratchet one epoch and publishes the replacement prekey atomically with the owner-only
+state.
+
+The flag remains default-off because ratcheting immediately expires prior-epoch
+shares. There is no hidden per-login cadence: a product/UI decision must choose when
+to call the ratchet step and how to explain expired shares.

@@ -13,8 +13,9 @@
  *
  *   - ECDH(EK, IK): EK = fresh sender ephemeral, IK = recipient LONG-TERM identity
  *                   key. Binds the wrap to the published identity — an attacker who
- *                   swaps a prekey into the directory still needs IK_priv, so
- *                   substitution is denial-of-service, never disclosure.
+ *                   swaps a prekey into the directory still needs IK_priv. Without
+ *                   IK_priv, substitution is denial-of-service; with IK_priv, it is
+ *                   disclosure.
  *   - ECDH(EK, PK): PK = recipient SESSION PREKEY whose private half is EVICTED on
  *                   rotation. This is the forward-secret term: once PK_priv is
  *                   deleted, no holder of IK_priv can reconstruct the secret for an
@@ -30,6 +31,9 @@ import { toBase64, fromBase64 } from './encryption';
 
 export const FS_SHARE_VERSION = 2;
 export const FS_RECIPIENT_ALG = 'ECDH-P256-2DH+HKDF-SHA256' as const;
+export const FS_KEY_LIFECYCLE_PREKEY_RING = 'prekey-ring-v1' as const;
+export const FS_KEY_LIFECYCLE_RATCHET = 'ratchet-v1' as const;
+export type FSKeyLifecycle = typeof FS_KEY_LIFECYCLE_PREKEY_RING | typeof FS_KEY_LIFECYCLE_RATCHET;
 const EC_PARAMS = { name: 'ECDH', namedCurve: 'P-256' } as const;
 const IV_BYTES = 12;
 const SALT_BYTES = 16;
@@ -56,6 +60,8 @@ export interface FSSharedEncryptionMeta {
   originalName?: string;
   originalType?: string;
   originalSize?: number;
+  /** Which recipient key lifecycle produced this v2 envelope. Routing metadata. */
+  keyLifecycle?: FSKeyLifecycle;
 }
 
 /** A recipient's public material for a forward-secret wrap. */
@@ -64,7 +70,7 @@ export interface FSRecipientPublicKey {
   /** Long-term identity ECDH public key (lib/recipientKeys.importPublicIdentity). */
   identityKey: CryptoKey;
   /** One session prekey to bind this wrap to. */
-  prekey: { id: string; key: CryptoKey };
+  prekey: { id: string; key: CryptoKey; keyLifecycle?: FSKeyLifecycle };
 }
 
 /** Resolve a recipient prekey id → its private CryptoKey (or null if evicted/unknown). */
@@ -141,6 +147,14 @@ function contentAAD(
   return new TextEncoder().encode(
     JSON.stringify([m.v, m.alg, m.recipientAlg, m.fileIv, m.originalName ?? null, m.originalType ?? null, m.originalSize ?? null, context])
   );
+}
+
+function resolveKeyLifecycle(recipients: FSRecipientPublicKey[]): FSKeyLifecycle {
+  const lifecycles = new Set(recipients.map((r) => r.prekey.keyLifecycle ?? FS_KEY_LIFECYCLE_PREKEY_RING));
+  if (lifecycles.size !== 1) {
+    throw new Error('Forward-secret recipients mix incompatible key lifecycles');
+  }
+  return Array.from(lifecycles)[0];
 }
 
 /** Concatenate two equal-curve ECDH outputs into one HKDF input keying material. */
@@ -252,6 +266,7 @@ export async function encryptForRecipientsFS(
     originalName: fileInfo?.name,
     originalType: fileInfo?.type,
     originalSize: fileInfo?.size,
+    keyLifecycle: resolveKeyLifecycle(recipients),
   };
   const aad = contentAAD(header, context);
   const ciphertext = new Uint8Array(

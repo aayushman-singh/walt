@@ -30,9 +30,10 @@
  *     adopted, because epoch-n's private is gone.
  *
  * The confidentiality + identity-binding crypto is UNCHANGED: each wrap still mixes
- * ECDH(EK, IK_identity) ‖ ECDH(EK, PK_ratchet) exactly as lib/forwardSecretSharing,
- * so a directory-substituted prekey is still denial-of-service, never disclosure.
- * The ratchet is a *key-lifecycle* change, not a new cipher.
+ * ECDH(EK, IK_identity) ‖ ECDH(EK, PK_ratchet) exactly as lib/forwardSecretSharing.
+ * A directory-substituted prekey is denial-of-service unless the attacker also has
+ * the recipient identity private key. The ratchet is a *key-lifecycle* change, not
+ * a new cipher.
  *
  * ## Honest scope (no overclaiming)
  *
@@ -45,6 +46,8 @@
  *     passphrase compromise is out of scope (it requires a second factor / device and
  *     is fundamentally impossible against a party who keeps reading passphrase-locked
  *     storage). This is stated plainly in docs/crypto-post-compromise.md.
+ *   - PCS does NOT defeat an active malicious directory that serves attacker-chosen
+ *     ratchet prekeys while the attacker also holds the recipient identity private.
  *   - Healing is single-step but the heal/expiry window is the SAME interval (see the
  *     FS↔re-download tension in docs/crypto-forward-secrecy.md): once you ratchet,
  *     prior-epoch shares are gone for everyone, including the recipient.
@@ -53,7 +56,7 @@
  * throws loudly. An out-of-epoch prekey id resolves to null (explicit expiry).
  */
 import { encryptBytes, decryptBytes, toBase64, fromBase64, type EncryptionMeta } from './encryption';
-import type { FSRecipientPublicKey, PrekeyResolver } from './forwardSecretSharing';
+import { FS_KEY_LIFECYCLE_RATCHET, type FSRecipientPublicKey, type PrekeyResolver } from './forwardSecretSharing';
 
 export const RATCHET_VERSION = 1;
 const EC_PARAMS = { name: 'ECDH', namedCurve: 'P-256' } as const;
@@ -76,6 +79,8 @@ export interface EncryptedRatchetState {
   v: number;
   epoch: number;
   prekeyId: string;
+  /** base64 raw public EC point matching the encrypted private key. */
+  publicKey: string;
   /** base64 PKCS#8 ciphertext of the current ratchet private key. */
   ciphertext: string;
   meta: EncryptionMeta;
@@ -106,16 +111,18 @@ async function encryptRatchetPrivate(
   epoch: number,
   prekeyId: string,
   privateKey: CryptoKey,
+  publicKey: CryptoKey,
   passphrase: string
 ): Promise<EncryptedRatchetState> {
   const pkcs8 = new Uint8Array(await getSubtle().exportKey('pkcs8', privateKey));
+  const publicRaw = new Uint8Array(await getSubtle().exportKey('raw', publicKey));
   const { ciphertext, meta } = await encryptBytes(pkcs8, passphrase, {
     name: `ratchet-epoch-${epoch}.pkcs8`,
     type: 'application/pkcs8',
     size: pkcs8.byteLength,
   });
   pkcs8.fill(0);
-  return { v: RATCHET_VERSION, epoch, prekeyId, ciphertext: toBase64(ciphertext), meta };
+  return { v: RATCHET_VERSION, epoch, prekeyId, publicKey: toBase64(publicRaw), ciphertext: toBase64(ciphertext), meta };
 }
 
 /**
@@ -139,7 +146,7 @@ export async function createRatchet(
   const pair = await generateRatchetPair();
   return {
     published: await exportPublished(epoch, prekeyId, pair.publicKey),
-    state: await encryptRatchetPrivate(epoch, prekeyId, pair.privateKey, passphrase),
+    state: await encryptRatchetPrivate(epoch, prekeyId, pair.privateKey, pair.publicKey, passphrase),
   };
 }
 
@@ -171,7 +178,7 @@ export async function ratchetForward(
   const pair = await generateRatchetPair();
   return {
     published: await exportPublished(epoch, prekeyId, pair.publicKey),
-    state: await encryptRatchetPrivate(epoch, prekeyId, pair.privateKey, passphrase),
+    state: await encryptRatchetPrivate(epoch, prekeyId, pair.privateKey, pair.publicKey, passphrase),
     evicted: { epoch: state.epoch, prekeyId: state.prekeyId },
   };
 }
@@ -212,7 +219,7 @@ export async function toRatchetRecipient(
   published: PublishedRatchetPrekey
 ): Promise<FSRecipientPublicKey> {
   const prekey = await pickRatchetForWrap(published);
-  return { id: recipientId, identityKey, prekey };
+  return { id: recipientId, identityKey, prekey: { ...prekey, keyLifecycle: FS_KEY_LIFECYCLE_RATCHET } };
 }
 
 /**
