@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import TagIcon from '@rsuite/icons/Tag';
+import WIcon from './WIcon';
 import styles from '../styles/TagManager.module.css';
 
 interface TagManagerProps {
@@ -62,8 +62,8 @@ const TagManager: React.FC<TagManagerProps> = ({
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h3><TagIcon /> Manage Tags</h3>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <h3><WIcon name="tag" size={16} /> Manage Tags</h3>
+          <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={16} /></button>
         </div>
 
         <div className={styles.content}>
@@ -127,7 +127,7 @@ const TagManager: React.FC<TagManagerProps> = ({
                       onClick={() => onRemoveTag(tag)}
                       title="Remove tag"
                     >
-                      ✕
+                      <WIcon name="close" size={12} />
                     </button>
                   </div>
                 ))}

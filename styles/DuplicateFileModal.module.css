@@ -1,10 +1,10 @@
+/* DuplicateFileModal — SOVEREIGN (.w-overlay / .w-modal / .w-radio) */
+
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(4, 7, 14, 0.66);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,104 +12,90 @@
   animation: fadeIn 0.2s ease-out;
 }
 
+[data-theme="light"] .overlay,
+.light .overlay {
+  background: rgba(20, 30, 55, 0.42);
+}
+
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  max-width: 600px;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  max-width: 480px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  animation: slideUp 0.3s ease-out;
+  animation: slideUp 0.24s ease-out;
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.dark .modal {
-  background: #1a1a2e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .header {
-  padding: 24px 24px 20px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.dark .header {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--line);
 }
 
 .title {
   margin: 0;
-  font-size: 22px;
-  font-weight: 500;
-  color: #202124;
-}
-
-.dark .title {
-  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
 }
 
 .content {
-  padding: 24px;
+  padding: 22px;
 }
 
 .message {
-  margin: 0 0 24px 0;
-  font-size: 14px;
-  color: #5f6368;
+  margin: 0 0 16px 0;
+  font-size: 12.5px;
+  color: var(--mut);
   line-height: 1.5;
 }
 
-.dark .message {
-  color: rgba(255, 255, 255, 0.8);
-}
-
 .message strong {
-  color: #202124;
-  font-weight: 500;
-}
-
-.dark .message strong {
-  color: #fff;
+  color: var(--tx);
+  font-weight: 600;
 }
 
 .radioGroup {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 9px;
   margin-top: 8px;
 }
 
 .radioOption {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
+  padding: 11px 13px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
   cursor: pointer;
-  padding: 8px 0;
   user-select: none;
+  transition: 0.16s;
 }
 
 .radioOption:hover {
-  opacity: 0.8;
+  border-color: var(--accent-bd);
+}
+
+.radioOption:has(.radioInput:checked) {
+  border-color: var(--accent-bd);
+  background: var(--accent-soft);
 }
 
 .radioInput {
@@ -117,159 +103,105 @@
   height: 18px;
   margin: 0;
   cursor: pointer;
-  accent-color: #1a73e8;
+  accent-color: var(--accent);
   flex-shrink: 0;
 }
 
-.dark .radioInput {
-  accent-color: #4285f4;
-}
-
 .radioLabel {
-  font-size: 14px;
-  color: #202124;
+  font-size: 13.5px;
+  color: var(--tx);
   cursor: pointer;
   line-height: 1.5;
 }
 
-.dark .radioLabel {
-  color: rgba(255, 255, 255, 0.9);
-}
-
 .actions {
   display: flex;
-  gap: 8px;
+  gap: 9px;
   justify-content: flex-end;
-  padding: 16px 24px 24px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.dark .actions {
-  border-top-color: rgba(255, 255, 255, 0.1);
+  padding: 16px 22px 22px;
+  border-top: 1px solid var(--line);
 }
 
 .cancelButton {
-  background: none;
-  border: none;
-  color: #1a73e8;
-  font-size: 14px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+  border: 1px solid var(--line2);
+  color: var(--tx);
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 10px 16px;
-  border-radius: 4px;
-  transition: background 0.2s;
+  padding: 9px 16px;
+  border-radius: 10px;
+  transition: 0.16s;
+  min-width: 84px;
 }
 
 .cancelButton:hover {
-  background: rgba(26, 115, 232, 0.08);
+  border-color: var(--accent-bd);
+  background: var(--surface3);
 }
 
-.dark .cancelButton {
-  color: #8ab4f8;
-}
-
-.dark .cancelButton:hover {
-  background: rgba(138, 180, 248, 0.1);
-}
-
-.uploadButton {
-  background: #1a73e8;
-  border: none;
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
+.uploadButton,
+.compareButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  border: 1px solid transparent;
+  color: var(--accent-ink);
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 10px 24px;
-  border-radius: 4px;
-  transition: background 0.2s;
-  min-width: 88px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  transition: 0.16s;
+  box-shadow: 0 8px 22px -10px var(--accent);
 }
 
-.uploadButton:hover {
-  background: #1765cc;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+.uploadButton { min-width: 88px; }
+.compareButton { min-width: 120px; }
+
+.uploadButton:hover,
+.compareButton:hover {
+  background: var(--accent-h);
 }
 
-.uploadButton:active {
-  background: #1557b0;
-}
-
-.dark .uploadButton {
-  background: #4285f4;
-}
-
-.dark .uploadButton:hover {
-  background: #3367d6;
-}
-
-.dark .uploadButton:active {
-  background: #2b5fc7;
+.uploadButton:active,
+.compareButton:active {
+  background: var(--accent-h);
 }
 
 .remainingCount {
   display: block;
   margin-top: 8px;
-  font-size: 13px;
-  color: #5f6368;
+  font-size: 12.5px;
+  color: var(--mut);
   font-weight: normal;
 }
 
-.dark .remainingCount {
-  color: rgba(255, 255, 255, 0.7);
-}
-
 .batchButton {
-  background: #f1f3f4;
-  border: none;
-  color: #202124;
-  font-size: 14px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+  border: 1px solid var(--line2);
+  color: var(--tx);
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 10px 16px;
-  border-radius: 4px;
-  transition: background 0.2s;
+  padding: 9px 16px;
+  border-radius: 10px;
+  transition: 0.16s;
   white-space: nowrap;
   flex-shrink: 0;
   text-align: center;
 }
 
 .batchButton:hover {
-  background: #e8eaed;
-}
-
-.dark .batchButton {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.dark .batchButton:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.compareButton {
-  background: #1a73e8;
-  border: none;
-  color: white;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 10px 24px;
-  border-radius: 4px;
-  transition: background 0.2s;
-  min-width: 120px;
-}
-
-.compareButton:hover {
-  background: #1765cc;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.dark .compareButton {
-  background: #4285f4;
-}
-
-.dark .compareButton:hover {
-  background: #3367d6;
+  border-color: var(--accent-bd);
+  background: var(--surface3);
 }
 
 /* Mobile responsive */
@@ -283,8 +215,10 @@
     flex-direction: column;
   }
 
-  .button {
+  .cancelButton,
+  .uploadButton,
+  .compareButton,
+  .batchButton {
     width: 100%;
   }
 }
-

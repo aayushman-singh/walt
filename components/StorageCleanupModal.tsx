@@ -7,9 +7,7 @@ import {
   CleanupFilters
 } from '../lib/storageCleanup';
 import { UploadedFile } from '../hooks/useUserFileStorage';
-import StorageIcon from '@rsuite/icons/Storage';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import TrashIcon from '@rsuite/icons/Trash';
+import { WIcon } from './WIcon';
 
 interface StorageCleanupModalProps {
   isOpen: boolean;
@@ -100,8 +98,8 @@ const StorageCleanupModal: React.FC<StorageCleanupModalProps> = ({
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2>🧹 Storage Cleanup</h2>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <h2><WIcon name="trash" size={18} /> Storage Cleanup</h2>
+          <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={18} /></button>
         </div>
 
         <div className={styles.tabs}>
@@ -109,13 +107,13 @@ const StorageCleanupModal: React.FC<StorageCleanupModalProps> = ({
             className={`${styles.tab} ${activeTab === 'recommendations' ? styles.active : ''}`}
             onClick={() => setActiveTab('recommendations')}
           >
-            💡 Recommendations
+            <WIcon name="bolt" size={15} /> Recommendations
           </button>
           <button
             className={`${styles.tab} ${activeTab === 'custom' ? styles.active : ''}`}
             onClick={() => setActiveTab('custom')}
           >
-            🔍 Custom Search
+            <WIcon name="search" size={15} /> Custom Search
           </button>
         </div>
 
@@ -126,19 +124,19 @@ const StorageCleanupModal: React.FC<StorageCleanupModalProps> = ({
                 <h3>Cleanup Opportunities</h3>
                 <div className={styles.summaryGrid}>
                   <div className={styles.summaryCard}>
-                    <div className={styles.summaryLabel}><StorageIcon /> Large Files (100MB+)</div>
+                    <div className={styles.summaryLabel}><WIcon name="server" size={14} /> Large Files (100MB+)</div>
                     <div className={styles.summaryValue}>{recommendations.largeFiles}</div>
                   </div>
                   <div className={styles.summaryCard}>
-                    <div className={styles.summaryLabel}>⏰ Old Files (180+ days)</div>
+                    <div className={styles.summaryLabel}><WIcon name="clock" size={14} /> Old Files (180+ days)</div>
                     <div className={styles.summaryValue}>{recommendations.oldFiles}</div>
                   </div>
                   <div className={styles.summaryCard}>
-                    <div className={styles.summaryLabel}><WarningRoundIcon /> Old Unpinned (30+ days)</div>
+                    <div className={styles.summaryLabel}><WIcon name="warning" size={14} /> Old Unpinned (30+ days)</div>
                     <div className={styles.summaryValue}>{recommendations.oldUnpinnedFiles}</div>
                   </div>
                   <div className={styles.summaryCard}>
-                    <div className={styles.summaryLabel}>💾 Reclaimable Space</div>
+                    <div className={styles.summaryLabel}><WIcon name="download" size={14} /> Reclaimable Space</div>
                     <div className={styles.summaryValue}>{formatSize(recommendations.totalSizeReclaimable)}</div>
                   </div>
                 </div>
@@ -245,7 +243,7 @@ const StorageCleanupModal: React.FC<StorageCleanupModalProps> = ({
             <div className={styles.footerActions}>
               <button onClick={onClose} className={styles.cancelBtn}>Cancel</button>
               <button onClick={handleDelete} className={styles.deleteBtn}>
-                <TrashIcon /> Delete Selected
+                <WIcon name="trash" size={15} /> Delete Selected
               </button>
             </div>
           </div>

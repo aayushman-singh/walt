@@ -10,10 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/DropdownMenu';
-import SearchIcon from '@rsuite/icons/Search';
-import FunnelIcon from '@rsuite/icons/Funnel';
-import StarIcon from '@rsuite/icons/Star';
-import CloseIcon from '@rsuite/icons/Close';
+import { WIcon } from '../WIcon';
 import { DashboardFilters, SavedSearch } from './types';
 
 interface SearchBarProps {
@@ -58,7 +55,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   return (
     <div className={styles.searchContainer}>
       <div className={styles.searchBar}>
-        <span className={styles.searchIcon}><SearchIcon /></span>
+        <span className={styles.searchIcon}><WIcon name="search" size={16} /></span>
         <input
           type="text"
           placeholder="Search in Drive"
@@ -92,7 +89,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               className={styles.filterToggle}
               title="Show filters"
             >
-              <FunnelIcon />
+              <WIcon name="sliders" size={16} />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -242,7 +239,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 }}
                 title="Save current search with filters"
               >
-                💾 Save Search
+                <WIcon name="download" size={15} /> Save Search
               </button>
             </div>
           </DropdownMenuContent>
@@ -270,7 +267,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                   }}
                   title="Save current search"
                 >
-                  💾 Save
+                  <WIcon name="download" size={13} /> Save
                 </button>
               </div>
               {savedSearches.map((savedSearch, idx) => (
@@ -282,7 +279,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                     setShowSuggestions(false);
                   }}
                 >
-                  <span className={styles.suggestionIcon}><StarIcon /></span>
+                  <span className={styles.suggestionIcon}><WIcon name="starFill" size={16} /></span>
                   <span className={styles.suggestionText}>{savedSearch.name}</span>
                   <button
                     className={styles.deleteSavedSearchBtn}
@@ -292,7 +289,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                     }}
                     title="Delete saved search"
                   >
-                    <CloseIcon />
+                    <WIcon name="close" size={16} />
                   </button>
                 </DropdownMenuItem>
               ))}
@@ -312,7 +309,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                     setShowSuggestions(false);
                   }}
                 >
-                  <span className={styles.suggestionIcon}>🕐</span>
+                  <span className={styles.suggestionIcon}><WIcon name="clock" size={16} /></span>
                   <span>{search}</span>
                 </DropdownMenuItem>
               ))}
@@ -332,7 +329,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                     setShowSuggestions(false);
                   }}
                 >
-                  <span className={styles.suggestionIcon}><SearchIcon /></span>
+                  <span className={styles.suggestionIcon}><WIcon name="search" size={16} /></span>
                   <span>{suggestion}</span>
                 </DropdownMenuItem>
               ))}

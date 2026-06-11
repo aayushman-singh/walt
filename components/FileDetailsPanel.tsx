@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import FileDownloadIcon from '@rsuite/icons/FileDownload';
-import ShareRoundIcon from '@rsuite/icons/ShareRound';
-import PinIcon from '@rsuite/icons/Pin';
-import PinedIcon from '@rsuite/icons/Pined';
-import SearchIcon from '@rsuite/icons/Search';
-import CloseIcon from '@rsuite/icons/Close';
-import CheckIcon from '@rsuite/icons/Check';
-import TrashIcon from '@rsuite/icons/Trash';
+import WIcon from './WIcon';
 import { getBackendGatewayUrl } from '../lib/shareUtils';
 import styles from '../styles/FileDetailsPanel.module.css';
 
@@ -119,14 +112,14 @@ const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
     <aside className={styles.panel}>
       <div className={styles.header}>
         <div className={styles.title} title={file.name}>{file.name}</div>
-        <button className={styles.closeBtn} onClick={onClose}><CloseIcon /></button>
+        <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={16} /></button>
       </div>
 
       <div className={styles.actions}>
-        <button className={styles.actionBtn} onClick={onDownload}><FileDownloadIcon /> Download</button>
-        <button className={styles.actionBtn} onClick={onShare}><ShareRoundIcon /> Share</button>
-        <button className={styles.actionBtn} onClick={onTogglePin}>{file.isPinned ? <><PinedIcon /> Unpin</> : <><PinIcon /> Pin</>}</button>
-        <a className={styles.actionBtn} href={backendGatewayUrl} target="_blank" rel="noreferrer"><SearchIcon /> Open</a>
+        <button className={styles.actionBtn} onClick={onDownload}><WIcon name="download" size={14} /> Download</button>
+        <button className={styles.actionBtn} onClick={onShare}><WIcon name="share" size={14} /> Share</button>
+        <button className={styles.actionBtn} onClick={onTogglePin}>{file.isPinned ? <><WIcon name="pinFilled" size={14} /> Unpin</> : <><WIcon name="pin" size={14} /> Pin</>}</button>
+        <a className={styles.actionBtn} href={backendGatewayUrl} target="_blank" rel="noreferrer"><WIcon name="eye" size={14} /> Open</a>
       </div>
 
       <div className={styles.section}>
@@ -197,7 +190,7 @@ const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
                 onClick={handleAddProperty}
                 disabled={!propertyKey.trim() || !propertyValue.trim()}
               >
-                <CheckIcon />
+                <WIcon name="check" size={14} sw={2.4} />
               </button>
               <button
                 className={styles.cancelBtn}
@@ -207,7 +200,7 @@ const FileDetailsPanel: React.FC<FileDetailsPanelProps> = ({
                   setPropertyValue('');
                 }}
               >
-                <CloseIcon />
+                <WIcon name="close" size={14} />
               </button>
             </div>
           </div>
@@ -299,8 +292,8 @@ const PropertyRow: React.FC<PropertyRowProps> = ({ propertyKey, propertyValue, o
             onBlur={handleSave}
             autoFocus
           />
-          <button className={styles.saveBtn} onClick={handleSave} title="Save"><CheckIcon /></button>
-          <button className={styles.cancelBtn} onClick={handleCancel} title="Cancel"><CloseIcon /></button>
+          <button className={styles.saveBtn} onClick={handleSave} title="Save"><WIcon name="check" size={14} sw={2.4} /></button>
+          <button className={styles.cancelBtn} onClick={handleCancel} title="Cancel"><WIcon name="close" size={14} /></button>
         </div>
       ) : (
         <div className={styles.propertyValueRow}>
@@ -312,7 +305,7 @@ const PropertyRow: React.FC<PropertyRowProps> = ({ propertyKey, propertyValue, o
             onClick={onDelete}
             title="Delete property"
           >
-            <TrashIcon />
+            <WIcon name="trash" size={14} />
           </button>
         </div>
       )}

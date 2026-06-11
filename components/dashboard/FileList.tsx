@@ -12,20 +12,8 @@ import {
   DropdownMenuTrigger,
 } from '../ui/DropdownMenu';
 import { getBackendGatewayUrl } from '../../lib/shareUtils';
-import FolderIcon from '@rsuite/icons/FolderFill';
-import StarIcon from '@rsuite/icons/Star';
-import StarOutlineIcon from '@rsuite/icons/Star';
-import PinIcon from '@rsuite/icons/Pin';
-import PinedIcon from '@rsuite/icons/Pined';
-import TrashIcon from '@rsuite/icons/Trash';
-import VisibleIcon from '@rsuite/icons/Visible';
-import FileDownloadIcon from '@rsuite/icons/FileDownload';
-import ShareRoundIcon from '@rsuite/icons/ShareRound';
-import TagIcon from '@rsuite/icons/Tag';
-import EditIcon from '@rsuite/icons/Edit';
-import UndoIcon from '@rsuite/icons/Undo';
-import CheckIcon from '@rsuite/icons/Check';
 import { getFileIcon } from './FileIcon';
+import WIcon, { WIconName } from '../WIcon';
 import { ActiveView, UploadedFile, VisibleColumns } from './types';
 
 interface FileListProps {
@@ -75,7 +63,7 @@ const FileList: React.FC<FileListProps> = ({
         {visibleColumns.modified && <div className={styles.listColumn} style={{ flex: '1' }}>Modified</div>}
         {visibleColumns.pinStatus && <div className={styles.listColumn} style={{ flex: '0.5' }}>Pin</div>}
         {visibleColumns.tags && <div className={styles.listColumn} style={{ flex: '1.5' }}>Tags</div>}
-        {visibleColumns.starStatus && <div className={styles.listColumn} style={{ flex: '0.5' }}><StarIcon /></div>}
+        {visibleColumns.starStatus && <div className={styles.listColumn} style={{ flex: '0.5' }}><WIcon name="starFill" size={16} /></div>}
         <div className={styles.listColumn} style={{ flex: '0.5' }}>Actions</div>
       </div>
 
@@ -112,15 +100,15 @@ const FileList: React.FC<FileListProps> = ({
                     toggleFileSelection(file.id);
                   }}
                 >
-                  {selectedFiles.has(file.id) && <CheckIcon />}
+                  {selectedFiles.has(file.id) && <WIcon name="check" size={16} />}
                 </div>
               )}
               <div className={styles.fileIconSmall}>
-                {file.isFolder ? <FolderIcon /> : getFileIcon(file.type)}
+                {file.isFolder ? <WIcon name="folder" size={16} /> : getFileIcon(file.type)}
               </div>
               <span className={styles.fileNameList} title={file.name}>{file.name}</span>
               {file.encryption && (
-                <span title="End-to-end encrypted" style={{ marginLeft: '6px', fontSize: '0.85em' }}>🔒</span>
+                <span title="End-to-end encrypted" style={{ marginLeft: '6px', display: 'inline-flex', alignItems: 'center', color: 'var(--accent)' }}><WIcon name="lock" size={14} /></span>
               )}
             </div>
           )}
@@ -149,7 +137,7 @@ const FileList: React.FC<FileListProps> = ({
           {/* Pin Status Column */}
           {visibleColumns.pinStatus && (
             <div className={styles.listColumn} style={{ flex: '0.5' }}>
-              {!file.isFolder && (file.isPinned ? <PinedIcon /> : <PinIcon />)}
+              {!file.isFolder && (file.isPinned ? <WIcon name="pinFilled" size={16} /> : <WIcon name="pin" size={16} />)}
             </div>
           )}
 
@@ -170,7 +158,7 @@ const FileList: React.FC<FileListProps> = ({
           {/* Star Status Column - hidden for folders in cleanup mode */}
           {visibleColumns.starStatus && !(cleanupMode && file.isFolder) && (
             <div className={styles.listColumn} style={{ flex: '0.5' }}>
-              {file.starred ? <StarIcon /> : <StarOutlineIcon />}
+              {file.starred ? <WIcon name="starFill" size={16} /> : <WIcon name="star" size={16} />}
             </div>
           )}
 
@@ -183,7 +171,7 @@ const FileList: React.FC<FileListProps> = ({
                   onClick={(e) => e.stopPropagation()}
                   title="More actions"
                 >
-                  ⋮
+                  <WIcon name="dots" size={18} />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className={styles.userDropdownContent}>
@@ -192,45 +180,45 @@ const FileList: React.FC<FileListProps> = ({
                     {!file.isFolder && (
                       <>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePreview(file); }}>
-                          <VisibleIcon /> Preview
+                          <WIcon name="eye" size={16} /> Preview
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShowDetails(file); }}>
-                          🧾 Details
+                          <WIcon name="fileDoc" size={16} /> Details
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDownload(file); }}>
-                          <FileDownloadIcon /> Download
+                          <WIcon name="download" size={16} /> Download
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
                     )}
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyToClipboard(getBackendGatewayUrl(file.ipfsUri)); }}>
-                      <ShareRoundIcon /> Share Link
+                      <WIcon name="share" size={16} /> Share Link
                     </DropdownMenuItem>
                     <DropdownMenuItem className={styles.menuDisabled} onClick={(e) => { e.stopPropagation(); }}>
-                      📋 Duplicate
+                      <WIcon name="copy" size={16} /> Duplicate
                     </DropdownMenuItem>
                     <DropdownMenuItem className={styles.menuDisabled} onClick={(e) => { e.stopPropagation(); }}>
-                      <TagIcon /> Manage Tags
+                      <WIcon name="tag" size={16} /> Manage Tags
                     </DropdownMenuItem>
                     <DropdownMenuItem className={styles.menuDisabled} onClick={(e) => { e.stopPropagation(); }}>
-                      📜 Version History
+                      <WIcon name="history" size={16} /> Version History
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(file.id); }}>
-                      <EditIcon /> Rename
+                      <WIcon name="edit" size={16} /> Rename
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }} className={styles.menuDanger}>
-                      <TrashIcon /> Trash
+                      <WIcon name="trash" size={16} /> Trash
                     </DropdownMenuItem>
                   </>
                 ) : (
                   <>
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRestore(file.id); }}>
-                      <UndoIcon /> Restore
+                      <WIcon name="history" size={16} /> Restore
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }} className={styles.menuDanger}>
-                      ❌ Delete Forever
+                      <WIcon name="trash" size={16} /> Delete Forever
                     </DropdownMenuItem>
                   </>
                 )}

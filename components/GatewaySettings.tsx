@@ -5,9 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { getGatewayOptimizer, GatewayStats } from '../lib/gatewayOptimizer';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import CloseIcon from '@rsuite/icons/Close';
-import CheckIcon from '@rsuite/icons/Check';
+import { WIcon } from './WIcon';
 import styles from '../styles/GatewaySettings.module.css';
 
 interface GatewaySettingsProps {
@@ -97,7 +95,7 @@ const GatewaySettings: React.FC<GatewaySettingsProps> = ({ isOpen, onClose }) =>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2>Gateway Settings</h2>
-          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+          <button className={styles.closeBtn} onClick={onClose}><WIcon name="close" size={18} /></button>
         </div>
 
         <div className={styles.content}>
@@ -109,7 +107,7 @@ const GatewaySettings: React.FC<GatewaySettingsProps> = ({ isOpen, onClose }) =>
                 onClick={handleHealthCheck}
                 disabled={isChecking}
               >
-                {isChecking ? 'Checking...' : '🔍 Check Health'}
+                {isChecking ? 'Checking...' : <><WIcon name="search" size={14} /> Check Health</>}
               </button>
             </div>
 
@@ -124,12 +122,14 @@ const GatewaySettings: React.FC<GatewaySettingsProps> = ({ isOpen, onClose }) =>
                         <span className={styles.statName}>{stats.name}</span>
                         <span className={styles.statUrl}>{stats.url}</span>
                       </div>
-                      <div 
-                        className={styles.performanceBadge}
-                        style={{ backgroundColor: getPerformanceColor(stats) }}
+                      <div
+                        className={`${styles.performanceBadge} ${
+                          stats.successRate >= 0.8 && stats.responseTime < 1500 ? styles.fast :
+                          stats.successRate >= 0.5 ? styles.slow : styles.unreliable
+                        }`}
                       >
-                        {stats.successRate >= 0.8 && stats.responseTime < 1500 ? <><CheckIcon /> Fast</> : 
-                         stats.successRate >= 0.5 ? <><WarningRoundIcon /> Slow</> : <><CloseIcon /> Unreliable</>}
+                        {stats.successRate >= 0.8 && stats.responseTime < 1500 ? <><WIcon name="check" size={13} /> Fast</> :
+                         stats.successRate >= 0.5 ? <><WIcon name="warning" size={13} /> Slow</> : <><WIcon name="x" size={13} /> Unreliable</>}
                       </div>
                     </div>
                     <div className={styles.statMetrics}>

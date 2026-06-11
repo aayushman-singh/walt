@@ -1,32 +1,25 @@
+/* NotificationBell — SOVEREIGN (.w-icbtn bell + danger badge) */
+
 .bellButton {
   position: relative;
-  background: none;
-  border: none;
+  background: transparent;
+  border: 1px solid var(--line);
   cursor: pointer;
-  padding: 8px 12px;
-  font-size: 20px;
-  color: #5f6368;
-  transition: all 0.2s;
-  border-radius: 50%;
+  color: var(--mut);
+  transition: 0.16s;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
+  font-size: 18px;
 }
 
 .bellButton:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #1a73e8;
-}
-
-.dark .bellButton {
-  color: #aaa;
-}
-
-.dark .bellButton:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #4a9eff;
+  color: var(--tx);
+  border-color: var(--line2);
+  background: var(--surface2);
 }
 
 .bellIcon {
@@ -35,22 +28,18 @@
 
 .badge {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  background: #ea4335;
-  color: white;
-  border-radius: 10px;
+  top: 2px;
+  right: 2px;
+  background: var(--danger);
+  color: #fff;
+  border-radius: 99px;
   font-size: 10px;
-  font-weight: 600;
-  padding: 2px 6px;
+  font-weight: 700;
+  font-family: var(--mono);
+  padding: 1px 5px;
   min-width: 18px;
   text-align: center;
   line-height: 14px;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 2px solid var(--bg2);
+  box-shadow: var(--shadow-sm);
 }
-
-.dark .badge {
-  border-color: #1e1e1e;
-}
-

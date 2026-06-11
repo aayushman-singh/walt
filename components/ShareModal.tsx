@@ -8,12 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import CloseIcon from '@rsuite/icons/Close';
-import CopyIcon from '@rsuite/icons/Copy';
-import LockRoundIcon from '@rsuite/icons/LockRound';
-import ShareRoundIcon from '@rsuite/icons/ShareRound';
-import WaitIcon from '@rsuite/icons/Wait';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
+import { WIcon } from './WIcon';
 import styles from '../styles/ShareModal.module.css';
 
 interface ShareConfig {
@@ -236,7 +231,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
         <div className={styles.header}>
           <h2>Share &quot;{fileName}&quot;</h2>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close share modal">
-            <CloseIcon />
+            <WIcon name="close" size={18} />
           </button>
         </div>
 
@@ -247,7 +242,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
               <div className={styles.shareActive}>
                 <div className={styles.shareInfo}>
                   <span className={styles.shareIcon} aria-hidden>
-                    <ShareRoundIcon />
+                    <WIcon name="share" size={18} />
                   </span>
                   <div>
                     <div className={styles.shareLabel}>Share link is active</div>
@@ -268,7 +263,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                 {shortLink && (
                   <div className={styles.linkBox} style={{ marginBottom: '1rem' }}>
                     <label className={`${styles.shareLabel} ${styles.labelWithIcon}`} style={{ marginBottom: '0.5rem', display: 'block' }}>
-                      <ShareRoundIcon className={styles.inlineIcon} />
+                      <WIcon name="share" size={15} className={styles.inlineIcon} />
                       Short Link
                     </label>
                     <input 
@@ -285,7 +280,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                         'Copied!'
                       ) : (
                         <>
-                          <CopyIcon className={styles.buttonIcon} />
+                          <WIcon name="copy" size={15} className={styles.buttonIcon} />
                           Copy
                         </>
                       )}
@@ -311,7 +306,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                       'Copied!'
                     ) : (
                       <>
-                        <CopyIcon className={styles.buttonIcon} />
+                        <WIcon name="copy" size={15} className={styles.buttonIcon} />
                         Copy
                       </>
                     )}
@@ -323,7 +318,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                   onClick={handleDisableShare}
                   disabled={isSharing}
                 >
-                  <LockRoundIcon className={styles.buttonIcon} />
+                  <WIcon name="lock" size={15} className={styles.buttonIcon} />
                   Disable Sharing
                 </button>
               </div>
@@ -393,7 +388,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
               </div>
 
               <div className={styles.warning}>
-                <WarningRoundIcon className={styles.inlineIcon} />
+                <WIcon name="warning" size={17} className={styles.inlineIcon} />
                 <span>
                   Anyone with the link will be able to {permission === 'viewer' ? 'view' : 'view and download'} this {isFolder ? 'folder' : 'file'}.
                 </span>
@@ -406,12 +401,12 @@ const ShareModal: React.FC<ShareModalProps> = ({
               >
                 {isSharing ? (
                   <>
-                    <WaitIcon className={styles.buttonIcon} />
+                    <WIcon name="clock" size={16} className={styles.buttonIcon} />
                     Creating...
                   </>
                 ) : (
                   <>
-                    <ShareRoundIcon className={styles.buttonIcon} />
+                    <WIcon name="share" size={16} className={styles.buttonIcon} />
                     Create Share Link
                   </>
                 )}
@@ -422,9 +417,9 @@ const ShareModal: React.FC<ShareModalProps> = ({
           {/* End-to-end encrypted sharing with a walt user (optional block). */}
           {encryptedSharingEnabled && (
             <div className={styles.section} data-testid="encrypted-share-section">
-              <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '1.25rem 0' }} />
+              <hr className={styles.divider} />
               <label className={`${styles.label} ${styles.labelWithIcon}`}>
-                <LockRoundIcon className={styles.inlineIcon} />
+                <WIcon name="lock" size={15} className={styles.inlineIcon} style={{ color: 'var(--accent)' }} />
                 Share end-to-end encrypted with a walt user
               </label>
               <p className={styles.hint}>
@@ -462,8 +457,8 @@ const ShareModal: React.FC<ShareModalProps> = ({
               </div>
 
               {resolveError && (
-                <div className={styles.warning} role="alert" style={{ marginTop: '0.75rem' }}>
-                  <WarningRoundIcon className={styles.inlineIcon} />
+                <div className={styles.warning} role="alert" style={{ marginTop: '0.75rem', marginBottom: 0, background: 'var(--danger-soft)', borderColor: 'rgba(255,93,108,.3)' }}>
+                  <WIcon name="warning" size={16} className={styles.inlineIcon} style={{ color: 'var(--danger)' }} />
                   <span>{resolveError}</span>
                 </div>
               )}
@@ -474,28 +469,15 @@ const ShareModal: React.FC<ShareModalProps> = ({
                   data-testid="recipient-chips"
                 >
                   {recipients.map((r) => (
-                    <li
-                      key={r.id}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        background: '#eef2ff',
-                        color: '#3730a3',
-                        borderRadius: '999px',
-                        padding: '0.25rem 0.6rem',
-                        fontSize: '0.85rem',
-                      }}
-                    >
-                      <span aria-hidden>✓</span>
+                    <li key={r.id} className={styles.recipient}>
+                      <WIcon name="check" size={13} sw={2.6} aria-hidden />
                       <span>{r.email}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveRecipient(r.id)}
                         aria-label={`Remove ${r.email}`}
-                        style={{ background: 'none', border: 0, cursor: 'pointer', color: 'inherit', display: 'inline-flex' }}
                       >
-                        <CloseIcon />
+                        <WIcon name="close" size={13} />
                       </button>
                     </li>
                   ))}
@@ -503,7 +485,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
               )}
 
               {encryptedShareDone && (
-                <p className={styles.hint} role="status" style={{ color: '#16a34a', marginTop: '0.75rem' }}>
+                <p className={`${styles.hint} ${styles.successText}`} role="status" style={{ marginTop: '0.75rem' }}>
                   Shared encrypted. Recipients will see it under &quot;Shared with you&quot;.
                 </p>
               )}
@@ -517,12 +499,12 @@ const ShareModal: React.FC<ShareModalProps> = ({
               >
                 {isSharingEncrypted ? (
                   <>
-                    <WaitIcon className={styles.buttonIcon} />
+                    <WIcon name="clock" size={15} className={styles.buttonIcon} />
                     Encrypting…
                   </>
                 ) : (
                   <>
-                    <LockRoundIcon className={styles.buttonIcon} />
+                    <WIcon name="lock" size={15} className={styles.buttonIcon} />
                     Share encrypted
                   </>
                 )}

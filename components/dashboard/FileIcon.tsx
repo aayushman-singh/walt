@@ -4,20 +4,15 @@
  */
 
 import React from 'react';
-import ImageIcon from '@rsuite/icons/Image';
-import VideoIcon from '@rsuite/icons/Video';
-import AudioIcon from '@rsuite/icons/Audio';
-import PageIcon from '@rsuite/icons/Page';
-import TableIcon from '@rsuite/icons/Table';
-import ArchiveIcon from '@rsuite/icons/Archive';
+import WIcon, { WIconName } from '../WIcon';
 
 export const getFileIcon = (type: string): React.ReactElement => {
-  if (type.startsWith('image/')) return <ImageIcon />;
-  if (type.startsWith('video/')) return <VideoIcon />;
-  if (type.startsWith('audio/')) return <AudioIcon />;
-  if (type.includes('pdf')) return <PageIcon />;
-  if (type.includes('word') || type.includes('document')) return <PageIcon />;
-  if (type.includes('sheet') || type.includes('excel')) return <TableIcon />;
-  if (type.includes('zip') || type.includes('rar')) return <ArchiveIcon />;
-  return <PageIcon />;
+  if (type.startsWith('image/')) return <WIcon name="image" size={16} />;
+  if (type.startsWith('video/')) return <WIcon name="video" size={16} />;
+  if (type.startsWith('audio/')) return <WIcon name="audio" size={16} />;
+  if (type.includes('pdf')) return <WIcon name="fileDoc" size={16} />;
+  if (type.includes('word') || type.includes('document')) return <WIcon name="fileDoc" size={16} />;
+  if (type.includes('sheet') || type.includes('excel')) return <WIcon name="sheet" size={16} />;
+  if (type.includes('zip') || type.includes('rar')) return <WIcon name="archive" size={16} />;
+  return <WIcon name="fileDoc" size={16} />;
 };

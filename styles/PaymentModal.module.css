@@ -1,98 +1,120 @@
+/* Walt · SOVEREIGN — PaymentModal visual restyle. All colors via design tokens. */
+
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background: rgba(4, 7, 14, 0.66);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Keep z-index:10000 so the Cashfree-injected _modal is not trapped behind. */
   z-index: 10000;
   padding: 20px;
 }
 
+:global([data-theme="light"]) .overlay,
+:global(.light) .overlay {
+  background: rgba(20, 30, 55, 0.42);
+}
+
 .modal {
-  background: white;
-  border-radius: 12px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 520px;
+  max-width: 92%;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
 }
 
 .header h2 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #111827;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
 }
 
 .closeButton {
-  background: none;
-  border: none;
-  font-size: 32px;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--mut);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background-color 0.16s, color 0.16s, border-color 0.16s;
 }
 
 .closeButton:hover {
-  background-color: #f3f4f6;
+  background: var(--surface2);
+  color: var(--tx);
 }
 
 .content {
-  padding: 24px;
+  padding: 22px;
+  max-height: 560px;
+  overflow-y: auto;
 }
 
 .warning {
-  background-color: #fef3c7;
-  border: 1px solid #fbbf24;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--amber-soft);
+  border: 1px solid rgba(245, 181, 68, 0.3);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 22px;
 }
 
 .warning p {
-  margin: 0 0 8px 0;
-  color: #92400e;
-  font-size: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0;
+  color: var(--txdim);
+  font-size: 13px;
   line-height: 1.5;
 }
 
-.warning p:last-child {
-  margin-bottom: 0;
+.warning p svg {
+  color: var(--amber);
+  flex: none;
+  margin-top: 1px;
 }
 
 .billingInfo {
-  background-color: #f9fafb;
-  border-radius: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
   padding: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 22px;
 }
 
 .infoRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
 }
 
 .infoRow:last-child {
@@ -100,65 +122,74 @@
 }
 
 .infoRow span:first-child {
-  color: #6b7280;
-  font-size: 14px;
+  color: var(--mut);
+  font-size: 13px;
 }
 
 .infoRow span:last-child {
   font-weight: 600;
-  color: #111827;
-  font-size: 16px;
+  color: var(--tx);
+  font-size: 14px;
+  font-family: var(--mono);
 }
 
 .amount {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 .chargeAmount {
-  color: #059669;
-  font-size: 20px;
+  color: var(--green);
+  font-size: 18px;
 }
 
 .note {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--line);
 }
 
 .note small {
-  color: #6b7280;
-  font-size: 12px;
+  color: var(--mut);
+  font-size: 12.5px;
   line-height: 1.5;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .form label {
-  font-weight: 500;
-  color: #374151;
-  font-size: 14px;
+  font-weight: 600;
+  color: var(--tx);
+  font-size: 13px;
 }
 
 .form input {
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 0.2s;
+  width: 100%;
+  height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--bg2);
+  color: var(--tx);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color 0.16s;
+}
+
+.form input::placeholder {
+  color: var(--faint);
 }
 
 .form input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--accent-bd);
 }
 
 .form input:disabled {
-  background-color: #f3f4f6;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -183,65 +214,76 @@
 }
 
 .payButton {
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  box-shadow: 0 8px 22px -10px var(--accent);
+  transition: background-color 0.16s;
 }
 
 .payButton:hover:not(:disabled) {
-  background-color: #2563eb;
+  background: var(--accent-h);
 }
 
 .payButton:disabled {
-  background-color: #9ca3af;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .error {
-  background-color: #fee2e2;
-  border: 1px solid #fca5a5;
-  color: #991b1b;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 14px;
+  background: var(--danger-soft);
+  border: 1px solid rgba(255, 93, 108, 0.3);
+  color: var(--danger);
+  padding: 11px 13px;
+  border-radius: 10px;
+  font-size: 13px;
 }
 
 .paymentLink {
   text-align: center;
-  padding: 20px 0;
+  padding: 16px 0;
 }
 
 .paymentLink p {
   margin: 0 0 16px 0;
-  color: #374151;
-  font-size: 14px;
+  color: var(--txdim);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .linkButton {
-  display: inline-block;
-  background-color: #3b82f6;
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
   text-decoration: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 11px 18px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 13.5px;
   font-weight: 600;
-  transition: background-color 0.2s;
+  box-shadow: 0 8px 22px -10px var(--accent);
+  transition: background-color 0.16s;
 }
 
 .linkButton:hover {
-  background-color: #2563eb;
+  background: var(--accent-h);
 }
 
 .waiting {
   margin-top: 16px;
-  color: #6b7280;
-  font-size: 13px;
-  font-style: italic;
+  color: var(--mut);
+  font-size: 12.5px;
 }
-

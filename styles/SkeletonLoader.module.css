@@ -1,4 +1,5 @@
-/* Skeleton Animation */
+/* SkeletonLoader — SOVEREIGN shimmer (var(--surface2) -> var(--surface3)) */
+
 @keyframes shimmer {
   0% {
     background-position: -1000px 0;
@@ -16,27 +17,13 @@
 .skeletonIcon {
   background: linear-gradient(
     90deg,
-    #f0f0f0 0%,
-    #f8f8f8 50%,
-    #f0f0f0 100%
+    var(--surface2) 0%,
+    var(--surface3) 50%,
+    var(--surface2) 100%
   );
   background-size: 2000px 100%;
   animation: shimmer 2s infinite;
-  border-radius: 4px;
-}
-
-.dark .skeletonRect,
-.dark .skeletonText,
-.dark .skeletonCircle,
-.dark .skeletonImage,
-.dark .skeletonIcon {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-  background-size: 2000px 100%;
+  border-radius: 6px;
 }
 
 /* Rect Skeleton */
@@ -65,36 +52,31 @@
 
 /* File Card Skeleton */
 .fileCardSkeleton {
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
   overflow: hidden;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.dark .fileCardSkeleton {
-  background: #1e1e1e;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
 .skeletonImage {
   width: 100%;
-  height: 200px;
+  height: 96px;
   border-radius: 0;
 }
 
 .skeletonContent {
-  padding: 12px;
+  padding: 14px;
 }
 
 .skeletonTitle {
-  height: 18px;
+  height: 16px;
   width: 80%;
   margin-bottom: 8px;
 }
 
 .skeletonSubtitle {
-  height: 14px;
+  height: 12px;
   width: 60%;
 }
 
@@ -102,19 +84,15 @@
 .fileRowSkeleton {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
   gap: 16px;
 }
 
-.dark .fileRowSkeleton {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
 .skeletonIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   flex-shrink: 0;
 }
 
@@ -124,4 +102,3 @@
   margin-left: auto;
   flex-shrink: 0;
 }
-

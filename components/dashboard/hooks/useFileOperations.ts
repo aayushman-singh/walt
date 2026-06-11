@@ -151,7 +151,7 @@ export function useFileOperations(params: UseFileOperationsParams) {
         setConfirmationModal({
           isOpen: true,
           title: 'Unpin File',
-          message: `🆓 Unpin "${file.name}"?\n\nUnpinned files are FREE but may be garbage collected from IPFS and become unavailable. Pinned files cost money but are guaranteed to persist.`,
+          message: `Unpin "${file.name}"?\n\nUnpinned files are FREE but may be garbage collected from IPFS and become unavailable. Pinned files cost money but are guaranteed to persist.`,
           confirmText: 'Unpin (Free)',
           cancelText: 'Keep Pinned',
           onConfirm: async () => {

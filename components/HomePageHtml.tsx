@@ -11,10 +11,7 @@ import Testimonials from './Testimonials';
 import DecentralizationVisual from './landing/DecentralizationVisual';
 import Image from 'next/image';
 import { Cover } from './ui/cover';
-import BriefcaseIcon from '@rsuite/icons/legacy/Briefcase';
-import GithubIcon from '@rsuite/icons/legacy/Github';
-import LinkedinIcon from '@rsuite/icons/legacy/Linkedin';
-import TwitterIcon from '@rsuite/icons/legacy/Twitter';
+import WIcon from './WIcon';
 
 type WorkCard = {
   title: string;
@@ -190,9 +187,9 @@ const HomePageHtml: React.FC = () => {
   ];
 
   const footerSocialLinks = [
-    { href: 'https://x.com/aayushman2703', Icon: TwitterIcon, label: 'X (Twitter)' },
-    { href: 'https://www.linkedin.com/in/aayushman-singh-zz/', Icon: LinkedinIcon, label: 'LinkedIn' },
-    { href: 'https://github.com/aayushman-singh', Icon: GithubIcon, label: 'GitHub' },
+    { href: 'https://x.com/aayushman2703', iconName: 'x' as const, label: 'X (Twitter)' },
+    { href: 'https://www.linkedin.com/in/aayushman-singh-zz/', iconName: 'linkedin' as const, label: 'LinkedIn' },
+    { href: 'https://github.com/aayushman-singh', iconName: 'github' as const, label: 'GitHub' },
   ];
 
   const classNames = (...classes: (string | undefined | false)[]) =>
@@ -405,12 +402,12 @@ const HomePageHtml: React.FC = () => {
         <div
           className={styles["menu-bar"]}
           style={{
-            backgroundColor: interpolateColor('#000000', '#00171f', menuBgProgress),
+            backgroundColor: interpolateColor('#080a0e', '#0b0e14', menuBgProgress),
             boxShadow: `0 18px 36px rgba(0, 0, 0, ${0.25 + menuBgProgress * 0.2})`,
-            borderBottom: `1px solid rgba(173, 235, 255, ${0.05 + menuBgProgress * 0.15})`,
+            borderBottom: `1px solid rgba(77, 159, 255, ${0.05 + menuBgProgress * 0.18})`,
           }}
         >
-          <div className={styles.logo}>Walt</div>
+          <div className={styles.logo}>walt</div>
           <nav className={styles["menu-items"]}>
             <a
               href="#welcome-hero"
@@ -651,7 +648,7 @@ const HomePageHtml: React.FC = () => {
                   rel="noopener noreferrer"
                   className={styles["creator-link"]}
                 >
-                  <GithubIcon />
+                  <WIcon name="github" size={18} />
                   GitHub
                 </a>
                 <a
@@ -660,7 +657,7 @@ const HomePageHtml: React.FC = () => {
                   rel="noopener noreferrer"
                   className={styles["creator-link"]}
                 >
-                  <BriefcaseIcon />
+                  <WIcon name="briefcase" size={18} />
                   Portfolio
                 </a>
               </div>
@@ -674,12 +671,12 @@ const HomePageHtml: React.FC = () => {
         <div className={styles["footer-glow"]} aria-hidden="true" />
         <div className={styles["footer-content"]}>
           <div className={styles["footer-brand-block"]}>
-            <p className={styles["footer-title"]}>Walt</p>
+            <p className={styles["footer-title"]}>walt</p>
             <p className={styles["footer-tagline"]}>
               Built with care by Aayushman Singh.
             </p>
             <div className={styles["footer-icons"]}>
-              {footerSocialLinks.map(({ href, Icon, label }) => (
+              {footerSocialLinks.map(({ href, iconName, label }) => (
                 <a
                   key={href}
                   href={href}
@@ -688,7 +685,7 @@ const HomePageHtml: React.FC = () => {
                   className={styles["footer-icon"]}
                   aria-label={label}
                 >
-                  <Icon />
+                  <WIcon name={iconName} size={18} />
                 </a>
               ))}
             </div>

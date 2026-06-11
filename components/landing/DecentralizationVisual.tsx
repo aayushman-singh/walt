@@ -45,7 +45,8 @@ const DecentralizationVisual: React.FC = () => {
               textTransform: 'uppercase',
               letterSpacing: '0.18em',
               fontSize: 13,
-              color: 'rgba(173, 235, 255, 0.75)',
+              color: 'var(--accent)',
+              fontFamily: 'var(--mono)',
               margin: '0 0 14px',
             }}
           >
@@ -55,8 +56,9 @@ const DecentralizationVisual: React.FC = () => {
             id="decentralization-heading"
             style={{
               fontSize: 'clamp(28px, 4vw, 46px)',
-              fontWeight: 700,
-              color: '#ffffff',
+              fontWeight: 600,
+              letterSpacing: '-0.03em',
+              color: 'var(--tx)',
               margin: 0,
               lineHeight: 1.1,
             }}
@@ -67,7 +69,7 @@ const DecentralizationVisual: React.FC = () => {
             style={{
               maxWidth: 620,
               margin: '20px auto 0',
-              color: 'rgba(255, 251, 244, 0.7)',
+              color: 'var(--mut)',
               fontSize: 17,
               lineHeight: 1.6,
             }}
@@ -95,7 +97,8 @@ const DecentralizationVisual: React.FC = () => {
             textAlign: 'center',
             marginTop: 28,
             fontSize: 13,
-            color: 'rgba(255, 251, 244, 0.45)',
+            color: 'var(--faint)',
+            fontFamily: 'var(--mono)',
           }}
         >
           Illustrative model — not live network telemetry.
@@ -107,10 +110,10 @@ const DecentralizationVisual: React.FC = () => {
 
 const PANEL_STYLE: React.CSSProperties = {
   position: 'relative',
-  borderRadius: 20,
+  borderRadius: 14,
   padding: '28px 28px 24px',
-  border: '1px solid rgba(173, 235, 255, 0.15)',
-  background: 'rgba(0, 23, 31, 0.55)',
+  border: '1px solid var(--line)',
+  background: 'var(--surface)',
   overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
@@ -131,17 +134,15 @@ const PanelTitle: React.FC<{ kicker: string; title: string; tone: 'warn' | 'good
         padding: '4px 10px',
         borderRadius: 999,
         marginBottom: 10,
-        color: tone === 'good' ? 'rgba(173, 235, 255, 0.95)' : 'rgba(255, 180, 160, 0.95)',
-        background:
-          tone === 'good' ? 'rgba(173, 235, 255, 0.1)' : 'rgba(255, 120, 90, 0.1)',
-        border: `1px solid ${
-          tone === 'good' ? 'rgba(173, 235, 255, 0.3)' : 'rgba(255, 120, 90, 0.3)'
-        }`,
+        fontFamily: 'var(--mono)',
+        color: tone === 'good' ? 'var(--accent)' : 'var(--danger)',
+        background: tone === 'good' ? 'var(--accent-soft)' : 'var(--danger-soft)',
+        border: `1px solid ${tone === 'good' ? 'var(--accent-bd)' : 'var(--danger-soft)'}`,
       }}
     >
       {kicker}
     </span>
-    <h3 style={{ fontSize: 20, fontWeight: 600, color: '#ffffff', margin: 0 }}>{title}</h3>
+    <h3 style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--tx)', margin: 0 }}>{title}</h3>
   </div>
 );
 
@@ -172,11 +173,12 @@ const CentralizedPanel: React.FC<{ reduced: boolean }> = ({ reduced }) => (
           y1="84"
           x2="50"
           y2="46"
-          stroke="rgba(255, 120, 90, 0.4)"
+          stroke="var(--danger)"
+          strokeOpacity="0.4"
           strokeWidth="0.8"
           strokeDasharray="2 2"
         />
-        <circle cx="50" cy="86" r="3" fill="rgba(255, 251, 244, 0.55)" />
+        <circle cx="50" cy="86" r="3" fill="var(--mut)" />
         {/* the single server box */}
         <motion.g
           initial={reduced ? false : { scale: 0.9, opacity: 0 }}
@@ -191,17 +193,18 @@ const CentralizedPanel: React.FC<{ reduced: boolean }> = ({ reduced }) => (
             width="24"
             height="24"
             rx="3"
-            fill="rgba(255, 120, 90, 0.12)"
-            stroke="rgba(255, 120, 90, 0.7)"
+            fill="var(--danger-soft)"
+            stroke="var(--danger)"
+            strokeOpacity="0.7"
             strokeWidth="1"
           />
-          <line x1="41" y1="27" x2="59" y2="27" stroke="rgba(255, 120, 90, 0.6)" strokeWidth="0.8" />
-          <line x1="41" y1="32" x2="59" y2="32" stroke="rgba(255, 120, 90, 0.6)" strokeWidth="0.8" />
-          <circle cx="44" cy="38" r="1" fill="rgba(255, 180, 160, 0.95)" />
+          <line x1="41" y1="27" x2="59" y2="27" stroke="var(--danger)" strokeOpacity="0.6" strokeWidth="0.8" />
+          <line x1="41" y1="32" x2="59" y2="32" stroke="var(--danger)" strokeOpacity="0.6" strokeWidth="0.8" />
+          <circle cx="44" cy="38" r="1" fill="var(--danger)" />
         </motion.g>
       </svg>
     </div>
-    <p style={{ fontSize: 14, color: 'rgba(255, 251, 244, 0.6)', margin: '14px 0 0', lineHeight: 1.55 }}>
+    <p style={{ fontSize: 14, color: 'var(--mut)', margin: '14px 0 0', lineHeight: 1.55 }}>
       The provider holds the only copy. They can lose it, lock you out, or be
       compelled to take it down — and it is simply gone.
     </p>
@@ -238,16 +241,16 @@ const DecentralizedPanel: React.FC<{ reduced: boolean; animate: boolean }> = ({
         flexWrap: 'wrap',
       }}
     >
-      <span style={{ fontSize: 13, color: 'rgba(255, 251, 244, 0.6)' }}>Addressed by CID</span>
+      <span style={{ fontSize: 13, color: 'var(--mut)' }}>Addressed by CID</span>
       <code
         style={{
           fontSize: 13,
           padding: '4px 10px',
           borderRadius: 8,
-          color: 'rgba(173, 235, 255, 0.95)',
-          background: 'rgba(173, 235, 255, 0.08)',
-          border: '1px solid rgba(173, 235, 255, 0.2)',
-          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+          color: 'var(--accent)',
+          background: 'var(--accent-soft)',
+          border: '1px solid var(--accent-bd)',
+          fontFamily: 'var(--mono)',
         }}
       >
         {SAMPLE_CID}
@@ -279,8 +282,8 @@ const PeerConstellation: React.FC<{ reduced: boolean; animate: boolean }> = ({
     >
       <defs>
         <radialGradient id="peerGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="rgba(173, 235, 255, 0.9)" />
-          <stop offset="100%" stopColor="rgba(173, 235, 255, 0)" />
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -292,7 +295,8 @@ const PeerConstellation: React.FC<{ reduced: boolean; animate: boolean }> = ({
           y1={ORIGIN.y}
           x2={peer.x}
           y2={peer.y}
-          stroke="rgba(173, 235, 255, 0.35)"
+          stroke="var(--accent)"
+          strokeOpacity="0.35"
           strokeWidth="0.5"
           initial={reduced ? drawEdge : { pathLength: 0, opacity: 0 }}
           animate={
@@ -313,7 +317,7 @@ const PeerConstellation: React.FC<{ reduced: boolean; animate: boolean }> = ({
           <motion.circle
             key={`pulse-${peer.id}`}
             r="1.1"
-            fill="rgba(173, 235, 255, 0.95)"
+            fill="var(--accent)"
             initial={{ cx: ORIGIN.x, cy: ORIGIN.y, opacity: 0 }}
             animate={{ cx: peer.x, cy: peer.y, opacity: [0, 1, 1, 0] }}
             transition={{
@@ -341,11 +345,12 @@ const PeerConstellation: React.FC<{ reduced: boolean; animate: boolean }> = ({
             cx={peer.x}
             cy={peer.y}
             r={peer.r}
-            fill="rgba(0, 23, 31, 0.9)"
-            stroke="rgba(173, 235, 255, 0.85)"
+            fill="var(--bg)"
+            stroke="var(--accent)"
+            strokeOpacity="0.85"
             strokeWidth="0.7"
           />
-          <circle cx={peer.x} cy={peer.y} r={peer.r * 0.35} fill="rgba(173, 235, 255, 0.95)" />
+          <circle cx={peer.x} cy={peer.y} r={peer.r * 0.35} fill="var(--accent)" />
         </motion.g>
       ))}
 
@@ -356,7 +361,8 @@ const PeerConstellation: React.FC<{ reduced: boolean; animate: boolean }> = ({
             cx={ORIGIN.x}
             cy={ORIGIN.y}
             fill="none"
-            stroke="rgba(173, 235, 255, 0.6)"
+            stroke="var(--accent)"
+            strokeOpacity="0.6"
             strokeWidth="0.6"
             initial={{ r: 4, opacity: 0.6 }}
             animate={{ r: [4, 14], opacity: [0.6, 0] }}
@@ -368,8 +374,9 @@ const PeerConstellation: React.FC<{ reduced: boolean; animate: boolean }> = ({
           cx={ORIGIN.x}
           cy={ORIGIN.y}
           r="3.6"
-          fill="rgba(255, 251, 244, 0.95)"
-          stroke="rgba(173, 235, 255, 0.9)"
+          fill="var(--tx)"
+          stroke="var(--accent)"
+          strokeOpacity="0.9"
           strokeWidth="0.8"
         />
       </g>

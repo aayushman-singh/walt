@@ -1,3 +1,5 @@
+/* FilePreviewHover — SOVEREIGN (.w-card-modal hover preview, .w-card-meta) */
+
 .previewContainer {
   position: fixed;
   z-index: 9999;
@@ -18,15 +20,94 @@
 }
 
 .previewContent {
-  background: white;
-  border: 1px solid #dadce0;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
   overflow: hidden;
   max-width: 400px;
   max-height: 500px;
   display: flex;
   flex-direction: column;
+}
+
+.previewImage {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  transition: opacity 0.2s;
+  background: var(--surface2);
+}
+
+.loadingSpinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: var(--surface2);
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--line2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 32px;
+  background: var(--surface2);
+  color: var(--mut);
+}
+
+.errorIcon {
+  display: flex;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+
+.errorText {
+  font-size: 13px;
+  color: var(--mut);
+}
+
+.previewInfo {
+  padding: 13px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.fileName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.fileMeta {
+  font-size: 11.5px;
+  color: var(--mut);
+  font-family: var(--mono);
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 @media (max-width: 768px) {
@@ -51,7 +132,7 @@
   }
 
   .previewInfo {
-    padding: 8px;
+    padding: 10px;
   }
 
   .fileName {
@@ -62,118 +143,3 @@
     font-size: 11px;
   }
 }
-
-.dark .previewContent {
-  background: #1e1e1e;
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.previewImage {
-  width: 100%;
-  height: auto;
-  max-height: 400px;
-  object-fit: contain;
-  transition: opacity 0.2s;
-  background: #f5f5f5;
-}
-
-.dark .previewImage {
-  background: #2a2a2a;
-}
-
-.loadingSpinner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-  background: #f5f5f5;
-}
-
-.dark .loadingSpinner {
-  background: #2a2a2a;
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e0e0e0;
-  border-top-color: #1a73e8;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-.dark .spinner {
-  border-color: rgba(255, 255, 255, 0.2);
-  border-top-color: #4a9eff;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.errorState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-  padding: 32px;
-  background: #f5f5f5;
-  color: #5f6368;
-}
-
-.dark .errorState {
-  background: #2a2a2a;
-  color: #ccc;
-}
-
-.errorIcon {
-  font-size: 48px;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.errorText {
-  font-size: 14px;
-  opacity: 0.7;
-}
-
-.previewInfo {
-  padding: 12px;
-  border-top: 1px solid #e0e0e0;
-  background: white;
-}
-
-.dark .previewInfo {
-  border-top-color: rgba(255, 255, 255, 0.1);
-  background: #1e1e1e;
-}
-
-.fileName {
-  font-size: 14px;
-  font-weight: 500;
-  color: #202124;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 4px;
-}
-
-.dark .fileName {
-  color: #fff;
-}
-
-.fileMeta {
-  font-size: 12px;
-  color: #5f6368;
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.dark .fileMeta {
-  color: #999;
-}
-

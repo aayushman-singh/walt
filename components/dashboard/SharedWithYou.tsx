@@ -43,16 +43,16 @@ const SharedWithYou: React.FC<SharedWithYouProps> = ({ records, loading, load, o
   };
 
   return (
-    <div style={{ padding: '1rem' }} data-testid="shared-with-you">
-      <h2 style={{ margin: '0 0 0.25rem' }}>Shared with you</h2>
-      <p style={{ color: '#6b7280', marginTop: 0 }}>
+    <div style={{ padding: '1rem', color: 'var(--tx)' }} data-testid="shared-with-you">
+      <h2 style={{ margin: '0 0 0.25rem', color: 'var(--tx)', fontWeight: 700, letterSpacing: '-0.02em' }}>Shared with you</h2>
+      <p style={{ color: 'var(--mut)', marginTop: 0 }}>
         Files other walt users encrypted to your key. Only you can decrypt them.
       </p>
 
       {loading ? (
-        <p>Loading…</p>
+        <p style={{ color: 'var(--mut)' }}>Loading…</p>
       ) : records.length === 0 ? (
-        <p style={{ color: '#9ca3af' }}>Nothing shared with you yet.</p>
+        <p style={{ color: 'var(--faint)' }}>Nothing shared with you yet.</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {records.map((record) => (
@@ -63,15 +63,16 @@ const SharedWithYou: React.FC<SharedWithYouProps> = ({ records, loading, load, o
                 flexDirection: 'column',
                 gap: '0.5rem',
                 padding: '0.75rem',
-                border: '1px solid #e5e7eb',
-                borderRadius: 8,
+                border: '1px solid var(--line)',
+                background: 'var(--surface)',
+                borderRadius: 12,
                 marginBottom: '0.5rem',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                 <div>
-                  <div style={{ fontWeight: 600 }}>{record.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                  <div style={{ fontWeight: 600, color: 'var(--tx)' }}>{record.name}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--mut)', fontFamily: 'var(--mono)' }}>
                     From {record.fromEmail || record.from} · {formatFileSize(record.size)}
                   </div>
                 </div>
@@ -81,7 +82,7 @@ const SharedWithYou: React.FC<SharedWithYouProps> = ({ records, loading, load, o
                     setActiveId(activeId === record.shareId ? null : record.shareId);
                     setPassphrase('');
                   }}
-                  style={{ padding: '0.4rem 0.8rem', borderRadius: 6, border: '1px solid #d1d5db', cursor: 'pointer' }}
+                  style={{ padding: '0.4rem 0.8rem', borderRadius: 9, border: '1px solid var(--line2)', background: 'var(--surface2)', color: 'var(--tx)', fontWeight: 600, cursor: 'pointer' }}
                 >
                   {activeId === record.shareId ? 'Cancel' : 'Decrypt & download'}
                 </button>
@@ -101,13 +102,13 @@ const SharedWithYou: React.FC<SharedWithYouProps> = ({ records, loading, load, o
                       }
                     }}
                     aria-label="Sharing passphrase"
-                    style={{ flex: 1, padding: '0.4rem', borderRadius: 6, border: '1px solid #d1d5db' }}
+                    style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 9, border: '1px solid var(--line2)', background: 'var(--bg2)', color: 'var(--tx)', fontFamily: 'var(--mono)' }}
                   />
                   <button
                     type="button"
                     onClick={() => void submitDownload(record)}
                     disabled={!passphrase || busyId === record.shareId}
-                    style={{ padding: '0.4rem 0.8rem', borderRadius: 6, border: 0, background: '#4f46e5', color: 'white', cursor: 'pointer' }}
+                    style={{ padding: '0.4rem 0.8rem', borderRadius: 9, border: 0, background: 'var(--accent)', color: 'var(--accent-ink)', fontWeight: 600, cursor: 'pointer' }}
                   >
                     {busyId === record.shareId ? 'Decrypting…' : 'Download'}
                   </button>

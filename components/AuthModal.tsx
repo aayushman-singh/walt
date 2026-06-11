@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import CloseIcon from '@rsuite/icons/Close';
 import GoogleIcon from '@rsuite/icons/Google';
 import { useAuth } from '../contexts/AuthContext';
+import WIcon from './WIcon';
 import styles from '../styles/Auth.module.css';
 
 const AuthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -51,7 +51,7 @@ const AuthModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         <div className={styles.modalHeader}>
           <h2>{isSignUp ? 'Sign Up' : 'Sign In'}</h2>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close authentication modal">
-            <CloseIcon />
+            <WIcon name="close" size={18} />
           </button>
         </div>
 

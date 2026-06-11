@@ -6,8 +6,7 @@
  */
 
 import React from 'react';
-import CheckIcon from '@rsuite/icons/Check';
-import CloseIcon from '@rsuite/icons/Close';
+import WIcon, { WIconName } from '../WIcon';
 import { UploadProgress } from './types';
 
 interface ProgressPanelProps {
@@ -22,7 +21,7 @@ const ProgressPanel: React.FC<ProgressPanelProps> = ({ styles, queue, heading, o
     <div className={styles.uploadPanel}>
       <div className={styles.uploadHeader}>
         <h4>{heading}</h4>
-        <button onClick={onClose} className={styles.closeUploadPanel}><CloseIcon /></button>
+        <button onClick={onClose} className={styles.closeUploadPanel}><WIcon name="close" size={16} /></button>
       </div>
       <div className={styles.uploadList}>
         {queue.map((item, index) => (
@@ -30,7 +29,7 @@ const ProgressPanel: React.FC<ProgressPanelProps> = ({ styles, queue, heading, o
             <div className={styles.uploadItemInfo}>
               <span className={styles.uploadItemName}>{item.name}</span>
               <span className={styles.uploadItemProgress}>
-                {item.status === 'complete' ? <CheckIcon /> : item.status === 'error' ? <CloseIcon /> : `${Math.round(item.progress)}%`}
+                {item.status === 'complete' ? <WIcon name="check" size={16} /> : item.status === 'error' ? <WIcon name="close" size={16} /> : `${Math.round(item.progress)}%`}
               </span>
             </div>
             <div className={styles.progressBar}>

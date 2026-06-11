@@ -93,7 +93,7 @@ export function useExport({ uploadedFiles, showToast }: UseExportParams) {
       showToast(`Exported ${processed} files successfully!`, 'success');
     } catch (error) {
       console.error('Export failed:', error);
-      showToast('❌ Export failed. Please try again.', 'error');
+      showToast('Export failed. Please try again.', 'error');
     }
   };
 

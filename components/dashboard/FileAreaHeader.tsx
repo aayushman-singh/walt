@@ -7,13 +7,7 @@
 
 import React from 'react';
 import { BillingStatus } from '../../lib/billingClient';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import FolderIcon from '@rsuite/icons/FolderFill';
-import TrashIcon from '@rsuite/icons/Trash';
-import UndoIcon from '@rsuite/icons/Undo';
-import FileDownloadIcon from '@rsuite/icons/FileDownload';
-import TableIcon from '@rsuite/icons/Table';
-import ListIcon from '@rsuite/icons/List';
+import WIcon, { WIconName } from '../WIcon';
 import { ActiveView, UploadedFile, ViewMode } from './types';
 
 interface FolderPathItem {
@@ -110,7 +104,7 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
     <>
       {showBillingWarning && billingStatus && (
         <div className={styles.billingWarningBanner}>
-          <div className={styles.billingWarningIcon}><WarningRoundIcon /></div>
+          <div className={styles.billingWarningIcon}><WIcon name="warning" size={18} /></div>
           <div className={styles.billingWarningContent}>
             <div className={styles.billingWarningTitle}>Free tier exceeded</div>
             <p className={styles.billingWarningText}>
@@ -136,7 +130,7 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
       )}
       {pinningWarning && (
         <div className={styles.pinningWarningBanner}>
-          <div className={styles.pinningWarningIcon}><WarningRoundIcon /></div>
+          <div className={styles.pinningWarningIcon}><WIcon name="warning" size={18} /></div>
           <div>
             <div className={styles.pinningWarningTitle}>Pinning Service Attention Needed</div>
             <p className={styles.pinningWarningText}>{pinningWarning}</p>
@@ -246,7 +240,7 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
         return (
           <div className={styles.trashWarningBanner}>
             <div className={styles.trashWarningContent}>
-              <span className={styles.trashWarningIcon}><WarningRoundIcon /></span>
+              <span className={styles.trashWarningIcon}><WIcon name="warning" size={18} /></span>
               <div className={styles.trashWarningText}>
                 {expiredFiles.length > 0 && (
                   <strong>{expiredFiles.length} item{expiredFiles.length !== 1 ? 's' : ''} will be permanently deleted and unpinned automatically (older than 30 days)</strong>
@@ -309,14 +303,14 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
                   onClick={handleBulkRestore}
                   title="Restore selected files"
                 >
-                  <UndoIcon /> Restore
+                  <WIcon name="history" size={16} /> Restore
                 </button>
                 <button
                   className={`${styles.selectionBtn} ${styles.selectionBtnDanger}`}
                   onClick={handleBulkPermanentlyDelete}
                   title="Permanently delete selected files"
                 >
-                  <TrashIcon /> Delete Permanently
+                  <WIcon name="trash" size={16} /> Delete Permanently
                 </button>
               </>
             ) : (
@@ -332,14 +326,14 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
                   }
                   style={selectedFiles.size > 2 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                 >
-                  <FileDownloadIcon /> Download
+                  <WIcon name="download" size={16} /> Download
                 </button>
                 <button
                   className={`${styles.selectionBtn} ${styles.selectionBtnDanger}`}
                   onClick={handleBulkMoveToTrash}
                   title="Move selected files to trash"
                 >
-                  <TrashIcon /> Move to trash
+                  <WIcon name="trash" size={16} /> Move to trash
                 </button>
               </>
             )}
@@ -348,7 +342,7 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
               onClick={deselectAllFiles}
               title="Deselect all"
             >
-              ✕ Deselect
+              <WIcon name="close" size={16} /> Deselect
             </button>
             <button
               className={styles.selectionBtn}
@@ -372,7 +366,7 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
             onClick={handleEmptyTrash}
             title="Permanently delete all items in trash"
           >
-            <TrashIcon /> Empty Trash
+            <WIcon name="trash" size={16} /> Empty Trash
           </button>
         </div>
       )}
@@ -386,7 +380,7 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
               onClick={handleCreateFolder}
               title="Create new folder"
             >
-              <FolderIcon />+ New Folder
+              <WIcon name="folder" size={16} />+ New Folder
             </button>
           )}
           {cleanupMode && (
@@ -417,21 +411,21 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
             onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
             title={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`}
           >
-            {sortDirection === 'asc' ? '↑' : '↓'}
+            {sortDirection === 'asc' ? <WIcon name="sortAsc" size={18} /> : <WIcon name="sortDesc" size={18} />}
           </button>
           <button
             className={viewMode === 'grid' ? styles.viewBtnActive : styles.viewBtn}
             onClick={() => setViewMode('grid')}
             title="Grid view"
           >
-            ▦
+            <WIcon name="grid" size={18} />
           </button>
           <button
             className={viewMode === 'list' ? styles.viewBtnActive : styles.viewBtn}
             onClick={() => setViewMode('list')}
             title="List view"
           >
-            <ListIcon />
+            <WIcon name="list" size={18} />
           </button>
           {viewMode === 'list' && (
             <button
@@ -439,7 +433,7 @@ const FileAreaHeader: React.FC<FileAreaHeaderProps> = (props) => {
               onClick={() => setShowColumnSettings(!showColumnSettings)}
               title="Column settings"
             >
-              <TableIcon />
+              <WIcon name="sheet" size={18} />
             </button>
           )}
           {uploadedFiles.length > 0 && (activeView === 'drive' || activeView === 'trash') && (

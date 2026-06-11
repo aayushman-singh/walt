@@ -24,6 +24,7 @@ import {
   formatChargeAmount,
   getBillingDayLabel,
 } from '../components/dashboard/utils';
+import { WIcon } from '../components/WIcon';
 import Header from '../components/dashboard/Header';
 import Sidebar from '../components/dashboard/Sidebar';
 import MobileMenu from '../components/dashboard/MobileMenu';
@@ -210,7 +211,7 @@ const Dashboard: NextPage = () => {
           {isDragActive && (
             <div className={styles.dropOverlay}>
               <div className={styles.dropMessage}>
-                <span className={styles.dropIcon}>📤</span>
+                <span className={styles.dropIcon}><WIcon name="upload" size={56} /></span>
                 <p>Drop files here to upload</p>
               </div>
             </div>

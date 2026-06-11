@@ -13,17 +13,7 @@ import {
 import { calculatePinningCost, DEFAULT_BILLING_CYCLE_DAYS } from '../../lib/pinningService';
 import { BillingStatus } from '../../lib/billingClient';
 import { billingCycleTitle } from './utils';
-import FolderIcon from '@rsuite/icons/FolderFill';
-import StarIcon from '@rsuite/icons/Star';
-import StarOutlineIcon from '@rsuite/icons/Star';
-import PinedIcon from '@rsuite/icons/Pined';
-import TrashIcon from '@rsuite/icons/Trash';
-import TableIcon from '@rsuite/icons/Table';
-import PageIcon from '@rsuite/icons/Page';
-import GearIcon from '@rsuite/icons/Gear';
-import SettingIcon from '@rsuite/icons/Setting';
-import TimeIcon from '@rsuite/icons/Time';
-import CloseIcon from '@rsuite/icons/Close';
+import { WIcon } from '../WIcon';
 import { ActiveView } from './types';
 
 interface StorageStats {
@@ -90,7 +80,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             onClick={() => setShowMobileMenu(false)}
             aria-label="Close menu"
           >
-            <CloseIcon />
+            <WIcon name="close" size={18} />
           </button>
         </div>
 
@@ -113,14 +103,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 handleCreateFolder();
                 setShowMobileMenu(false);
               }}>
-                <FolderIcon /> New Folder
+                <WIcon name="folder" size={16} /> New Folder
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation();
                 handleFileUploadClick(e);
                 setShowMobileMenu(false);
               }}>
-                <PageIcon /> File Upload
+                <WIcon name="fileDoc" size={16} /> File Upload
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -136,7 +126,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               setShowMobileMenu(false);
             }}
           >
-            <span className={styles.navIcon}><FolderIcon /></span>
+            <span className={styles.navIcon}><WIcon name="folder" size={18} /></span>
             <span>My Drive</span>
           </div>
           <div
@@ -146,7 +136,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               setShowMobileMenu(false);
             }}
           >
-            <span className={styles.navIcon}><TimeIcon /></span>
+            <span className={styles.navIcon}><WIcon name="clock" size={18} /></span>
             <span>Recent</span>
           </div>
           <div
@@ -156,7 +146,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               setShowMobileMenu(false);
             }}
           >
-            <span className={styles.navIcon}>{activeView === 'starred' ? <StarIcon /> : <StarOutlineIcon />}</span>
+            <span className={styles.navIcon}>{activeView === 'starred' ? <WIcon name="starFill" size={18} /> : <WIcon name="star" size={18} />}</span>
             <span>Starred</span>
           </div>
           <div
@@ -166,7 +156,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               setShowMobileMenu(false);
             }}
           >
-            <span className={styles.navIcon}><TrashIcon /></span>
+            <span className={styles.navIcon}><WIcon name="trash" size={18} /></span>
             <span>Trash</span>
           </div>
         </nav>
@@ -181,7 +171,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               className={styles.autoPinCheckbox}
             />
             <span className={styles.autoPinText}>
-              <PinedIcon /> Auto-pin uploads
+              <WIcon name="pinFilled" size={15} /> Auto-pin uploads
             </span>
           </label>
           <p className={styles.autoPinHint}>
@@ -201,7 +191,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               className={styles.autoPinCheckbox}
             />
             <span className={styles.autoPinText}>
-              🔒 Encrypt uploads (end-to-end)
+              <WIcon name="lock" size={15} /> Encrypt uploads (end-to-end)
             </span>
           </label>
           <p className={styles.autoPinHint}>
@@ -224,7 +214,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                   }}
                   title="Clean up storage"
                 >
-                  <GearIcon /> Clean Up Storage
+                  <WIcon name="gear" size={16} /> Clean Up Storage
                 </button>
                 <button
                   className={styles.gatewayBtn}
@@ -234,7 +224,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                   }}
                   title="Gateway/CDN settings"
                 >
-                  <SettingIcon /> Gateways
+                  <WIcon name="gear" size={16} /> Gateways
                 </button>
               </div>
               <h4 className={styles.storageTitle}>Storage Overview</h4>
@@ -249,14 +239,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             </div>
             <hr className={styles.statDivider} />
             <div className={styles.statRow}>
-              <span className={styles.statLabel}><PinedIcon /> Pinned (Paid):</span>
+              <span className={styles.statLabel}><WIcon name="pinFilled" size={13} /> Pinned (Paid):</span>
               <span className={styles.statValue}>
                 {storageStats.pinnedCount} ({formatFileSize(storageStats.pinnedSize)})
               </span>
             </div>
             {storageStats.pinnedSize > 0 && (
               <div className={styles.statRow}>
-                <span className={styles.statLabel}>💰 Est. {billingCycleTitle} Cost:</span>
+                <span className={styles.statLabel}><WIcon name="bolt" size={13} /> Est. {billingCycleTitle} Cost:</span>
                 <span className={styles.statValue}>
                   {calculatePinningCost(storageStats.pinnedSize, DEFAULT_BILLING_CYCLE_DAYS)}
                 </span>
@@ -275,13 +265,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               </>
             )}
             <div className={styles.statRow}>
-              <span className={styles.statLabel}>🆓 Unpinned (Free):</span>
+              <span className={styles.statLabel}><WIcon name="cloud" size={13} /> Unpinned (Free):</span>
               <span className={styles.statValue}>
                 {storageStats.unpinnedCount} ({formatFileSize(storageStats.unpinnedSize)})
               </span>
             </div>
             <div className={styles.statRow}>
-              <span className={styles.statLabel}><TableIcon /> Total Size:</span>
+              <span className={styles.statLabel}><WIcon name="sheet" size={13} /> Total Size:</span>
               <span className={styles.statValue}>
                 {formatFileSize(storageStats.totalSize)}
               </span>

@@ -1,19 +1,28 @@
+/* PreviewModal — SOVEREIGN (.w-overlay / .w-card-modal preview shell) */
+
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(4, 7, 14, 0.66);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
 
+[data-theme="light"] .overlay,
+.light .overlay {
+  background: rgba(20, 30, 55, 0.42);
+}
+
 .modal {
   width: 90vw;
   height: 85vh;
-  background: var(--color-surface, #111);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -23,34 +32,47 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--color-surface-2, #1a1a1a);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 14px 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
 }
 
 .title {
   max-width: 80%;
-  color: var(--color-text, #fff);
+  color: var(--tx);
   font-weight: 600;
+  font-size: 15px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .closeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   background: transparent;
   border: none;
-  color: var(--color-text, #fff);
-  font-size: 18px;
+  color: var(--mut);
   cursor: pointer;
+  border-radius: 8px;
+  transition: 0.16s;
+}
+
+.closeBtn:hover {
+  color: var(--tx);
+  background: var(--surface2);
 }
 
 .content {
   flex: 1;
-  background: #000;
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .media {
@@ -69,18 +91,29 @@
 }
 
 .fallback {
-  color: var(--color-text, #fff);
+  color: var(--txdim);
   text-align: center;
+  font-size: 14px;
 }
 
 .openBtn {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 8px 12px;
-  background: #2b6cb0;
-  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 9px 14px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 13.5px;
+  font-weight: 600;
   text-decoration: none;
-  border-radius: 6px;
+  border-radius: 10px;
+  box-shadow: 0 8px 22px -10px var(--accent);
+  transition: 0.16s;
+}
+
+.openBtn:hover {
+  background: var(--accent-h);
 }
 
 /* Mobile Responsive */
@@ -91,16 +124,12 @@
   }
 
   .header {
-    padding: 10px 12px;
+    padding: 12px 14px;
   }
 
   .title {
     font-size: 14px;
     max-width: 75%;
-  }
-
-  .closeBtn {
-    font-size: 16px;
   }
 }
 
@@ -112,7 +141,7 @@
   }
 
   .header {
-    padding: 8px 10px;
+    padding: 10px 12px;
   }
 
   .title {

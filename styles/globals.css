@@ -1,105 +1,117 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-
+/* ============================================================
+   Walt · SOVEREIGN design system — dark (primary) + light (alt)
+   Carbon neutrals · electric azure · IBM Plex Sans/Mono · line icons
+   Raw tokens (--bg, --surface, --accent, --line …) are consumed by the
+   CSS modules. The shadcn HSL vars (--background, --foreground …) keep
+   their NAMES so the ui/* components keep working — only the values shift.
+   Dark is the base (:root); [data-theme="light"] / .light override it.
+   ============================================================ */
 
 @layer base {
   :root {
-    /* Light mode - using new color scheme */
-    /* #ffffff (white) for backgrounds */
-    --background: 0 0% 100%;
-    /* #00171f (darkest blue) for text */
-    --foreground: 195 100% 6%;
-    /* #ffffff (white) for cards */
-    --card: 0 0% 100%;
-    --card-foreground: 195 100% 6%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 195 100% 6%;
-    /* #003459 (dark blue) for primary */
-    --primary: 205 100% 17%;
-    --primary-foreground: 0 0% 100%;
-    /* #adebff (light blue) for secondary */
-    --secondary: 195 100% 84%;
-    --secondary-foreground: 195 100% 6%;
-    --muted: 195 100% 84%;
-    --muted-foreground: 205 100% 17%;
-    /* #adebff (light blue) for accent */
-    --accent: 195 100% 84%;
-    --accent-foreground: 195 100% 6%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 195 100% 84%;
-    --input: 195 100% 84%;
-    --ring: 205 100% 17%;
-    --radius: 0.5rem;
-    --chart-1: 205 100% 17%;
-    --chart-2: 195 100% 84%;
-    --chart-3: 195 100% 6%;
-    --chart-4: 205 100% 50%;
-    --chart-5: 195 100% 70%;
-    /* Custom color variables */
-    --color-primary: #00171f;
-    --color-secondary: #003459;
-    --color-accent: #adebff;
-    --color-highlight: #ffffff;
+    /* ---- SOVEREIGN raw tokens — DARK (primary) ---- */
+    --bg:#080a0e; --bg2:#0b0e14; --surface:#0e1219; --surface2:#11161f; --surface3:#141a25;
+    --line:#1d242f; --line2:#283040;
+    --tx:#e8edf5; --txdim:#aab3c2; --mut:#8a93a3; --faint:#5a6373;
+    --accent:#4d9fff; --accent-h:#74b4ff; --accent-soft:rgba(77,159,255,.10); --accent-bd:rgba(77,159,255,.38); --accent-ink:#04122b;
+    --green:#3ddc97; --green-soft:rgba(61,220,151,.12);
+    --amber:#f5b544; --amber-soft:rgba(245,181,68,.12);
+    --danger:#ff5d6c; --danger-soft:rgba(255,93,108,.12);
+    --shadow:0 24px 60px -28px rgba(0,0,0,.75);
+    --shadow-sm:0 10px 26px -16px rgba(0,0,0,.7);
+    --grid-dot:rgba(255,255,255,.025);
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+
+    /* ---- shadcn HSL vars — DARK values (names preserved) ---- */
+    --background:220 28% 4%;        /* #080a0e */
+    --foreground:218 33% 93%;       /* #e8edf5 */
+    --card:217 28% 8%;              /* #0e1219 */
+    --card-foreground:218 33% 93%;
+    --popover:217 28% 8%;
+    --popover-foreground:218 33% 93%;
+    --primary:213 100% 65%;         /* #4d9fff */
+    --primary-foreground:218 84% 9%;/* #04122b */
+    --secondary:217 28% 9%;         /* #11161f */
+    --secondary-foreground:218 33% 93%;
+    --muted:217 28% 9%;
+    --muted-foreground:215 11% 59%; /* #8a93a3 */
+    --accent:218 27% 11%;           /* #141a25 (hover surface) */
+    --accent-foreground:218 33% 93%;
+    --destructive:354 100% 68%;     /* #ff5d6c */
+    --destructive-foreground:0 0% 100%;
+    --border:213 23% 15%;           /* #1d242f */
+    --input:217 24% 20%;            /* #283040 */
+    --ring:213 100% 65%;
+    --radius:0.625rem;
+    --chart-1:213 100% 65%;
+    --chart-2:160 68% 55%;
+    --chart-3:40 90% 62%;
+    --chart-4:255 80% 68%;
+    --chart-5:354 100% 68%;
   }
 
-  .dark {
-    /* Dark mode - using new color scheme */
-    /* #00171f (darkest blue) for background */
-    --background: 195 100% 6%;
-    /* #ffffff (white) for text */
-    --foreground: 0 0% 100%;
-    /* #003459 (dark blue) for cards */
-    --card: 205 100% 17%;
-    --card-foreground: 0 0% 100%;
-    --popover: 205 100% 17%;
-    --popover-foreground: 0 0% 100%;
-    /* #adebff (light blue) for primary */
-    --primary: 195 100% 84%;
-    --primary-foreground: 195 100% 6%;
-    /* #003459 (dark blue) for secondary */
-    --secondary: 205 100% 17%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 205 100% 17%;
-    --muted-foreground: 195 100% 84%;
-    /* #adebff (light blue) for accent */
-    --accent: 195 100% 84%;
-    --accent-foreground: 195 100% 6%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 205 100% 17%;
-    --input: 205 100% 17%;
-    --ring: 195 100% 84%;
-    --chart-1: 195 100% 84%;
-    --chart-2: 205 100% 17%;
-    --chart-3: 0 0% 100%;
-    --chart-4: 195 100% 70%;
-    --chart-5: 205 100% 50%;
+  /* ---- LIGHT (alternate) ---- */
+  [data-theme="light"], .light {
+    --bg:#eef1f7; --bg2:#f7f9fc; --surface:#ffffff; --surface2:#f1f4fa; --surface3:#e9eef6;
+    --line:#e0e5ef; --line2:#cfd6e4;
+    --tx:#0d1422; --txdim:#3c4658; --mut:#646e80; --faint:#9aa2b3;
+    --accent:#2f6fe0; --accent-h:#2259c2; --accent-soft:rgba(47,111,224,.08); --accent-bd:rgba(47,111,224,.30); --accent-ink:#ffffff;
+    --green:#16a34a; --green-soft:rgba(22,163,74,.10);
+    --amber:#c47f12; --amber-soft:rgba(196,127,18,.12);
+    --danger:#dc2626; --danger-soft:rgba(220,38,38,.10);
+    --shadow:0 24px 60px -30px rgba(20,30,60,.28);
+    --shadow-sm:0 12px 30px -20px rgba(20,30,60,.30);
+    --grid-dot:rgba(20,40,80,.04);
+
+    --background:222 33% 95%;       /* #eef1f7 */
+    --foreground:220 45% 9%;        /* #0d1422 */
+    --card:0 0% 100%;
+    --card-foreground:220 45% 9%;
+    --popover:0 0% 100%;
+    --popover-foreground:220 45% 9%;
+    --primary:217 76% 53%;          /* #2f6fe0 */
+    --primary-foreground:0 0% 100%;
+    --secondary:220 38% 96%;        /* #f1f4fa */
+    --secondary-foreground:220 45% 9%;
+    --muted:220 38% 96%;
+    --muted-foreground:220 13% 45%; /* #646e80 */
+    --accent:220 38% 94%;           /* #e9eef6 */
+    --accent-foreground:220 45% 9%;
+    --destructive:0 72% 51%;        /* #dc2626 */
+    --destructive-foreground:0 0% 100%;
+    --border:222 30% 91%;           /* #e0e5ef */
+    --input:222 28% 85%;            /* #cfd6e4 */
+    --ring:217 76% 53%;
+    --chart-1:217 76% 53%;
+    --chart-2:142 76% 36%;
+    --chart-3:36 83% 42%;
+    --chart-4:255 70% 58%;
+    --chart-5:0 72% 51%;
   }
 }
 
 body, html {
-    margin: 0;
-    padding: 0;
-    background-color: transparent; /* Set your preferred background color */
-    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
 
-  html {
-    scroll-behavior: smooth;
-  }
+html {
+  scroll-behavior: smooth;
+}
 
-  img {
-    margin: 0;
-    padding: 0;
-  }
+img {
+  margin: 0;
+  padding: 0;
+}
 
-  
-
-  @layer base {
+@layer base {
   * {
     @apply border-border;
   }

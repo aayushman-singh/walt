@@ -15,12 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/DropdownMenu';
 import NotificationBell from '../NotificationBell';
-import CloseIcon from '@rsuite/icons/Close';
-import MenuIcon from '@rsuite/icons/Menu';
-import StorageIcon from '@rsuite/icons/Storage';
-import SettingIcon from '@rsuite/icons/Setting';
-import PeoplesIcon from '@rsuite/icons/Peoples';
-import ArrowDownIcon from '@rsuite/icons/ArrowDown';
+import { WIcon } from '../WIcon';
 import SearchBar from './SearchBar';
 import { DashboardFilters, SavedSearch } from './types';
 
@@ -91,7 +86,7 @@ const Header: React.FC<HeaderProps> = ({
     <header className={styles.header}>
       <div className={styles.headerLeft}>
         <button className={styles.logoBtn} onClick={() => router.push('/')}>
-          <span className={styles.logoText}>Walt</span>
+          <span className={styles.logoText}>walt</span>
         </button>
         <SearchBar
           styles={styles}
@@ -176,7 +171,7 @@ const Header: React.FC<HeaderProps> = ({
           title="Menu"
           aria-label="Toggle menu"
         >
-          {showMobileMenu ? <CloseIcon /> : <MenuIcon />}
+          {showMobileMenu ? <WIcon name="close" size={18} /> : <WIcon name="menu" size={18} />}
         </button>
 
         <button
@@ -184,7 +179,7 @@ const Header: React.FC<HeaderProps> = ({
           onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
           title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
         >
-          {theme === 'light' ? <span>🌙</span> : <span>☀️</span>}
+          {theme === 'light' ? <WIcon name="moon" size={18} /> : <WIcon name="sun" size={18} />}
         </button>
 
         {shouldShowBillingCTA() && (
@@ -193,7 +188,7 @@ const Header: React.FC<HeaderProps> = ({
             onClick={() => setShowPaymentModal(true)}
             title="Billing day: add payment info now"
           >
-            💳 Pay now
+            <WIcon name="bolt" size={16} /> Pay now
           </button>
         )}
 
@@ -204,25 +199,25 @@ const Header: React.FC<HeaderProps> = ({
         <DropdownMenu>
           <DropdownMenuTrigger className={styles.userDropdownTrigger}>
             <span className={styles.userEmail}>{user.email}</span>
-            <span className={styles.userIcon}><PeoplesIcon /></span>
-            <span className={styles.dropdownArrow}><ArrowDownIcon /></span>
+            <span className={styles.userIcon}><WIcon name="user" size={18} /></span>
+            <span className={styles.dropdownArrow}><WIcon name="chevronDown" size={16} /></span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className={styles.userDropdownContent}>
             <DropdownMenuItem onClick={() => router.push('/settings')}>
-              <span className={styles.dropdownIcon}><SettingIcon /></span>
+              <span className={styles.dropdownIcon}><WIcon name="gear" size={16} /></span>
               Settings
             </DropdownMenuItem>
             <DropdownMenuItem className={styles.menuDisabled} onClick={(e) => { e.stopPropagation(); }}>
-              <span className={styles.dropdownIcon}>🔒</span>
+              <span className={styles.dropdownIcon}><WIcon name="lock" size={16} /></span>
               2FA (Coming Soon)
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportAll}>
-              <span className={styles.dropdownIcon}><StorageIcon /></span>
+              <span className={styles.dropdownIcon}><WIcon name="server" size={16} /></span>
               Export All
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <span className={styles.dropdownIcon}>🚪</span>
+              <span className={styles.dropdownIcon}><WIcon name="logout" size={16} /></span>
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

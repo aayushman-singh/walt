@@ -1,7 +1,5 @@
 import React from 'react';
-import DangerIcon from '@rsuite/icons/Danger';
-import InfoRoundIcon from '@rsuite/icons/InfoRound';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
+import WIcon from './WIcon';
 import styles from '../styles/ConfirmationModal.module.css';
 
 interface ConfirmationModalProps {
@@ -50,18 +48,23 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   const getIcon = () => {
     switch (type) {
-      case 'danger': return <DangerIcon />;
-      case 'info': return <InfoRoundIcon />;
-      case 'warning': 
-      default: return <WarningRoundIcon />;
+      case 'danger': return <WIcon name="warning" size={24} />;
+      case 'info': return <WIcon name="info" size={24} />;
+      case 'warning':
+      default: return <WIcon name="warning" size={24} />;
     }
   };
+
+  const iconClass =
+    type === 'danger' ? styles.dangerIcon
+    : type === 'info' ? styles.infoIcon
+    : styles.warningIcon;
 
   return (
     <div className={styles.overlay} onClick={onCancel}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <div className={styles.icon}>{getIcon()}</div>
+          <div className={`${styles.icon} ${iconClass}`}>{getIcon()}</div>
           <h2 className={styles.title}>{title}</h2>
         </div>
         

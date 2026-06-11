@@ -67,3 +67,6 @@ backend/.env
 /SESSION_SUMMARY_V4.md
 /orchestrator*.log
 /codex/
+
+# design reference bundle (not for commit)
+.design-ref/

@@ -6,9 +6,7 @@
 
 import React from 'react';
 import { User } from 'firebase/auth';
-import FolderIcon from '@rsuite/icons/FolderFill';
-import StarIcon from '@rsuite/icons/Star';
-import TrashIcon from '@rsuite/icons/Trash';
+import WIcon, { WIconName } from '../WIcon';
 import { ActiveView } from './types';
 
 interface EmptyStateProps {
@@ -31,7 +29,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <div className={styles.emptyState}>
       <span className={styles.emptyIcon}>
-        {activeView === 'trash' ? <TrashIcon /> : activeView === 'starred' ? <StarIcon /> : <FolderIcon />}
+        {activeView === 'trash' ? <WIcon name="trash" size={28} /> : activeView === 'starred' ? <WIcon name="starFill" size={28} /> : <WIcon name="folder" size={28} />}
       </span>
       <h3>
         {activeView === 'trash' ? 'Trash is empty' :

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
+import { WIcon } from './WIcon';
 import styles from '../styles/PaymentModal.module.css';
 
 interface PaymentModalProps {
@@ -297,19 +297,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2>Payment Required</h2>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+          <button className={styles.closeButton} onClick={onClose} aria-label="Close"><WIcon name="close" size={18} /></button>
         </div>
         
         <div className={styles.content}>
           <div className={styles.warning}>
             {pinnedSizeGB && freeTierGB ? (
               <>
-                <p><WarningRoundIcon /> Your storage usage ({pinnedSizeGB.toFixed(2)} GB) exceeds the free tier limit ({freeTierGB} GB).</p>
+                <p><WIcon name="warning" size={16} /> Your storage usage ({pinnedSizeGB.toFixed(2)} GB) exceeds the free tier limit ({freeTierGB} GB).</p>
                 <p>To continue using our services, please add payment information.</p>
               </>
             ) : (
               <>
-            <p><WarningRoundIcon /> Your estimated pin cost (${monthlyCostUSD.toFixed(2)}/month) exceeds the free tier limit of ${freeTierLimitUSD.toFixed(2)}/month.</p>
+            <p><WIcon name="warning" size={16} /> Your estimated pin cost (${monthlyCostUSD.toFixed(2)}/month) exceeds the free tier limit of ${freeTierLimitUSD.toFixed(2)}/month.</p>
             <p>To continue using our services, please add payment information.</p>
               </>
             )}

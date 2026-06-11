@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import MessageIcon from '@rsuite/icons/Message';
+import WIcon from './WIcon';
 import { useAuth } from '../contexts/AuthContext';
 import NotificationCenter from './NotificationCenter';
 import styles from '../styles/NotificationBell.module.css';
@@ -80,7 +80,7 @@ const NotificationBell: React.FC = () => {
         title="Notifications"
       >
         <span className={styles.bellIcon} aria-hidden>
-          <MessageIcon />
+          <WIcon name="bell" size={18} />
         </span>
         {unreadCount > 0 && (
           <span className={styles.badge}>

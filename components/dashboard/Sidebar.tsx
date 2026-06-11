@@ -12,16 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/DropdownMenu';
 import { BillingStatus } from '../../lib/billingClient';
-import FolderIcon from '@rsuite/icons/FolderFill';
-import StarIcon from '@rsuite/icons/Star';
-import StarOutlineIcon from '@rsuite/icons/Star';
-import PinedIcon from '@rsuite/icons/Pined';
-import TrashIcon from '@rsuite/icons/Trash';
-import TableIcon from '@rsuite/icons/Table';
-import PageIcon from '@rsuite/icons/Page';
-import GearIcon from '@rsuite/icons/Gear';
-import SettingIcon from '@rsuite/icons/Setting';
-import TimeIcon from '@rsuite/icons/Time';
+import { WIcon } from '../WIcon';
 import { ActiveView } from './types';
 
 interface StorageStats {
@@ -134,13 +125,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem onClick={handleCreateFolder}>
-              <FolderIcon /> New Folder
+              <WIcon name="folder" size={16} /> New Folder
             </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => {
               e.stopPropagation();
               handleFileUploadClick(e);
             }}>
-              <PageIcon /> File Upload
+              <WIcon name="fileDoc" size={16} /> File Upload
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -154,35 +145,35 @@ const Sidebar: React.FC<SidebarProps> = ({
             setCurrentFolderId(null);
           }}
         >
-          <span className={styles.navIcon}><FolderIcon /></span>
+          <span className={styles.navIcon}><WIcon name="folder" size={18} /></span>
           <span>My Drive</span>
         </div>
         <div
           className={`${styles.navItem} ${activeView === 'recent' ? styles.active : ''}`}
           onClick={() => handleViewChange('recent')}
         >
-          <span className={styles.navIcon}><TimeIcon /></span>
+          <span className={styles.navIcon}><WIcon name="clock" size={18} /></span>
           <span>Recent</span>
         </div>
         <div
           className={`${styles.navItem} ${activeView === 'starred' ? styles.active : ''}`}
           onClick={() => handleViewChange('starred')}
         >
-          <span className={styles.navIcon}>{activeView === 'starred' ? <StarIcon /> : <StarOutlineIcon />}</span>
+          <span className={styles.navIcon}>{activeView === 'starred' ? <WIcon name="starFill" size={18} /> : <WIcon name="star" size={18} />}</span>
           <span>Starred</span>
         </div>
         <div
           className={`${styles.navItem} ${activeView === 'shared' ? styles.active : ''}`}
           onClick={() => handleViewChange('shared')}
         >
-          <span className={styles.navIcon} aria-hidden>🔐</span>
+          <span className={styles.navIcon}><WIcon name="lock" size={18} /></span>
           <span>Shared with you</span>
         </div>
         <div
           className={`${styles.navItem} ${activeView === 'trash' ? styles.active : ''}`}
           onClick={() => handleViewChange('trash')}
         >
-          <span className={styles.navIcon}><TrashIcon /></span>
+          <span className={styles.navIcon}><WIcon name="trash" size={18} /></span>
           <span>Trash</span>
         </div>
       </nav>
@@ -197,7 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={styles.autoPinCheckbox}
           />
           <span className={styles.autoPinText}>
-            <PinedIcon /> Auto-pin uploads
+            <WIcon name="pinFilled" size={15} /> Auto-pin uploads
           </span>
         </label>
         <p className={styles.autoPinHint}>
@@ -207,7 +198,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </p>
 
         {!autoPinEnabled && (
-          <p className={styles.autoPinHint} style={{ marginTop: '8px', color: '#10b981' }}>
+          <p className={styles.autoPinHint} style={{ marginTop: '8px', color: 'var(--green)' }}>
             Tip: Unpinned files are FREE but may be lost. Enable auto-pin for guaranteed persistence.
           </p>
         )}
@@ -223,7 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={styles.autoPinCheckbox}
           />
           <span className={styles.autoPinText}>
-            🔒 Encrypt uploads (end-to-end)
+            <WIcon name="lock" size={15} /> Encrypt uploads (end-to-end)
           </span>
         </label>
         <p className={styles.autoPinHint}>
@@ -242,14 +233,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => setShowStorageCleanup(true)}
                 title="Clean up storage"
               >
-                <GearIcon /> Clean Up Storage
+                <WIcon name="gear" size={16} /> Clean Up Storage
               </button>
               <button
                 className={styles.gatewayBtn}
                 onClick={() => setShowGatewaySettings(true)}
                 title="Gateway/CDN settings"
               >
-                <SettingIcon /> Gateways
+                <WIcon name="gear" size={16} /> Gateways
               </button>
             </div>
             <h4 className={styles.storageTitle}>Storage Overview</h4>
@@ -264,14 +255,14 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <hr className={styles.statDivider} />
           <div className={styles.statRow}>
-            <span className={styles.statLabel}><PinedIcon /> Pinned (Paid):</span>
+            <span className={styles.statLabel}><WIcon name="pinFilled" size={13} /> Pinned (Paid):</span>
             <span className={styles.statValue}>
               {storageStats.pinnedCount} ({formatFileSize(storageStats.pinnedSize)})
             </span>
           </div>
           {billingStatus && storageStats.pinnedSize > 0 && (
             <div className={styles.statRow}>
-              <span className={styles.statLabel}>💰 Usage:</span>
+              <span className={styles.statLabel}><WIcon name="bolt" size={13} /> Usage:</span>
               <span className={styles.statValue}>
                 {billingStatus.pinnedSizeGB.toFixed(2)} GB / {billingStatus.freeTierGB} GB free
               </span>

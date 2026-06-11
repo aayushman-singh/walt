@@ -11,6 +11,7 @@ import { useUserFileStorage } from '../hooks/useUserFileStorage';
 import TwoFactorSetup from '../components/TwoFactorSetup';
 import GatewaySettings from '../components/GatewaySettings';
 import Toast from '../components/Toast';
+import WIcon from '../components/WIcon';
 import styles from '../styles/Settings.module.css';
 
 const Settings: NextPage = () => {
@@ -75,36 +76,36 @@ const Settings: NextPage = () => {
     localStorage.setItem('vault_theme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
-    showToast(`✅ Theme changed to ${newTheme}`, 'success');
+    showToast(`Theme changed to ${newTheme}`, 'success');
   };
 
   const handleViewModeChange = (mode: 'grid' | 'list') => {
     setViewMode(mode);
     localStorage.setItem('vault_view_mode', mode);
-    showToast(`✅ Default view set to ${mode}`, 'success');
+    showToast(`Default view set to ${mode}`, 'success');
   };
 
   const handleSortEnabledChange = (enabled: boolean) => {
     setSortEnabled(enabled);
     localStorage.setItem('vault_sort_enabled', enabled.toString());
-    showToast(`✅ Real-time sorting ${enabled ? 'enabled' : 'disabled'}`, 'success');
+    showToast(`Real-time sorting ${enabled ? 'enabled' : 'disabled'}`, 'success');
   };
 
   const handleNotificationsChange = (enabled: boolean) => {
     setNotificationsEnabled(enabled);
     localStorage.setItem('vault_notifications_enabled', enabled.toString());
-    showToast(`✅ In-app notifications ${enabled ? 'enabled' : 'disabled'}`, 'success');
+    showToast(`In-app notifications ${enabled ? 'enabled' : 'disabled'}`, 'success');
   };
 
   const handleEmailNotificationsChange = (enabled: boolean) => {
     setEmailNotifications(enabled);
     localStorage.setItem('vault_email_notifications', enabled.toString());
-    showToast(`✅ Email notifications ${enabled ? 'enabled' : 'disabled'}`, 'success');
+    showToast(`Email notifications ${enabled ? 'enabled' : 'disabled'}`, 'success');
   };
 
   const handleAutoPinChange = (enabled: boolean) => {
     setAutoPinEnabled(enabled);
-    showToast(`✅ Auto-pin ${enabled ? 'enabled' : 'disabled'}`, 'success');
+    showToast(`Auto-pin ${enabled ? 'enabled' : 'disabled'}`, 'success');
   };
 
   if (authLoading) {
@@ -128,7 +129,7 @@ const Settings: NextPage = () => {
             onClick={() => router.push('/dashboard')}
             title="Back to Dashboard"
           >
-            ← Back
+            <WIcon name="arrow" size={16} style={{ transform: 'scaleX(-1)' }} /> Back
           </button>
           <h1 className={styles.title}>Settings</h1>
         </div>
@@ -149,13 +150,13 @@ const Settings: NextPage = () => {
                 className={`${styles.themeOption} ${theme === 'light' ? styles.active : ''}`}
                 onClick={() => handleThemeChange('light')}
               >
-                ☀️ Light
+                <WIcon name="sun" size={15} /> Light
               </button>
               <button
                 className={`${styles.themeOption} ${theme === 'dark' ? styles.active : ''}`}
                 onClick={() => handleThemeChange('dark')}
               >
-                🌙 Dark
+                <WIcon name="moon" size={15} /> Dark
               </button>
             </div>
           </div>
@@ -170,13 +171,13 @@ const Settings: NextPage = () => {
                 className={`${styles.viewOption} ${viewMode === 'grid' ? styles.active : ''}`}
                 onClick={() => handleViewModeChange('grid')}
               >
-                🔲 Grid
+                <WIcon name="grid" size={15} /> Grid
               </button>
               <button
                 className={`${styles.viewOption} ${viewMode === 'list' ? styles.active : ''}`}
                 onClick={() => handleViewModeChange('list')}
               >
-                ☰ List
+                <WIcon name="list" size={15} /> List
               </button>
             </div>
           </div>
@@ -278,7 +279,7 @@ const Settings: NextPage = () => {
                 className={`${styles.actionBtn} ${styles.disabled}`}
                 disabled
               >
-                🔒 Manage 2FA
+                <WIcon name="lock" size={15} /> Manage 2FA
               </button>
             </div>
           </div>
@@ -298,7 +299,7 @@ const Settings: NextPage = () => {
                 className={styles.actionBtn}
                 onClick={() => setShowGatewaySettings(true)}
               >
-                ⚡ Manage Gateways
+                <WIcon name="bolt" size={15} /> Manage Gateways
               </button>
             </div>
           </div>
@@ -335,7 +336,7 @@ const Settings: NextPage = () => {
                   router.push('/');
                 }}
               >
-                🚪 Sign Out
+                <WIcon name="logout" size={15} /> Sign Out
               </button>
             </div>
           </div>
@@ -347,7 +348,7 @@ const Settings: NextPage = () => {
         isOpen={showTwoFactorSetup}
         onClose={() => setShowTwoFactorSetup(false)}
         onEnabled={() => {
-          showToast('✅ Two-factor authentication enabled!', 'success');
+          showToast('Two-factor authentication enabled!', 'success');
           setShowTwoFactorSetup(false);
         }}
       />

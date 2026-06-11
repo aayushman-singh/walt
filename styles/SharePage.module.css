@@ -1,31 +1,40 @@
+/* Walt · SOVEREIGN — public Share page (token-driven, dark base + light alt) */
+
 .container {
   min-height: 100vh;
-  background: #f8f9fa;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(90% 60% at 50% -10%, var(--accent-soft), transparent 60%),
+    var(--bg);
+  color: var(--tx);
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .header {
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  padding: 16px 32px;
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+  padding: 20px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .logo {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 600;
-  color: #5f6368;
+  letter-spacing: -0.02em;
+  color: var(--tx);
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.16s;
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
 .logo:hover {
-  color: #1a73e8;
+  color: var(--accent);
 }
 
 .headerRight {
@@ -36,38 +45,50 @@
 
 .sharedBadge {
   padding: 6px 12px;
-  background: #e8f0fe;
-  color: #1a73e8;
-  border-radius: 16px;
-  font-size: 13px;
-  font-weight: 500;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-bd);
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
 .main {
-  max-width: 900px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 48px 24px;
+  padding: 50px 24px;
 }
 
 .fileCard {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  width: 640px;
+  max-width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
   overflow: hidden;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 
 .filePreview {
   width: 100%;
   min-height: 300px;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, var(--surface2), var(--bg2));
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--line);
+  position: relative;
 }
 
 .image {
@@ -79,161 +100,184 @@
 
 .fileIcon,
 .folderIcon {
-  font-size: 128px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--accent);
 }
 
 .fileIcon svg,
 .folderIcon svg {
-  width: 128px;
-  height: 128px;
+  width: 96px;
+  height: 96px;
 }
 
 .fileInfo {
-  padding: 32px;
+  padding: 28px 30px 30px;
 }
 
 .fileName {
-  font-size: 28px;
-  color: #202124;
-  margin: 0 0 16px 0;
-  font-weight: 400;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+  margin: 0 0 10px 0;
   word-break: break-word;
 }
 
 .fileMeta {
   display: flex;
-  gap: 8px;
-  font-size: 14px;
-  color: #5f6368;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--mut);
+  font-family: var(--mono);
+  margin-bottom: 18px;
   flex-wrap: wrap;
 }
 
 .permissions {
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
   flex-wrap: wrap;
 }
 
 .permissionBadge {
-  padding: 8px 16px;
-  background: #e8f5e9;
-  color: #2e7d32;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 6px 12px;
+  background: var(--green-soft);
+  color: var(--green);
+  border: 1px solid var(--green-soft);
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
 .expiryInfo {
-  padding: 8px 16px;
-  background: #fff3e0;
-  color: #e65100;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 6px 12px;
+  background: var(--surface3);
+  color: var(--txdim);
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 .actions {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 18px;
   flex-wrap: wrap;
 }
 
 .actionBtn {
-  padding: 12px 24px;
-  border: 1px solid #dadce0;
-  background: white;
-  color: #5f6368;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--line2);
+  background: var(--surface2);
+  color: var(--tx);
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.16s;
+  white-space: nowrap;
 }
 
 .actionBtn:hover {
-  background: #f8f9fa;
-  border-color: #5f6368;
+  background: var(--surface3);
+  border-color: var(--accent-bd);
 }
 
 .actionBtn.primary {
-  background: #1a73e8;
-  color: white;
-  border-color: #1a73e8;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+  box-shadow: 0 8px 22px -10px var(--accent);
 }
 
 .actionBtn.primary:hover {
-  background: #1765cc;
-  border-color: #1765cc;
+  background: var(--accent-h);
+  border-color: transparent;
 }
 
 .notice {
-  padding: 12px 16px;
-  background: #e8f0fe;
-  border-left: 4px solid #1a73e8;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #1967d2;
+  margin-top: 18px;
+  padding: 11px 13px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--mut);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
 }
 
 .footer {
   text-align: center;
-  padding: 32px;
-  color: #5f6368;
+  padding: 24px;
+  color: var(--mut);
 }
 
 .footer p {
-  margin: 0 0 16px 0;
-  font-size: 14px;
+  margin: 0 0 14px 0;
+  font-size: 13px;
+}
+
+.footer strong {
+  color: var(--tx);
 }
 
 .linkBtn {
-  background: white;
-  border: 1px solid #dadce0;
-  padding: 10px 20px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #5f6368;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--line2);
+  padding: 9px 14px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--tx);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: 0.16s;
 }
 
 .linkBtn:hover {
-  background: #f8f9fa;
-  border-color: #1a73e8;
-  color: #1a73e8;
+  background: var(--surface3);
+  border-color: var(--accent-bd);
+  color: var(--accent);
 }
 
 /* Loading State */
 .loading {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  color: #5f6368;
+  color: var(--mut);
+  font-size: 14px;
 }
 
 .spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid #e0e0e0;
-  border-top-color: #1a73e8;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -243,163 +287,162 @@
   to { transform: rotate(360deg); }
 }
 
-/* Error State */
-.error {
+/* Centered states (password / not found) */
+.error,
+.passwordBox {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 24px;
+  padding: 40px 24px;
   text-align: center;
+}
+
+.errorIcon,
+.passwordIcon {
+  width: 74px;
+  height: 74px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  border: 1px solid var(--line2);
 }
 
 .errorIcon {
-  font-size: 72px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.errorIcon svg {
-  width: 72px;
-  height: 72px;
-}
-
-.error h2 {
-  font-size: 24px;
-  color: #202124;
-  margin: 0 0 12px 0;
-  font-weight: 400;
-}
-
-.error p {
-  font-size: 16px;
-  color: #5f6368;
-  margin: 0 0 24px 0;
-}
-
-.homeBtn {
-  padding: 12px 24px;
-  background: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.homeBtn:hover {
-  background: #1765cc;
-}
-
-/* Password Box */
-.passwordBox {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 24px;
-  text-align: center;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger-soft);
 }
 
 .passwordIcon {
-  font-size: 72px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-bd);
 }
 
+.errorIcon svg,
 .passwordIcon svg {
-  width: 72px;
-  height: 72px;
+  width: 32px;
+  height: 32px;
+}
+
+.error h2,
+.passwordBox h2 {
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
+  margin: 0 0 8px 0;
+}
+
+.error p,
+.passwordBox p {
+  font-size: 14px;
+  color: var(--mut);
+  margin: 0 0 22px 0;
+  max-width: 360px;
+  line-height: 1.5;
 }
 
 .inlineIcon {
   display: inline-flex;
 }
 
-.passwordBox h2 {
-  font-size: 24px;
-  color: #202124;
-  margin: 0 0 12px 0;
-  font-weight: 400;
+.homeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: 0.16s;
+  box-shadow: 0 8px 22px -10px var(--accent);
 }
 
-.passwordBox p {
-  font-size: 16px;
-  color: #5f6368;
-  margin: 0 0 32px 0;
+.homeBtn:hover {
+  background: var(--accent-h);
 }
 
+/* Password Box form */
 .passwordBox form {
-  width: 100%;
-  max-width: 400px;
+  display: flex;
+  gap: 9px;
+  width: 340px;
+  max-width: 100%;
 }
 
 .passwordInput {
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  font-size: 16px;
-  margin-bottom: 16px;
-  transition: all 0.2s;
+  flex: 1;
+  height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  background: var(--bg2);
+  color: var(--tx);
+  font-size: 13.5px;
+  font-family: inherit;
+  outline: none;
+  transition: 0.16s;
 }
 
-.passwordInput:hover {
-  border-color: #5f6368;
+.passwordInput::placeholder {
+  color: var(--faint);
 }
 
 .passwordInput:focus {
-  outline: none;
-  border-color: #1a73e8;
-  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+  border-color: var(--accent-bd);
 }
 
 .submitBtn {
-  width: 100%;
-  padding: 14px;
-  background: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 500;
+  flex: none;
+  padding: 0 18px;
+  height: 42px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: 0.16s;
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: #1765cc;
+  background: var(--accent-h);
 }
 
 .submitBtn:disabled {
-  background: #dadce0;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .header {
-    padding: 12px 16px;
+    padding: 16px 18px;
   }
 
   .main {
-    padding: 24px 16px;
+    padding: 32px 16px;
   }
 
   .fileInfo {
-    padding: 24px 16px;
+    padding: 24px 18px;
   }
 
   .fileName {
-    font-size: 22px;
+    font-size: 21px;
   }
 
   .actions {
@@ -408,6 +451,6 @@
 
   .actionBtn {
     width: 100%;
+    justify-content: center;
   }
 }
-

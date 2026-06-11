@@ -1,77 +1,68 @@
+/* Walt · SOVEREIGN — Settings (token-driven, dark base + light alt) */
+
 .container {
   min-height: 100vh;
-  background: #ffffff;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-.dark .container {
-  background: #00171f;
-  color: #ffffff;
+  background: var(--bg);
+  color: var(--tx);
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .header {
-  background: white;
-  border-bottom: 1px solid #adebff;
-  padding: 16px 24px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
+  padding: 0 22px;
+  height: 64px;
+  display: flex;
+  align-items: center;
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
-.dark .header {
-  background: #00171f;
-  border-bottom-color: rgba(173, 235, 255, 0.2);
-}
-
 .headerContent {
-  max-width: 900px;
+  max-width: 860px;
   margin: 0 auto;
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
 .backBtn {
-  background: none;
-  border: 1px solid #adebff;
-  border-radius: 4px;
-  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  padding: 8px 14px;
   cursor: pointer;
-  font-size: 14px;
-  color: #00171f;
-  transition: all 0.2s;
-}
-
-.dark .backBtn {
-  border-color: rgba(173, 235, 255, 0.3);
-  color: #adebff;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--tx);
+  transition: 0.16s;
+  white-space: nowrap;
 }
 
 .backBtn:hover {
-  background: #adebff;
-  border-color: #003459;
-}
-
-.dark .backBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--accent-bd);
+  background: var(--surface3);
 }
 
 .title {
   margin: 0;
-  font-size: 28px;
-  font-weight: 600;
-  color: #00171f;
-}
-
-.dark .title {
-  color: #adebff;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
 }
 
 .content {
-  max-width: 900px;
+  max-width: 860px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 40px 32px 60px;
 }
 
 .loading {
@@ -79,51 +70,38 @@
   align-items: center;
   justify-content: center;
   height: 100vh;
-  font-size: 16px;
-  color: #666;
+  font-size: 14px;
+  color: var(--mut);
 }
 
-.dark .loading {
-  color: #aaa;
-}
-
+/* ---- section cards ---- */
 .section {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.dark .section {
-  background: #003459;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  margin-bottom: 18px;
+  overflow: hidden;
 }
 
 .sectionTitle {
-  margin: 0 0 20px 0;
-  font-size: 20px;
+  margin: 0;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   font-weight: 600;
-  color: #00171f;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #adebff;
-}
-
-.dark .sectionTitle {
-  color: #fff;
-  border-bottom-color: #333;
+  color: var(--accent);
+  font-family: var(--mono);
+  background: var(--bg2);
 }
 
 .settingItem {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.dark .settingItem {
-  border-bottom-color: #333;
+  gap: 20px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
 }
 
 .settingItem:last-child {
@@ -137,102 +115,76 @@
 
 .settingLabel {
   display: block;
-  font-size: 16px;
-  font-weight: 500;
-  color: #00171f;
-  margin-bottom: 4px;
-}
-
-.dark .settingLabel {
-  color: #adebff;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--tx);
+  margin-bottom: 3px;
 }
 
 .settingDescription {
   margin: 0;
-  font-size: 14px;
-  color: #00171f;
-  line-height: 1.4;
-}
-
-.dark .settingDescription {
-  color: #aaa;
+  font-size: 13px;
+  color: var(--mut);
+  line-height: 1.5;
+  word-break: break-all;
 }
 
 .pinningWarningNote {
-  margin: 12px 0 0;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: #fef3c7;
-  border: 1px solid #fbbf24;
-  color: #92400e;
-  font-size: 14px;
-}
-
-.dark .pinningWarningNote {
-  background: #451a03;
-  border-color: #f59e0b;
-  color: #fde68a;
+  margin: 0 22px 18px;
+  padding: 12px 14px;
+  border-radius: 11px;
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-soft);
+  color: var(--amber);
+  font-size: 12.5px;
+  line-height: 1.5;
 }
 
 .settingControl {
-  flex-shrink: 0;
-  margin-left: 24px;
+  flex: none;
+  display: flex;
+  gap: 8px;
+  margin-left: 0;
 }
 
+/* ---- segmented buttons (theme + view) ---- */
 .themeOption,
 .viewOption {
-  padding: 10px 20px;
-  background: #adebff;
-  border: 1px solid #adebff;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: 9px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-  margin-right: 8px;
-  color: #00171f;
-}
-
-.dark .themeOption,
-.dark .viewOption {
-  background: rgba(173, 235, 255, 0.1);
-  border-color: rgba(173, 235, 255, 0.2);
-  color: #adebff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: 0.16s;
+  color: var(--mut);
 }
 
 .themeOption:hover,
 .viewOption:hover {
-  background: #adebff;
-  border-color: #003459;
-  color: #003459;
-}
-
-.dark .themeOption:hover,
-.dark .viewOption:hover {
-  background: rgba(173, 235, 255, 0.2);
-  border-color: #adebff;
-  color: #adebff;
+  border-color: var(--accent-bd);
+  color: var(--tx);
 }
 
 .themeOption.active,
 .viewOption.active {
-  background: #003459;
-  border-color: #003459;
-  color: white;
+  background: var(--accent-soft);
+  border-color: var(--accent-bd);
+  color: var(--accent);
 }
 
-.dark .themeOption.active,
-.dark .viewOption.active {
-  background: #adebff;
-  border-color: #adebff;
-  color: #00171f;
-}
-
+/* ---- toggle switch ---- */
 .toggle {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 26px;
+  width: 42px;
+  height: 24px;
+  flex: none;
   cursor: pointer;
 }
 
@@ -240,119 +192,107 @@
   opacity: 0;
   width: 0;
   height: 0;
+  position: absolute;
 }
 
 .toggleSlider {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  border-radius: 26px;
-  transition: 0.3s;
+  inset: 0;
+  background: var(--surface3);
+  border: 1px solid var(--line2);
+  border-radius: 99px;
+  transition: 0.18s;
 }
 
 .toggleSlider:before {
   position: absolute;
   content: "";
-  height: 20px;
-  width: 20px;
+  width: 16px;
+  height: 16px;
   left: 3px;
-  bottom: 3px;
-  background-color: white;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--mut);
   border-radius: 50%;
-  transition: 0.3s;
-}
-
-.dark .toggleSlider {
-  background-color: #555;
+  transition: 0.18s;
 }
 
 .toggle input:checked + .toggleSlider {
-  background-color: #1a73e8;
-}
-
-.dark .toggle input:checked + .toggleSlider {
-  background-color: #4a9eff;
+  background: var(--accent-soft);
+  border-color: var(--accent-bd);
 }
 
 .toggle input:checked + .toggleSlider:before {
-  transform: translateX(24px);
+  transform: translate(18px, -50%);
+  background: var(--accent);
 }
 
 .toggle input:disabled + .toggleSlider {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
+/* ---- action / danger buttons ---- */
 .actionBtn {
-  padding: 10px 20px;
-  background: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--surface2);
+  color: var(--tx);
+  border: 1px solid var(--line2);
+  border-radius: 9px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: 0.16s;
+  white-space: nowrap;
 }
 
 .actionBtn:hover {
-  background: #1557b0;
+  border-color: var(--accent-bd);
+  background: var(--surface3);
 }
 
-.actionBtn.disabled {
-  opacity: 0.5;
+.actionBtn.disabled,
+.actionBtn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
 }
 
-.dark .actionBtn {
-  background: #4a9eff;
-}
-
-.dark .actionBtn:hover {
-  background: #4285f4;
-}
-
 .dangerBtn {
-  padding: 10px 20px;
-  background: #ea4335;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger-soft);
+  border-radius: 9px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: 0.16s;
+  white-space: nowrap;
 }
 
 .dangerBtn:hover {
-  background: #c5221f;
+  background: var(--danger);
+  color: #fff;
+  border-color: transparent;
 }
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-  .header {
-    padding: 14px 18px;
-  }
-
   .content {
-    padding: 24px 18px;
+    padding: 28px 18px 48px;
   }
 
   .title {
-    font-size: 24px;
-  }
-
-  .section {
-    padding: 20px 18px;
-    margin-bottom: 20px;
-  }
-
-  .sectionTitle {
-    font-size: 18px;
+    font-size: 20px;
   }
 
   .settingItem {
@@ -362,25 +302,19 @@
   }
 
   .settingControl {
-    margin-left: 0;
     width: 100%;
-  }
-
-  .themeOption,
-  .viewOption {
-    margin-right: 8px;
-    margin-bottom: 8px;
   }
 
   .actionBtn,
   .dangerBtn {
     width: 100%;
+    justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
   .header {
-    padding: 12px 16px;
+    padding: 0 16px;
   }
 
   .headerContent {
@@ -393,32 +327,32 @@
   }
 
   .title {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .content {
-    padding: 20px 16px;
-  }
-
-  .section {
-    padding: 18px 16px;
+    padding: 24px 16px 40px;
   }
 
   .sectionTitle {
-    font-size: 16px;
+    padding: 14px 18px;
+  }
+
+  .settingItem {
+    padding: 16px 18px;
   }
 
   .settingLabel {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .settingDescription {
-    font-size: 13px;
+    font-size: 12.5px;
   }
 
   .themeOption,
   .viewOption {
-    padding: 8px 16px;
-    font-size: 13px;
+    padding: 8px 13px;
+    font-size: 12.5px;
   }
 }

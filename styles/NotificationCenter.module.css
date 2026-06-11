@@ -1,10 +1,10 @@
+/* NotificationCenter — SOVEREIGN (.w-notif / .w-notif-ic / .w-notif-t / .w-notif-m) */
+
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  inset: 0;
+  background: rgba(4, 7, 14, 0.4);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
@@ -13,21 +13,23 @@
   padding-top: 80px;
 }
 
+[data-theme="light"] .overlay,
+.light .overlay {
+  background: rgba(20, 30, 55, 0.28);
+}
+
 .modal {
-  background: white;
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: 16px;
   max-width: 420px;
   width: 100%;
   max-height: calc(100vh - 120px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.dark .modal {
-  background: #1e1e1e;
-  color: #fff;
+  box-shadow: var(--shadow);
+  color: var(--tx);
 }
 
 .header {
@@ -35,18 +37,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--line);
   flex-shrink: 0;
-}
-
-.dark .header {
-  border-bottom-color: #333;
 }
 
 .header h2 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
 }
 
 .headerActions {
@@ -57,76 +57,56 @@
 
 .unreadBadge {
   padding: 2px 8px;
-  background: #1a73e8;
-  color: white;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-bd);
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
   margin-left: 10px;
 }
 
 .markAllReadBtn {
-  padding: 6px 12px;
-  background: #f8f9fa;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
+  padding: 6px 11px;
+  background: var(--surface2);
+  border: 1px solid var(--line2);
+  border-radius: 8px;
   cursor: pointer;
   font-size: 12px;
-  font-weight: 500;
-  transition: all 0.2s;
-  color: #5f6368;
-}
-
-.dark .markAllReadBtn {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #ccc;
+  font-weight: 600;
+  font-family: inherit;
+  transition: 0.16s;
+  color: var(--txdim);
 }
 
 .markAllReadBtn:hover {
-  background: #e8f0fe;
-  border-color: #1a73e8;
-  color: #1a73e8;
-}
-
-.dark .markAllReadBtn:hover {
-  background: rgba(26, 115, 232, 0.2);
-  border-color: #4a9eff;
-  color: #4a9eff;
+  background: var(--accent-soft);
+  border-color: var(--accent-bd);
+  color: var(--accent);
 }
 
 .closeBtn {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 20px;
   cursor: pointer;
-  color: #666;
+  color: var(--mut);
   padding: 0;
   width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
+  border-radius: 8px;
+  transition: 0.16s;
 }
 
 .closeBtn:hover {
-  background: #f0f0f0;
-  color: #000;
-}
-
-.dark .closeBtn {
-  color: #aaa;
-}
-
-.dark .closeBtn:hover {
-  background: #333;
-  color: #fff;
+  background: var(--surface2);
+  color: var(--tx);
 }
 
 .content {
-  padding: 0;
+  padding: 12px;
   overflow-y: auto;
   flex: 1;
 }
@@ -134,107 +114,87 @@
 .loading {
   text-align: center;
   padding: 40px;
-  color: #666;
-  font-size: 14px;
-}
-
-.dark .loading {
-  color: #aaa;
+  color: var(--mut);
+  font-size: 13px;
 }
 
 .error {
-  padding: 20px;
-  background: #ffebee;
-  border-left: 4px solid #f44336;
-  color: #d32f2f;
-  margin: 20px;
-  border-radius: 4px;
-}
-
-.dark .error {
-  background: rgba(244, 67, 54, 0.2);
-  border-color: #f44336;
-  color: #f44336;
+  padding: 14px 16px;
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-soft);
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+  margin: 12px;
+  border-radius: 10px;
+  font-size: 13px;
 }
 
 .empty {
   text-align: center;
   padding: 60px 20px;
-  color: #666;
-}
-
-.dark .empty {
-  color: #aaa;
+  color: var(--mut);
 }
 
 .emptyIcon {
-  font-size: 48px;
-  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-bd);
 }
 
 .emptySubtext {
   margin-top: 8px;
-  font-size: 14px;
-  color: #999;
-}
-
-.dark .emptySubtext {
-  color: #666;
+  font-size: 13px;
+  color: var(--faint);
 }
 
 .section {
-  margin-bottom: 20px;
+  margin-bottom: 8px;
 }
 
 .sectionTitle {
-  padding: 12px 20px 8px;
-  font-size: 12px;
+  padding: 8px 4px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: #666;
-  letter-spacing: 0.5px;
-}
-
-.dark .sectionTitle {
-  color: #aaa;
+  color: var(--mut);
+  letter-spacing: 0.1em;
+  font-family: var(--mono);
 }
 
 .notificationsList {
   display: flex;
   flex-direction: column;
+  gap: 9px;
 }
 
 .notificationItem {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 12px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: 0.16s;
   position: relative;
 }
 
-.dark .notificationItem {
-  border-bottom-color: #333;
-}
-
 .notificationItem:hover {
-  background: #f8f9fa;
-}
-
-.dark .notificationItem:hover {
-  background: #252525;
+  border-color: var(--line2);
+  background: var(--surface2);
 }
 
 .notificationItem.unread {
-  background: #e8f0fe;
-  border-left: 3px solid #1a73e8;
-}
-
-.dark .notificationItem.unread {
-  background: rgba(26, 115, 232, 0.15);
-  border-left-color: #4a9eff;
+  background: var(--accent-soft);
+  border-color: var(--accent-bd);
 }
 
 .notificationItem.read {
@@ -242,9 +202,15 @@
 }
 
 .notificationIcon {
-  font-size: 24px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
-  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--surface3);
+  font-size: 16px;
 }
 
 .notificationContent {
@@ -256,43 +222,32 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: 8px;
+  margin-bottom: 3px;
 }
 
 .notificationTitle {
   margin: 0;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: #202124;
+  color: var(--tx);
   flex: 1;
-}
-
-.dark .notificationTitle {
-  color: #fff;
 }
 
 .notificationTime {
   font-size: 11px;
-  color: #999;
+  color: var(--faint);
+  font-family: var(--mono);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.dark .notificationTime {
-  color: #666;
-}
-
 .notificationMessage {
   margin: 0;
-  font-size: 13px;
-  color: #5f6368;
-  line-height: 1.4;
+  font-size: 12.5px;
+  color: var(--mut);
+  line-height: 1.45;
   word-wrap: break-word;
-}
-
-.dark .notificationMessage {
-  color: #aaa;
 }
 
 .notificationActions {
@@ -300,7 +255,7 @@
   gap: 4px;
   flex-shrink: 0;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.16s;
 }
 
 .notificationItem:hover .notificationActions {
@@ -309,39 +264,25 @@
 
 .actionBtn,
 .deleteBtn {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 18px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s;
-  color: #666;
+  padding: 5px 7px;
+  border-radius: 8px;
+  transition: 0.16s;
+  color: var(--mut);
   line-height: 1;
-}
-
-.dark .actionBtn,
-.dark .deleteBtn {
-  color: #aaa;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .actionBtn:hover {
-  background: #e8f0fe;
-  color: #1a73e8;
-}
-
-.dark .actionBtn:hover {
-  background: rgba(26, 115, 232, 0.2);
-  color: #4a9eff;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .deleteBtn:hover {
-  background: #ffebee;
-  color: #f44336;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
-
-.dark .deleteBtn:hover {
-  background: rgba(244, 67, 54, 0.2);
-  color: #f44336;
-}
-

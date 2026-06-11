@@ -1,11 +1,11 @@
-/* Auth Modal Styles */
+/* Auth Modal Styles — SOVEREIGN (.w-overlay / .w-modal / .w-gbtn / .w-divider / .w-input / .w-auth-switch) */
 .modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(4, 7, 14, 0.66);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,117 +13,128 @@
   backdrop-filter: blur(4px);
 }
 
+[data-theme="light"] .modalOverlay {
+  background: rgba(20, 30, 55, 0.42);
+}
+
 .modal {
-  background: white;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: 18px;
+  width: 92%;
+  max-width: 440px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow);
 }
 
 .modalHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 24px 0;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
 }
 
 .modalHeader h2 {
   margin: 0;
-  font-size: 24px;
-  color: #202124;
-  font-weight: 500;
+  font-size: 18px;
+  color: var(--tx);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .closeBtn {
-  background: none;
-  border: none;
-  font-size: 28px;
+  background: transparent;
+  border: 1px solid var(--line);
+  font-size: 0;
   cursor: pointer;
-  color: #5f6368;
+  color: var(--mut);
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s;
+  border-radius: 9px;
+  transition: 0.16s;
 }
 
 .closeBtn:hover {
-  background: #f1f3f4;
-  color: #202124;
+  background: var(--surface2);
+  color: var(--tx);
+  border-color: var(--line2);
 }
 
 .modalBody {
-  padding: 24px;
+  padding: 22px;
 }
 
+/* ---- Continue with Google → .w-gbtn ---- */
 .googleBtn {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: white;
-  border: 1px solid #dadce0;
-  border-radius: 8px;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--surface2);
+  border: 1px solid var(--line2);
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  color: #202124;
-  transition: all 0.2s;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tx);
+  font-family: inherit;
+  transition: 0.16s;
   margin-bottom: 16px;
 }
 
 .googleBtn:hover {
-  background: #f8f9fa;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent-bd);
+  background: var(--surface3);
 }
 
 .googleBtn:disabled {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .googleIcon {
   width: 20px;
   height: 20px;
-  background: #4285f4;
-  color: white;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 14px;
+  color: var(--accent);
 }
 
+.googleIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- divider → .w-divider ---- */
 .divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
   text-align: center;
-  margin: 20px 0;
-  position: relative;
 }
 
-.divider::before {
+.divider::before,
+.divider::after {
   content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
+  flex: 1;
   height: 1px;
-  background: #dadce0;
+  background: var(--line);
 }
 
 .divider span {
-  background: white;
-  padding: 0 16px;
-  color: #5f6368;
-  font-size: 14px;
+  color: var(--faint);
+  font-size: 12px;
 }
 
 .form {
@@ -137,80 +148,93 @@
   flex-direction: column;
 }
 
+/* ---- inputs → .w-input ---- */
 .input {
-  padding: 12px 16px;
-  border: 1px solid #dadce0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: all 0.2s;
-  background: white;
+  height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-family: inherit;
+  transition: 0.16s;
+  background: var(--bg2);
+  color: var(--tx);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--faint);
 }
 
 .input:focus {
   outline: none;
-  border-color: #1a73e8;
-  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+  border-color: var(--accent-bd);
 }
 
 .error {
-  color: #d93025;
-  font-size: 14px;
-  margin-top: -8px;
-  padding: 8px 12px;
-  background: #fce8e6;
-  border-radius: 4px;
-  border: 1px solid #f28b82;
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: -4px;
+  padding: 9px 12px;
+  background: var(--danger-soft);
+  border-radius: 9px;
+  border: 1px solid var(--danger-soft);
+  line-height: 1.4;
 }
 
+/* ---- submit → .w-btn-accent ---- */
 .submitBtn {
   width: 100%;
-  padding: 12px 16px;
-  background: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: 0.16s;
+  box-shadow: 0 8px 22px -10px var(--accent);
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: #1765cc;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  background: var(--accent-h);
 }
 
 .submitBtn:disabled {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
+/* ---- switch sign-in/up → .w-auth-switch ---- */
 .switchMode {
   text-align: center;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #dadce0;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
 }
 
 .switchMode p {
   margin: 0;
-  color: #5f6368;
-  font-size: 14px;
+  color: var(--mut);
+  font-size: 13px;
 }
 
 .switchBtn {
   background: none;
   border: none;
-  color: #1a73e8;
+  color: var(--accent);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  margin-left: 4px;
-  text-decoration: underline;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  margin-left: 6px;
 }
 
 .switchBtn:hover {
-  color: #1765cc;
+  color: var(--accent-h);
 }
 
 /* Responsive */
@@ -219,12 +243,12 @@
     width: 95%;
     margin: 20px;
   }
-  
+
   .modalHeader {
-    padding: 20px 20px 0;
+    padding: 18px 18px;
   }
-  
+
   .modalBody {
-    padding: 20px;
+    padding: 18px;
   }
 }

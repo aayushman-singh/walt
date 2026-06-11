@@ -3,20 +3,7 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Image from 'next/image';
-import ArchiveIcon from '@rsuite/icons/Archive';
-import AudioIcon from '@rsuite/icons/Audio';
-import DocPassIcon from '@rsuite/icons/DocPass';
-import FileDownloadIcon from '@rsuite/icons/FileDownload';
-import FolderIcon from '@rsuite/icons/Folder';
-import ImageIcon from '@rsuite/icons/Image';
-import InfoRoundIcon from '@rsuite/icons/InfoRound';
-import LockRoundIcon from '@rsuite/icons/LockRound';
-import PageIcon from '@rsuite/icons/Page';
-import ShareRoundIcon from '@rsuite/icons/ShareRound';
-import TableIcon from '@rsuite/icons/Table';
-import VideoIcon from '@rsuite/icons/Video';
-import VisibleIcon from '@rsuite/icons/Visible';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
+import WIcon from '../../components/WIcon';
 import Toast from '../../components/Toast';
 import OpenGraph from '../../components/OpenGraph';
 import { getBackendGatewayUrl } from '../../lib/shareUtils';
@@ -159,14 +146,14 @@ const SharePage: NextPage = () => {
   };
 
   const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <ImageIcon />;
-    if (type.startsWith('video/')) return <VideoIcon />;
-    if (type.startsWith('audio/')) return <AudioIcon />;
-    if (type.includes('pdf')) return <DocPassIcon />;
-    if (type.includes('word') || type.includes('document')) return <PageIcon />;
-    if (type.includes('sheet') || type.includes('excel')) return <TableIcon />;
-    if (type.includes('zip') || type.includes('rar')) return <ArchiveIcon />;
-    return <PageIcon />;
+    if (type.startsWith('image/')) return <WIcon name="image" size={18} />;
+    if (type.startsWith('video/')) return <WIcon name="video" size={18} />;
+    if (type.startsWith('audio/')) return <WIcon name="audio" size={18} />;
+    if (type.includes('pdf')) return <WIcon name="fileDoc" size={18} />;
+    if (type.includes('word') || type.includes('document')) return <WIcon name="fileDoc" size={18} />;
+    if (type.includes('sheet') || type.includes('excel')) return <WIcon name="sheet" size={18} />;
+    if (type.includes('zip') || type.includes('rar')) return <WIcon name="archive" size={18} />;
+    return <WIcon name="fileDoc" size={18} />;
   };
 
   const handleDownload = async () => {
@@ -219,7 +206,7 @@ const SharePage: NextPage = () => {
         />
         <div className={styles.passwordBox}>
           <div className={styles.passwordIcon}>
-            <LockRoundIcon />
+            <WIcon name="lock" size={18} />
           </div>
           <h2>Password Required</h2>
           <p>This shared content is password protected.</p>
@@ -255,7 +242,7 @@ const SharePage: NextPage = () => {
         />
         <div className={styles.error}>
           <div className={styles.errorIcon}>
-            <WarningRoundIcon />
+            <WIcon name="warning" size={18} />
           </div>
           <h2>{error || 'Content not found'}</h2>
           <p>This share link may have expired or been removed.</p>
@@ -288,12 +275,12 @@ const SharePage: NextPage = () => {
 
       <header className={styles.header}>
         <div className={styles.logo} onClick={() => router.push('/')}>
-          <LockRoundIcon className={styles.inlineIcon} />
+          <WIcon name="lock" size={18} className={styles.inlineIcon} />
           <span>Walt</span>
         </div>
         <div className={styles.headerRight}>
           <span className={styles.sharedBadge}>
-            <ShareRoundIcon className={styles.inlineIcon} />
+            <WIcon name="share" size={18} className={styles.inlineIcon} />
             Shared
           </span>
         </div>
@@ -304,7 +291,7 @@ const SharePage: NextPage = () => {
           <div className={styles.filePreview}>
             {file.isFolder ? (
               <div className={styles.folderIcon}>
-                <FolderIcon />
+                <WIcon name="folder" size={18} />
               </div>
             ) : file.type.startsWith('image/') ? (
               <Image src={getBackendGatewayUrl(file.ipfsUri)} alt={file.name} className={styles.image} width={800} height={600} unoptimized style={{ objectFit: 'contain' }} />
@@ -328,12 +315,12 @@ const SharePage: NextPage = () => {
               <span className={styles.permissionBadge}>
                 {file.shareConfig?.permission === 'viewer' ? (
                   <>
-                    <VisibleIcon className={styles.inlineIcon} />
+                    <WIcon name="eye" size={18} className={styles.inlineIcon} />
                     View Only
                   </>
                 ) : (
                   <>
-                    <FileDownloadIcon className={styles.inlineIcon} />
+                    <WIcon name="download" size={18} className={styles.inlineIcon} />
                     Can Download
                   </>
                 )}
@@ -352,7 +339,7 @@ const SharePage: NextPage = () => {
                     className={styles.actionBtn + ' ' + styles.primary}
                     onClick={() => window.open(getBackendGatewayUrl(file.ipfsUri), '_blank')}
                   >
-                    <VisibleIcon className={styles.inlineIcon} />
+                    <WIcon name="eye" size={18} className={styles.inlineIcon} />
                     View File
                   </button>
                   {file.shareConfig?.permission === 'editor' && (
@@ -360,7 +347,7 @@ const SharePage: NextPage = () => {
                       className={styles.actionBtn}
                       onClick={handleDownload}
                     >
-                      <FileDownloadIcon className={styles.inlineIcon} />
+                      <WIcon name="download" size={18} className={styles.inlineIcon} />
                       Download
                     </button>
                   )}
@@ -374,14 +361,14 @@ const SharePage: NextPage = () => {
                   showToast('Link copied!', 'success');
                 }}
               >
-                <ShareRoundIcon className={styles.inlineIcon} />
+                <WIcon name="share" size={18} className={styles.inlineIcon} />
                 Copy Link
               </button>
             </div>
 
             {file.shareConfig?.permission === 'viewer' && (
               <div className={styles.notice}>
-                <InfoRoundIcon className={styles.inlineIcon} />
+                <WIcon name="info" size={18} className={styles.inlineIcon} />
                 <span>This is a view-only share. Downloads are not permitted.</span>
               </div>
             )}

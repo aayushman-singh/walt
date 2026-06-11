@@ -13,6 +13,7 @@ export default [
       'backend/**',
       'coverage/**',
       'next-env.d.ts',
+      '.design-ref/**',
     ],
   },
   ...next,

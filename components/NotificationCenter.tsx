@@ -4,10 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import CloseIcon from '@rsuite/icons/Close';
-import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
-import TrashIcon from '@rsuite/icons/Trash';
+import WIcon from './WIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Notification, 
@@ -206,7 +203,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose
               </button>
             )}
             <button className={styles.closeBtn} onClick={onClose} aria-label="Close notifications">
-              <CloseIcon />
+              <WIcon name="close" size={16} />
             </button>
           </div>
         </div>
@@ -219,7 +216,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose
           ) : notifications.length === 0 ? (
             <div className={styles.empty}>
               <div className={styles.emptyIcon}>
-                <RemindOutlineIcon />
+                <WIcon name="info" size={40} />
               </div>
               <p>No notifications</p>
               <p className={styles.emptySubtext}>You&apos;re all caught up!</p>
@@ -262,7 +259,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose
                             }}
                             title="Mark as read"
                           >
-                            <CheckRoundIcon />
+                            <WIcon name="check" size={15} sw={2.2} />
                           </button>
                         )}
                         <button
@@ -273,7 +270,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose
                           }}
                           title="Delete"
                         >
-                          <TrashIcon />
+                          <WIcon name="trash" size={15} />
                         </button>
                       </div>
                     </div>
@@ -319,7 +316,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose
                             }}
                             title="Mark as read"
                           >
-                                <CheckRoundIcon />
+                                <WIcon name="check" size={15} sw={2.2} />
                               </button>
                             )}
                             <button
@@ -330,7 +327,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ isOpen, onClose
                               }}
                               title="Delete"
                             >
-                              <TrashIcon />
+                              <WIcon name="trash" size={15} />
                             </button>
                           </div>
                         </div>

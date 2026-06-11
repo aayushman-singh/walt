@@ -4,13 +4,7 @@
  */
 
 import React, { type ReactNode } from 'react';
-import EditIcon from '@rsuite/icons/Edit';
-import MessageIcon from '@rsuite/icons/Message';
-import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
-import ShareRoundIcon from '@rsuite/icons/ShareRound';
-import StorageIcon from '@rsuite/icons/Storage';
-import VisibleIcon from '@rsuite/icons/Visible';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
+import WIcon from '../components/WIcon';
 export type NotificationType = 
   | 'share_received' 
   | 'share_access' 
@@ -91,21 +85,21 @@ export function getNotificationIcon(type: NotificationType): ReactNode {
   switch (type) {
     case 'share_received':
     case 'file_shared':
-      return React.createElement(ShareRoundIcon);
+      return React.createElement(WIcon, { name: 'share', size: 18 });
     case 'share_access':
-      return React.createElement(VisibleIcon);
+      return React.createElement(WIcon, { name: 'eye', size: 18 });
     case 'comment_mentioned':
-      return React.createElement(MessageIcon);
+      return React.createElement(WIcon, { name: 'bell', size: 18 });
     case 'file_updated':
-      return React.createElement(EditIcon);
+      return React.createElement(WIcon, { name: 'edit', size: 18 });
     case 'pin_expiring':
-      return React.createElement(WarningRoundIcon);
+      return React.createElement(WIcon, { name: 'warning', size: 18 });
     case 'storage_warning':
-      return React.createElement(StorageIcon);
+      return React.createElement(WIcon, { name: 'server', size: 18 });
     case 'system':
-      return React.createElement(RemindOutlineIcon);
+      return React.createElement(WIcon, { name: 'info', size: 18 });
     default:
-      return React.createElement(RemindOutlineIcon);
+      return React.createElement(WIcon, { name: 'info', size: 18 });
   }
 }
 

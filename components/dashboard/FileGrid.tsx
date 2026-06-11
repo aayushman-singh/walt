@@ -14,21 +14,8 @@ import {
   DropdownMenuTrigger,
 } from '../ui/DropdownMenu';
 import { getBackendGatewayUrl } from '../../lib/shareUtils';
-import FolderIcon from '@rsuite/icons/FolderFill';
-import StarIcon from '@rsuite/icons/Star';
-import StarOutlineIcon from '@rsuite/icons/Star';
-import PinIcon from '@rsuite/icons/Pin';
-import PinedIcon from '@rsuite/icons/Pined';
-import TrashIcon from '@rsuite/icons/Trash';
-import VisibleIcon from '@rsuite/icons/Visible';
-import FileDownloadIcon from '@rsuite/icons/FileDownload';
-import SearchIcon from '@rsuite/icons/Search';
-import ShareRoundIcon from '@rsuite/icons/ShareRound';
-import TagIcon from '@rsuite/icons/Tag';
-import EditIcon from '@rsuite/icons/Edit';
-import UndoIcon from '@rsuite/icons/Undo';
-import CheckIcon from '@rsuite/icons/Check';
 import { getFileIcon } from './FileIcon';
+import WIcon, { WIconName } from '../WIcon';
 import { ActiveView, UploadedFile } from './types';
 
 interface FileGridProps {
@@ -234,7 +221,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                 toggleFileSelection(file.id);
               }}
             >
-              {selectedFiles.has(file.id) && <CheckIcon />}
+              {selectedFiles.has(file.id) && <WIcon name="check" size={16} />}
             </div>
           )}
 
@@ -243,7 +230,7 @@ const FileGrid: React.FC<FileGridProps> = ({
             {file.isFolder ? (
               <>
                 <div className={styles.folderIconLarge}>
-                  <FolderIcon />
+                  <WIcon name="folder" size={16} />
                 </div>
                 {/* Overlay buttons for folders - hidden in cleanup mode */}
                 {!cleanupMode && (
@@ -253,14 +240,14 @@ const FileGrid: React.FC<FileGridProps> = ({
                     onClick={(e) => handleToggleStar(file.id, e)}
                     title={file.starred ? "Unstar" : "Star"}
                   >
-                    {file.starred ? <StarIcon /> : <StarOutlineIcon />}
+                    {file.starred ? <WIcon name="starFill" size={16} /> : <WIcon name="star" size={16} />}
                   </button>
                   <button
                     className={styles.overlayBtn + ' ' + styles.overlayBtnTopRight}
                     onClick={(e) => handlePinToggle(file.id, file, e)}
                     title={file.isPinned ? "Pinned - Click to unpin (file may be lost)" : "Unpinned - Click to pin (file may be lost)"}
                   >
-                    {file.isPinned ? <PinedIcon /> : <PinIcon />}
+                    {file.isPinned ? <WIcon name="pinFilled" size={16} /> : <WIcon name="pin" size={16} />}
                   </button>
                 </div>
                 )}
@@ -291,10 +278,10 @@ const FileGrid: React.FC<FileGridProps> = ({
             <div className={styles.fileNameRow}>
             <h4 className={styles.fileName} title={file.name}>{file.name}</h4>
               {file.encryption && (
-                <span className={styles.starredBadge} title="End-to-end encrypted">🔒</span>
+                <span className={styles.starredBadge} title="End-to-end encrypted"><WIcon name="lock" size={14} /></span>
               )}
               {file.starred && (
-                <span className={styles.starredBadge} title="Starred"><StarIcon /></span>
+                <span className={styles.starredBadge} title="Starred"><WIcon name="starFill" size={14} /></span>
               )}
             </div>
             <div className={styles.fileMeta}>
@@ -342,7 +329,7 @@ const FileGrid: React.FC<FileGridProps> = ({
               }}
               title={file.starred ? "Unstar" : "Star"}
             >
-              {file.starred ? <StarIcon /> : <StarOutlineIcon />}
+              {file.starred ? <WIcon name="starFill" size={16} /> : <WIcon name="star" size={16} />}
             </button>
 
             {/* Pin button */}
@@ -355,7 +342,7 @@ const FileGrid: React.FC<FileGridProps> = ({
               }}
               title={file.isPinned ? "Pinned - Click to unpin (file may be lost)" : "Unpinned - Click to pin (file may be lost)"}
             >
-              {file.isPinned ? <PinedIcon /> : <PinIcon />}
+              {file.isPinned ? <WIcon name="pinFilled" size={16} /> : <WIcon name="pin" size={16} />}
             </button>
 
             {/* 3-dot menu button */}
@@ -369,7 +356,7 @@ const FileGrid: React.FC<FileGridProps> = ({
                   }}
                   title="More actions"
                 >
-                  ⋮
+                  <WIcon name="dots" size={18} />
                 </button>
               </DropdownMenuTrigger>
 
@@ -379,48 +366,48 @@ const FileGrid: React.FC<FileGridProps> = ({
                     {!file.isFolder && (
                       <>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePreview(file); }}>
-                          <VisibleIcon /> Preview
+                          <WIcon name="eye" size={16} /> Preview
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleShowDetails(file); }}>
-                          🧾 Details
+                          <WIcon name="fileDoc" size={16} /> Details
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDownload(file); }}>
-                          <FileDownloadIcon /> Download
+                          <WIcon name="download" size={16} /> Download
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(file.gatewayUrl, '_blank'); }}>
-                          <SearchIcon /> Open in new tab
+                          <WIcon name="search" size={16} /> Open in new tab
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
                     )}
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); copyToClipboard(getBackendGatewayUrl(file.ipfsUri)); }}>
-                      <ShareRoundIcon /> Share Link
+                      <WIcon name="share" size={16} /> Share Link
                     </DropdownMenuItem>
                     <DropdownMenuItem className={styles.menuDisabled} onClick={(e) => { e.stopPropagation(); }}>
-                      📋 Duplicate
+                      <WIcon name="copy" size={16} /> Duplicate
                     </DropdownMenuItem>
                     <DropdownMenuItem className={styles.menuDisabled} onClick={(e) => { e.stopPropagation(); }}>
-                      <TagIcon /> Manage Tags
+                      <WIcon name="tag" size={16} /> Manage Tags
                     </DropdownMenuItem>
                     <DropdownMenuItem className={styles.menuDisabled} onClick={(e) => { e.stopPropagation(); }}>
-                      📜 Version History
+                      <WIcon name="history" size={16} /> Version History
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRename(file.id); }}>
-                      <EditIcon /> Rename
+                      <WIcon name="edit" size={16} /> Rename
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }} className={styles.menuDanger}>
-                      <TrashIcon /> Trash
+                      <WIcon name="trash" size={16} /> Trash
                     </DropdownMenuItem>
                   </>
                 ) : (
                   <>
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRestore(file.id); }}>
-                      <UndoIcon /> Restore
+                      <WIcon name="history" size={16} /> Restore
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }} className={styles.menuDanger}>
-                      ❌ Delete Forever
+                      <WIcon name="trash" size={16} /> Delete Forever
                     </DropdownMenuItem>
                   </>
                 )}

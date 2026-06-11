@@ -1,15 +1,18 @@
+/* FileDetailsPanel — SOVEREIGN (.w-dp / .w-dp-acts / .w-dp-sec / .w-meta) */
+
 .panel {
   position: fixed;
   top: 0;
   right: 0;
   height: 100vh;
   width: 380px;
-  background: var(--color-surface, #111);
-  color: var(--color-text, #fff);
-  border-left: 1px solid rgba(255,255,255,0.08);
-  box-shadow: -12px 0 24px rgba(0,0,0,0.2);
+  background: var(--surface);
+  color: var(--tx);
+  border-left: 1px solid var(--line2);
+  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   z-index: 1000;
 }
 
@@ -18,67 +21,100 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: var(--color-surface-2, #1a1a1a);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
 }
 
 .title {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .closeBtn {
-  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
   background: transparent;
-  color: inherit;
+  color: var(--mut);
   cursor: pointer;
+  border-radius: 8px;
+  transition: 0.16s;
+  flex: none;
+}
+
+.closeBtn:hover {
+  color: var(--tx);
+  background: var(--surface2);
 }
 
 .actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  padding: 12px 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
 }
 
 .actionBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: transparent;
-  color: inherit;
-  border-radius: 8px;
-  padding: 8px 10px;
+  gap: 8px;
+  border: 1px solid var(--line2);
+  background: var(--surface2);
+  color: var(--tx);
+  border-radius: 9px;
+  padding: 6px 11px;
+  font-size: 12.5px;
+  font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
+  transition: 0.16s;
+}
+
+.actionBtn:hover {
+  border-color: var(--accent-bd);
+  background: var(--surface3);
 }
 
 .section {
-  padding: 12px 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.section:last-child {
+  border-bottom: none;
 }
 
 .sectionTitle {
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.8;
-  margin-bottom: 8px;
+  letter-spacing: 0.1em;
+  color: var(--mut);
+  font-family: var(--mono);
+  margin-bottom: 11px;
 }
 
 .metaGrid {
   display: grid;
   grid-template-columns: 100px 1fr;
-  gap: 8px 12px;
+  gap: 8px 16px;
+  font-size: 12.5px;
 }
 
 .metaLabel {
-  opacity: 0.7;
+  color: var(--mut);
 }
 
 .metaValue {
+  color: var(--txdim);
+  font-family: var(--mono);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -94,21 +130,24 @@
   display: grid;
   grid-template-columns: 140px 1fr;
   gap: 8px 12px;
-  font-size: 13px;
+  font-size: 12.5px;
 }
 
 .activityTime {
-  opacity: 0.7;
+  color: var(--faint);
+  font-family: var(--mono);
 }
 
 .activityDesc {
+  color: var(--txdim);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .empty {
-  opacity: 0.7;
+  color: var(--mut);
+  font-size: 12.5px;
 }
 
 /* Custom Properties Section */
@@ -116,23 +155,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 11px;
 }
 
 .addBtn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: inherit;
-  padding: 4px 8px;
-  border-radius: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--line2);
+  color: var(--tx);
+  padding: 5px 11px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: 0.16s;
 }
 
 .addBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--surface3);
+  border-color: var(--accent-bd);
 }
 
 .propertyEditor {
@@ -147,44 +188,54 @@
 
 .propertyInput {
   flex: 1;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  color: inherit;
+  height: 36px;
+  padding: 0 10px;
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  color: var(--tx);
   font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.16s;
+}
+
+.propertyInput::placeholder {
+  color: var(--faint);
 }
 
 .propertyInput:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-bd);
 }
 
 .saveBtn,
 .cancelBtn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: inherit;
-  padding: 6px 10px;
-  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+  border: 1px solid var(--line2);
+  color: var(--mut);
+  padding: 7px 9px;
+  border-radius: 9px;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
+  transition: 0.16s;
 }
 
 .saveBtn:hover {
-  background: rgba(76, 175, 80, 0.2);
-  border-color: rgba(76, 175, 80, 0.5);
+  background: var(--green-soft);
+  color: var(--green);
+  border-color: var(--green-soft);
 }
 
 .cancelBtn:hover {
-  background: rgba(244, 67, 54, 0.2);
-  border-color: rgba(244, 67, 54, 0.5);
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger-soft);
 }
 
 .saveBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -198,18 +249,19 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
+  padding: 9px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 
 .propertyKey {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.7;
+  letter-spacing: 0.08em;
+  color: var(--mut);
   font-weight: 600;
+  font-family: var(--mono);
 }
 
 .propertyValueRow {
@@ -222,14 +274,15 @@
 .propertyValue {
   flex: 1;
   font-size: 13px;
+  color: var(--txdim);
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
-  transition: background 0.2s;
+  border-radius: 6px;
+  transition: background 0.16s;
 }
 
 .propertyValue:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface3);
 }
 
 .propertyEdit {
@@ -239,19 +292,22 @@
 }
 
 .deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
-  border: 1px solid rgba(244, 67, 54, 0.3);
-  color: inherit;
-  padding: 4px 8px;
-  border-radius: 4px;
+  border: 1px solid var(--danger-soft);
+  color: var(--mut);
+  padding: 5px 8px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
+  transition: 0.16s;
 }
 
 .deleteBtn:hover {
-  background: rgba(244, 67, 54, 0.2);
-  border-color: rgba(244, 67, 54, 0.5);
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger-soft);
 }
 
 /* Mobile Responsive */
@@ -264,7 +320,6 @@
   .metaGrid {
     grid-template-columns: 80px 1fr;
     gap: 6px 10px;
-    font-size: 13px;
   }
 
   .activityItem {
@@ -287,16 +342,12 @@
     padding: 12px 14px;
   }
 
-  .title {
-    font-size: 14px;
-  }
-
   .actions {
-    padding: 10px 14px;
+    padding: 12px 14px;
   }
 
   .section {
-    padding: 10px 14px;
+    padding: 12px 14px;
   }
 
   .metaGrid {

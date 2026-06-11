@@ -1,27 +1,36 @@
+/* Walt · SOVEREIGN — Payment callback (token-driven, dark base + light alt) */
+
 .container {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
+  background:
+    radial-gradient(90% 60% at 50% -10%, var(--accent-soft), transparent 60%),
+    var(--bg);
+  color: var(--tx);
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 .card {
-  background: white;
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
   padding: 48px;
   max-width: 500px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow);
 }
 
+/* loading spinner: 2px accent ring on line track */
 .spinner {
   width: 64px;
   height: 64px;
-  border: 4px solid #f3f4f6;
-  border-top-color: #3b82f6;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 24px;
@@ -36,64 +45,77 @@
 .successIcon {
   width: 64px;
   height: 64px;
-  background-color: #10b981;
-  color: white;
+  background: var(--green-soft);
+  color: var(--green);
+  border: 1px solid var(--green-soft);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  font-weight: bold;
   margin: 0 auto 24px;
+}
+
+.successIcon svg {
+  width: 32px;
+  height: 32px;
 }
 
 .errorIcon {
   width: 64px;
   height: 64px;
-  background-color: #ef4444;
-  color: white;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger-soft);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  font-weight: bold;
   margin: 0 auto 24px;
 }
 
+.errorIcon svg {
+  width: 32px;
+  height: 32px;
+}
+
 .card :global(h1) {
-  margin: 0 0 16px 0;
-  font-size: 28px;
-  font-weight: 600;
-  color: #111827;
+  margin: 0 0 12px 0;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--tx);
 }
 
 .card :global(p) {
-  margin: 0 0 24px 0;
-  color: #6b7280;
-  font-size: 16px;
+  margin: 0 0 22px 0;
+  color: var(--mut);
+  font-size: 14px;
   line-height: 1.5;
 }
 
 .redirect {
-  font-size: 14px;
-  color: #9ca3af;
+  font-size: 12.5px;
+  color: var(--faint);
   font-style: italic;
 }
 
 .button {
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid transparent;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: 0.16s;
+  box-shadow: 0 8px 22px -10px var(--accent);
 }
 
 .button:hover {
-  background-color: #2563eb;
+  background: var(--accent-h);
 }
-

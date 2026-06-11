@@ -1,64 +1,81 @@
+/* Walt · SOVEREIGN — Terms & Conditions (token-driven, dark base + light alt) */
+
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #02060a 0%, #00121c 55%, #001d2c 100%);
-  color: #f6fbff;
+  background:
+    radial-gradient(90% 50% at 50% -10%, var(--accent-soft), transparent 60%),
+    var(--bg);
+  color: var(--tx);
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
   padding: 80px 24px;
 }
 
 .content {
   max-width: 800px;
   margin: 0 auto;
-  line-height: 1.8;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 48px 44px;
+  line-height: 1.75;
 }
 
 .backLink {
   display: inline-block;
-  color: #23a9ff;
+  color: var(--accent);
   text-decoration: none;
   margin-bottom: 32px;
-  font-size: 16px;
-  transition: color 0.2s ease;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.16s;
 }
 
 .backLink:hover {
-  color: #4db8ff;
+  color: var(--accent-h);
 }
 
 .title {
-  font-size: 48px;
+  font-size: 36px;
   font-weight: 700;
-  margin: 0 0 16px 0;
-  color: #f6fbff;
+  letter-spacing: -0.03em;
+  margin: 0 0 12px 0;
+  color: var(--tx);
 }
 
 .lastUpdated {
-  color: rgba(246, 251, 255, 0.6);
-  font-size: 14px;
-  margin-bottom: 48px;
+  color: var(--mut);
+  font-size: 13px;
+  font-family: var(--mono);
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
 }
 
 .section {
-  margin-bottom: 40px;
+  margin-bottom: 28px;
 }
 
 .section h2 {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 600;
-  margin: 0 0 16px 0;
-  color: #f6fbff;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px 0;
+  color: var(--tx);
 }
 
 .section p {
-  color: rgba(246, 251, 255, 0.85);
-  font-size: 16px;
+  color: var(--mut);
+  font-size: 15px;
   margin-bottom: 12px;
 }
 
 .section ul {
-  color: rgba(246, 251, 255, 0.85);
-  font-size: 16px;
+  color: var(--mut);
+  font-size: 15px;
   padding-left: 24px;
-  margin: 16px 0;
+  margin: 14px 0;
 }
 
 .section li {
@@ -66,31 +83,34 @@
 }
 
 .section a {
-  color: #23a9ff;
+  color: var(--accent);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color 0.16s;
 }
 
 .section a:hover {
-  color: #4db8ff;
+  color: var(--accent-h);
 }
 
 .section strong {
-  color: #f6fbff;
+  color: var(--tx);
   font-weight: 600;
 }
 
 @media (max-width: 768px) {
   .container {
-    padding: 60px 20px;
+    padding: 48px 16px;
+  }
+
+  .content {
+    padding: 32px 22px;
   }
 
   .title {
-    font-size: 36px;
+    font-size: 28px;
   }
 
   .section h2 {
-    font-size: 24px;
+    font-size: 20px;
   }
 }
-

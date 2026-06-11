@@ -27,6 +27,24 @@ const HeroMesh: React.FC = () => {
     const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
     const prefersReducedMotion = motionMedia.matches;
 
+    // Particle/link color from the SOVEREIGN accent token so the mesh tracks the theme.
+    const readAccentRgb = () => {
+      const raw = getComputedStyle(document.documentElement)
+        .getPropertyValue('--accent')
+        .trim();
+      const hex = raw.replace('#', '');
+      if (hex.length === 6) {
+        return {
+          r: parseInt(hex.slice(0, 2), 16),
+          g: parseInt(hex.slice(2, 4), 16),
+          b: parseInt(hex.slice(4, 6), 16),
+        };
+      }
+      return { r: 77, g: 159, b: 255 };
+    };
+    const accent = readAccentRgb();
+    const accentRgb = `${accent.r}, ${accent.g}, ${accent.b}`;
+
     const setCanvasSize = () => {
       const parent = canvas.parentElement;
       const width = parent?.clientWidth || window.innerWidth;
@@ -69,7 +87,7 @@ const HeroMesh: React.FC = () => {
         }
 
         ctx.beginPath();
-        ctx.fillStyle = `rgba(255, 251, 244, ${p.opacity})`;
+        ctx.fillStyle = `rgba(${accentRgb}, ${p.opacity})`;
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fill();
 
@@ -80,7 +98,7 @@ const HeroMesh: React.FC = () => {
           const distance = Math.hypot(dx, dy);
           if (distance < MAX_DISTANCE) {
             const intensity = 0.2 - distance / (MAX_DISTANCE * 6);
-            ctx.strokeStyle = `rgba(255, 251, 244, ${Math.max(intensity, 0)})`;
+            ctx.strokeStyle = `rgba(${accentRgb}, ${Math.max(intensity, 0)})`;
             ctx.lineWidth = 1.2;
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
