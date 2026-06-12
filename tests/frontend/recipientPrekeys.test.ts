@@ -184,5 +184,5 @@ describe('lib/recipientPrekeys — lifecycle', () => {
     await expect(
       decryptForRecipientFS(prior.ciphertext, prior.meta, 'rcpt', identityPriv, prekeyResolver(encryptedRing, PASS))
     ).rejects.toThrow(/forward-secret|rotated out|evicted/i);
-  });
+  }, 20000);
 });

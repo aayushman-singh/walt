@@ -29,8 +29,9 @@ wrapKey    = AES-256-GCM key from wrapSecret
 
 - **`ECDH(EK, IK)` — identity binding.** Deriving the key requires the recipient
   *identity* private key. So an attacker who substitutes their own prekey into the
-  directory still cannot read the file (they lack `IK_priv`). Directory substitution
-  becomes denial-of-service, never disclosure.
+  directory still cannot read the file unless they also have `IK_priv`. Directory
+  substitution alone is denial-of-service; directory substitution plus identity-key
+  compromise is disclosure.
 - **`ECDH(EK, PK)` — the forward-secret term.** `PK` is a short-lived session prekey.
   Its private half is **deleted** when the prekey rotates out of the recipient's
   bounded ring. After eviction, the second DH output is unrecoverable, so even a full
@@ -46,7 +47,7 @@ wrapKey    = AES-256-GCM key from wrapSecret
 | Fresh ephemeral per share on the **sender** side | ✅ |
 | Forward secrecy granularity | **per session prekey** — the FS window equals the rotation/eviction interval, not literally per-message |
 | Double ratchet / per-message chain keys | ❌ not implemented |
-| Post-compromise security (healing after a *device* compromise that leaks live prekey privates) | ❌ not implemented |
+| Post-compromise security (healing after a compromise that leaks live prekey privates) | ⤴ **V5**: single-step healing ratchet against private-key-material compromise — see `crypto-post-compromise.md` (not against passphrase compromise) |
 | Defeats an *actively malicious* directory (wrong identity key served on first use) | ❌ — still trust-on-first-use; out-of-band fingerprint check is the mitigation (see DECISIONS #11) |
 
 The honest one-liner: **V4 gives per-session forward secrecy against later compromise
@@ -72,7 +73,7 @@ v2 proves "this was encrypted *to me*", not "this was sent *by sender X*". The d
 `fromEmail` is bound only by Firestore rules, so a malicious server/admin could rewrite
 provenance. Cryptographic sender authentication (signing the envelope) is future work.
 
-## Prekey lifecycle
+## V4 prekey-ring lifecycle
 
 The recipient keeps a **bounded ring** of session prekeys (default 5):
 
@@ -86,23 +87,23 @@ The recipient keeps a **bounded ring** of session prekeys (default 5):
    (Inbox items are meant to be pulled promptly; this is the documented trade-off of
    per-session FS without server-coordinated one-time prekeys.)
 
+This ring remains in the code as a legacy v2 read path. V5 new-share sends use the
+single current ratchet prekey described in `docs/crypto-post-compromise.md`.
+
 ## Rollout (feature flag, default OFF)
 
 New shares emit v2 only when `NEXT_PUBLIC_FS_SHARING === 'on'`. Reading both v1 and v2
 is always on. The flag defaults **off** because emitting v2 safely requires, for every
 participant:
 
-1. A **published prekey ring** (`ensureIdentity` provisions one only when the FS flag is
-   on, so an FS-off build's v1 setup never breaks on prekey generation; existing v1-only
-   users have none until then), and
-2. A **rotation driver** — something that calls `rotatePrekeys` on a cadence (e.g. per
-   login/session). Without it, `pickPrekeyForWrap` keeps choosing the same newest
-   prekey forever and the "forward-secret" key never actually rotates or evicts, which
-   degrades v2 to a second long-lived ECDH key.
+1. A **published ratchet prekey** (`ensureIdentity` provisions one only when the FS flag
+   is on, so an FS-off build's v1 setup never breaks on ratchet writes), and
+2. An explicit product decision about **when** to call `rotatePrekeys`, because that
+   call advances the ratchet and immediately expires prior-epoch shares.
 
-Until both are wired into onboarding/login, the live site keeps emitting v1 so sharing
-never breaks. Turning the flag on before that wiring exists will fail loudly for users
-without a prekey ring (no silent fallback).
+The ratchet is wired under the flag; there is intentionally no hidden per-login
+rotation. Turning the flag on before users have a ratchet prekey fails loudly for those
+recipients (no silent fallback).
 
 ### Untrusted-input validation
 

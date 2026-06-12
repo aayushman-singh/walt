@@ -25,22 +25,22 @@ import { argon2id } from 'hash-wasm';
 export const ENCRYPTION_VERSION = 1;
 
 /** Argon2id cost parameters. Interactive-grade: ~64 MiB, 3 passes. */
-const ARGON_TIME_COST = 3;
-const ARGON_MEMORY_COST_KIB = 64 * 1024; // 64 MiB
-const ARGON_PARALLELISM = 1;
+export const ARGON_TIME_COST = 3;
+export const ARGON_MEMORY_COST_KIB = 64 * 1024; // 64 MiB
+export const ARGON_PARALLELISM = 1;
 
 /**
  * Minimum acceptable KDF cost on DECRYPT. A hostile party that controls the
  * stored metadata could otherwise set trivial Argon2 params and try to weaken a
  * future re-derivation; we refuse to derive a key with cost below these floors.
  */
-const ARGON_MIN_TIME_COST = 2;
-const ARGON_MIN_MEMORY_COST_KIB = 16 * 1024; // 16 MiB
-const ARGON_MIN_PARALLELISM = 1;
+export const ARGON_MIN_TIME_COST = 2;
+export const ARGON_MIN_MEMORY_COST_KIB = 16 * 1024; // 16 MiB
+export const ARGON_MIN_PARALLELISM = 1;
 
-const SALT_BYTES = 16;
-const IV_BYTES = 12; // 96-bit nonce, recommended for AES-GCM
-const DEK_BYTES = 32; // AES-256
+export const SALT_BYTES = 16;
+export const IV_BYTES = 12; // 96-bit nonce, recommended for AES-GCM
+export const DEK_BYTES = 32; // AES-256
 
 /**
  * Encryption metadata stored alongside a file (in the IPFS file-list + Firestore
@@ -96,14 +96,29 @@ export function fromBase64(b64: string): Uint8Array {
   return new Uint8Array(Buffer.from(b64, 'base64'));
 }
 
-interface ArgonParams {
+export interface ArgonParams {
   timeCost: number;
   memoryCost: number; // KiB
   parallelism: number;
 }
 
+/**
+ * Reject KDF cost params below the floors (tamper / downgrade guard). Shared by
+ * every module that re-derives a KEK from stored, untrusted Argon parameters, so
+ * the floor is enforced in exactly one place. Throws loudly on a sub-minimum param.
+ */
+export function assertArgonFloor(params: ArgonParams): void {
+  if (
+    !(params.timeCost >= ARGON_MIN_TIME_COST) ||
+    !(params.memoryCost >= ARGON_MIN_MEMORY_COST_KIB) ||
+    !(params.parallelism >= ARGON_MIN_PARALLELISM)
+  ) {
+    throw new Error('Refusing to derive a key with sub-minimum Argon2 parameters');
+  }
+}
+
 /** Derive the key-encryption key from a passphrase via Argon2id. */
-async function deriveKEK(passphrase: string, salt: Uint8Array, params: ArgonParams): Promise<CryptoKey> {
+export async function deriveKEK(passphrase: string, salt: Uint8Array, params: ArgonParams): Promise<CryptoKey> {
   const raw = await argon2id({
     password: passphrase,
     salt,
@@ -210,13 +225,7 @@ export async function decryptBytes(
     throw new Error(`Unsupported cipher/KDF: ${meta.alg}/${meta.kdf}`);
   }
   // Refuse cost params below the floor (tamper / downgrade guard).
-  if (
-    !(meta.argonTimeCost >= ARGON_MIN_TIME_COST) ||
-    !(meta.argonMemoryCost >= ARGON_MIN_MEMORY_COST_KIB) ||
-    !(meta.argonParallelism >= ARGON_MIN_PARALLELISM)
-  ) {
-    throw new Error('Refusing to derive a key with sub-minimum Argon2 parameters');
-  }
+  assertArgonFloor({ timeCost: meta.argonTimeCost, memoryCost: meta.argonMemoryCost, parallelism: meta.argonParallelism });
 
   const subtle = getSubtle();
   const kek = await deriveKEK(passphrase, fromBase64(meta.salt), {

@@ -31,7 +31,7 @@ import {
   type FSSharedEncryptionMeta,
   type PrekeyResolver,
 } from './forwardSecretSharing';
-import { decryptBytes, type EncryptionMeta } from './encryption';
+import { decryptFileBytes, type FileEncryptionMeta } from './fileEnvelope';
 
 /** Either share-envelope version. Decryption dispatches on `meta.v`. */
 export type AnyShareMeta = SharedEncryptionMeta | FSSharedEncryptionMeta;
@@ -43,8 +43,8 @@ export interface ShareableFile {
   type: string;
   size?: number;
   gatewayUrl: string;
-  /** Present iff the stored bytes are a V1 (passphrase) ciphertext. */
-  encryption?: EncryptionMeta;
+  /** Present iff the stored bytes are a passphrase ciphertext (whole-file or chunked). */
+  encryption?: FileEncryptionMeta;
 }
 
 /** One inbox record written to sharedWithMe/{recipientUid}/items/{shareId}. */
@@ -95,8 +95,8 @@ export interface EncryptedShareDeps {
    * prekey. Used for BOTH the sender (self) and every recipient.
    */
   getRecipientFS?: (recipient: RecipientPublicKey) => Promise<FSRecipientPublicKey>;
-  /** Build a prekey resolver from this user's encrypted ring + passphrase (to read v2 inbox items). */
-  getMyPrekeyResolver?: (passphrase: string) => Promise<PrekeyResolver>;
+  /** Build the right prekey resolver for this v2 envelope's key lifecycle. */
+  getMyPrekeyResolver?: (passphrase: string, meta: FSSharedEncryptionMeta) => Promise<PrekeyResolver>;
   /** Fetch raw bytes for a URL (gateway) — used to read the file to be shared. */
   fetchBytes: (url: string) => Promise<Uint8Array>;
   /** Fetch ciphertext bytes by content id (authed backend download). */
@@ -122,9 +122,10 @@ function defaultShareId(): string {
 }
 
 /**
- * Obtain the PLAINTEXT bytes for a file to be re-encrypted to recipients.
- * V1-encrypted files are decrypted with the user's passphrase first; plaintext
- * files are fetched as-is. Throws loudly if a passphrase is required but absent.
+ * Obtain the PLAINTEXT bytes for a file to be re-encrypted to recipients. The
+ * share envelope currently encrypts one plaintext buffer, so re-share is an
+ * explicit whole-buffer boundary even when the stored file used chunked at-rest
+ * encryption. Throws loudly if a passphrase is required but absent.
  */
 export async function getPlaintextBytes(
   file: ShareableFile,
@@ -139,7 +140,8 @@ export async function getPlaintextBytes(
   if (!passphrase) {
     throw new Error('Sharing cancelled — no passphrase provided to decrypt the source file');
   }
-  return decryptBytes(raw, file.encryption, passphrase);
+  // Dispatch on the stored envelope shape (whole-file or chunked) to recover plaintext.
+  return decryptFileBytes(raw, file.encryption, passphrase);
 }
 
 /**
@@ -228,7 +230,7 @@ export async function downloadShared(
     if (!deps.getMyPrekeyResolver) {
       throw new Error('This is a forward-secret (v2) share but no prekey resolver is available to read it');
     }
-    const resolvePrekey = await deps.getMyPrekeyResolver(passphrase);
+    const resolvePrekey = await deps.getMyPrekeyResolver(passphrase, record.meta);
     bytes = await decryptForRecipientFS(ciphertext, record.meta, deps.self.uid, privateKey, resolvePrekey, record.context);
   } else {
     bytes = await decryptForRecipient(ciphertext, record.meta, deps.self.uid, privateKey, record.context);

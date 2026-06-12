@@ -16,7 +16,7 @@ import { calculatePinningCost, DEFAULT_BILLING_CYCLE_DAYS } from '../../../lib/p
 import { getOptimizedGatewayUrl } from '../../../lib/gatewayOptimizer';
 import { BackendFileAPI } from '../../../lib/backendClient';
 import { ErrorHandler } from '../../../lib/errorHandler';
-import { encryptFile } from '../../../lib/encryption';
+import { encryptFileForUpload } from '../../../lib/fileEnvelope';
 import { getFriendlyPinServiceLabel, formatFileSize, billingCycleTitle } from '../utils';
 import {
   UploadedFile,
@@ -311,11 +311,13 @@ export function useUpload({
       // Encrypt before upload when enabled. Each entry keeps the original
       // filename and carries the EncryptionMeta needed to decrypt on download.
       // encryptionMetas is positionally aligned with filesToUpload/uploadResults.
-      const encryptionMetas: (import('../../../lib/encryption').EncryptionMeta | null)[] = [];
+      const encryptionMetas: (import('../../../lib/fileEnvelope').FileEncryptionMeta | null)[] = [];
       const filesForUpload: File[] = [];
       for (const file of filesToUpload) {
         if (encryptionPassphrase) {
-          const { blob, meta } = await encryptFile(file, encryptionPassphrase);
+          // Large files stream chunk-by-chunk (bounded memory); small files take
+          // the whole-file path. Dispatch + threshold live in lib/fileEnvelope.
+          const { blob, meta } = await encryptFileForUpload(file, encryptionPassphrase);
           filesForUpload.push(new File([blob], file.name, { type: 'application/octet-stream' }));
           encryptionMetas.push(meta);
         } else {

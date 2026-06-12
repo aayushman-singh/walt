@@ -44,10 +44,9 @@ export function useEncryptedShare() {
   } = useRecipientIdentity();
 
   // Forward-secret (v2) envelopes for NEW shares. Reading v1+v2 is ALWAYS on.
-  // Defaults OFF: emitting v2 requires every participant to have a published prekey
-  // ring AND a rotation driver in place (see docs/crypto-forward-secrecy.md, "Rollout").
-  // Until that wiring ships, the live site keeps emitting v1 so sharing never breaks.
-  // Set NEXT_PUBLIC_FS_SHARING=on to opt a build into emitting forward-secret shares.
+  // Defaults OFF: emitting v2 requires every participant to have a published
+  // ratchet prekey, and each manual ratchet step expires prior-epoch shares. Set
+  // NEXT_PUBLIC_FS_SHARING=on to opt a build into ratchet-backed v2 sends.
   const forwardSecret = process.env.NEXT_PUBLIC_FS_SHARING === 'on';
 
   /** Build the dependency bundle for the current session. Throws if signed out. */
@@ -132,9 +131,9 @@ export function useEncryptedShare() {
     myUid: user?.uid ?? null,
     /** Resolve an email to a recipient identity (null when they have none). */
     resolveRecipientByEmail,
-    /** Lazily create + publish the current user's sharing identity + prekey ring. */
+    /** Lazily create + publish the current user's sharing identity + ratchet prekey. */
     ensureIdentity,
-    /** Rotate the user's session prekeys (evicts the oldest → strengthens forward secrecy). */
+    /** Ratchet the user's sharing prekey (expires the prior epoch immediately). */
     rotatePrekeys,
     shareWithRecipients,
     listSharedWithMe,

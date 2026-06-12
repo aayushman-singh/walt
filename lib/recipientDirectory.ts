@@ -23,14 +23,16 @@
  * the planned mitigation; until then the guarantee is "no PASSIVE server read",
  * not "defeats an actively malicious directory".
  */
-import { doc, getDoc, setDoc, writeBatch, collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, writeBatch, runTransaction, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import type { PublicIdentity, EncryptedPrivateKey } from './recipientKeys';
 import type { PrekeyBundle, EncryptedPrekeyRing } from './recipientPrekeys';
+import type { PublishedRatchetPrekey, EncryptedRatchetState } from './postCompromiseRatchet';
 
 const publicKeyDoc = (uid: string) => doc(db, 'publicKeys', uid);
 const secretKeyDoc = (uid: string) => doc(db, 'users', uid, 'secrets', 'identityKey');
 const prekeyRingDoc = (uid: string) => doc(db, 'users', uid, 'secrets', 'prekeys');
+const ratchetStateDoc = (uid: string) => doc(db, 'users', uid, 'secrets', 'ratchet');
 
 /** Publish the user's PUBLIC identity to the directory + store their encrypted private key owner-only. */
 export async function publishIdentity(
@@ -101,6 +103,99 @@ export async function lookupPrekeyBundleByUid(uid: string): Promise<PrekeyBundle
   if (!uid) throw new Error('uid is required');
   const snap = await getDoc(publicKeyDoc(uid));
   return (snap.exists() ? (snap.data()?.prekeyBundle as PrekeyBundle) : null) ?? null;
+}
+
+/**
+ * Publish the user's CURRENT ratchet prekey (public directory) and owner-only
+ * encrypted current private state. This is atomic for the same reason
+ * publishPrekeys is atomic: no public wrap target may become visible without its
+ * matching private half being committed in the owner-only secret document.
+ */
+export async function publishRatchet(
+  uid: string,
+  email: string,
+  published: PublishedRatchetPrekey,
+  state: EncryptedRatchetState
+): Promise<void> {
+  if (!uid) throw new Error('uid is required to publish a ratchet prekey');
+  if (published.prekeyId !== state.prekeyId || published.epoch !== state.epoch || published.publicKey !== state.publicKey) {
+    throw new Error(
+      `Ratchet publish mismatch: public epoch ${published.epoch}/${published.prekeyId} vs private epoch ${state.epoch}/${state.prekeyId}`
+    );
+  }
+  const batch = writeBatch(db);
+  batch.set(
+    publicKeyDoc(uid),
+    { uid, emailLower: (email || '').trim().toLowerCase() || null, ratchetPrekey: published },
+    { merge: true }
+  );
+  batch.set(ratchetStateDoc(uid), { encryptedRatchetState: state }, { merge: true });
+  await batch.commit();
+}
+
+/**
+ * Publish a ratchet rotation only if the directory still points at the epoch the
+ * caller advanced from. Two tabs racing from epoch n must not both publish epoch
+ * n+1 and let the last writer strand shares wrapped during the race.
+ */
+export async function publishRatchetRotation(
+  uid: string,
+  email: string,
+  previous: Pick<EncryptedRatchetState, 'epoch' | 'prekeyId' | 'publicKey'>,
+  published: PublishedRatchetPrekey,
+  state: EncryptedRatchetState
+): Promise<void> {
+  if (!uid) throw new Error('uid is required to publish a ratchet rotation');
+  if (published.prekeyId !== state.prekeyId || published.epoch !== state.epoch || published.publicKey !== state.publicKey) {
+    throw new Error(
+      `Ratchet rotation publish mismatch: public epoch ${published.epoch}/${published.prekeyId} vs private epoch ${state.epoch}/${state.prekeyId}`
+    );
+  }
+  await runTransaction(db, async (tx) => {
+    const pubRef = publicKeyDoc(uid);
+    const stateRef = ratchetStateDoc(uid);
+    const pubSnap = await tx.get(pubRef);
+    const stateSnap = await tx.get(stateRef);
+    const currentPublished = (pubSnap.exists() ? (pubSnap.data()?.ratchetPrekey as PublishedRatchetPrekey) : null) ?? null;
+    const currentState = (stateSnap.exists() ? (stateSnap.data()?.encryptedRatchetState as EncryptedRatchetState) : null) ?? null;
+    if (!currentPublished || !currentState) {
+      throw new Error('Cannot rotate ratchet: current public/private ratchet state is missing');
+    }
+    if (
+      currentPublished.epoch !== previous.epoch ||
+      currentPublished.prekeyId !== previous.prekeyId ||
+      currentPublished.publicKey !== previous.publicKey ||
+      currentState.epoch !== previous.epoch ||
+      currentState.prekeyId !== previous.prekeyId ||
+      currentState.publicKey !== previous.publicKey ||
+      currentPublished.publicKey !== currentState.publicKey
+    ) {
+      throw new Error(
+        `Ratchet rotation conflict: expected epoch ${previous.epoch}/${previous.prekeyId}, ` +
+          `found public ${currentPublished.epoch}/${currentPublished.prekeyId} and private ${currentState.epoch}/${currentState.prekeyId}`
+      );
+    }
+    tx.set(
+      pubRef,
+      { uid, emailLower: (email || '').trim().toLowerCase() || null, ratchetPrekey: published },
+      { merge: true }
+    );
+    tx.set(stateRef, { encryptedRatchetState: state }, { merge: true });
+  });
+}
+
+/** Load the current user's owner-only encrypted ratchet state, if any. */
+export async function loadOwnRatchetState(uid: string): Promise<EncryptedRatchetState | null> {
+  if (!uid) throw new Error('uid is required');
+  const snap = await getDoc(ratchetStateDoc(uid));
+  return (snap.exists() ? (snap.data()?.encryptedRatchetState as EncryptedRatchetState) : null) ?? null;
+}
+
+/** Look up another user's CURRENT public ratchet prekey by uid. */
+export async function lookupRatchetPrekeyByUid(uid: string): Promise<PublishedRatchetPrekey | null> {
+  if (!uid) throw new Error('uid is required');
+  const snap = await getDoc(publicKeyDoc(uid));
+  return (snap.exists() ? (snap.data()?.ratchetPrekey as PublishedRatchetPrekey) : null) ?? null;
 }
 
 /** Look up another user's PUBLIC identity by uid. Returns null if they have none. */
