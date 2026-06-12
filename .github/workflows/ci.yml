@@ -44,4 +44,14 @@ jobs:
         run: pnpm test
 
       - name: Build
+        # Next imports the Firebase Web SDK while collecting page data. CI builds
+        # are not deployed, so public non-secret placeholders are enough here;
+        # real deploy environments must provide the actual NEXT_PUBLIC_FIREBASE_* config.
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ci-firebase-api-key
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-walt.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-walt
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci-walt.appspot.com
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "123456789"
+          NEXT_PUBLIC_FIREBASE_APP_ID: "1:123456789:web:ci"
         run: pnpm build
