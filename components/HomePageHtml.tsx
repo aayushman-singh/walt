@@ -7,7 +7,8 @@ import { scrollToSection } from './SmoothScroll';
 import Link from 'next/link';
 import HeroMesh from './HeroMesh';
 import HeroShield from './HeroShield';
-import Testimonials from './Testimonials';
+// Temporarily hidden from the landing page; keep the component for later reuse.
+// import Testimonials from './Testimonials';
 import DecentralizationVisual from './landing/DecentralizationVisual';
 import Image from 'next/image';
 import { Cover } from './ui/cover';
@@ -665,7 +666,9 @@ const HomePageHtml: React.FC = () => {
           </div>
         </section>
 
+        {/* Temporarily hidden from the landing page; keep the component for later reuse.
         <Testimonials />
+        */}
       </main>
       <footer className={styles["footer"]}>
         <div className={styles["footer-glow"]} aria-hidden="true" />
